@@ -1338,11 +1338,14 @@ def save_episode_video(frames, folder, episode_idx):
     writer.release()
 
 
-def resolve_groundingdino_paths(args):
+def resolve_groundingdino_paths(args, base_dir):
     def first_existing(candidates):
         for path in candidates:
-            if path and os.path.isfile(path):
-                return os.path.abspath(path)
+            if not path:
+                continue
+            resolved = path if os.path.isabs(path) else os.path.join(base_dir, path)
+            if os.path.isfile(resolved):
+                return os.path.abspath(resolved)
         return None
 
     config = first_existing(
@@ -1512,8 +1515,10 @@ def save_and_print_trace(trace_records, save_folder, episode_idx, window, manual
 # Main
 # =============================================================================
 def main(args):
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    xml_path = args.xml_path or os.path.join(base_dir, "dummyx_apf_scene.xml")
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    xml_path = args.xml_path or os.path.join(base_dir, "models", "dummyx_apf_scene.xml")
+    if not os.path.isabs(xml_path):
+        xml_path = os.path.join(base_dir, xml_path)
 
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
@@ -1559,7 +1564,7 @@ def main(args):
         and args.obstacle_source == "perception"
         and not args.no_obstacle
     ):
-        config_path, checkpoint_path = resolve_groundingdino_paths(args)
+        config_path, checkpoint_path = resolve_groundingdino_paths(args, base_dir)
         print(f"Loading GroundingDINO config: {config_path}")
         print(f"Loading GroundingDINO checkpoint: {checkpoint_path}")
         dino = GroundingDINOWrapper(

@@ -2,6 +2,12 @@ import cv2
 import os
 import argparse
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def project_path(path):
+    return path if os.path.isabs(path) else os.path.join(PROJECT_ROOT, path)
+
 def images_to_video(image_folder, video_name, fps=30):
     """
     将文件夹内的图片序列转换为视频。
@@ -65,4 +71,8 @@ if __name__ == "__main__":
     parser.add_argument("output_video", help="Output MP4 path")
     parser.add_argument("--fps", type=float, default=60, help="Output frame rate")
     args = parser.parse_args()
-    images_to_video(args.image_folder, args.output_video, args.fps)
+    output_video = project_path(args.output_video)
+    output_dir = os.path.dirname(output_video)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    images_to_video(project_path(args.image_folder), output_video, args.fps)

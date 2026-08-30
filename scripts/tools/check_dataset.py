@@ -2,14 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import glob
+import argparse
 
-def main():
-    # 1. 找到 dataset 文件夹下最新生成的一个 .npz 文件
-    dataset_dir = "dataset"
-    files = glob.glob(os.path.join(dataset_dir, "*.npz"))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def project_path(path):
+    return path if os.path.isabs(path) else os.path.join(PROJECT_ROOT, path)
+
+def main(dataset_dir="datasets", output="outputs/verify_camera_dual.png"):
+    dataset_dir = project_path(dataset_dir)
+    files = glob.glob(os.path.join(dataset_dir, "**", "*.npz"), recursive=True)
     
     if not files:
-        print("❌ 错误：在 dataset 文件夹下没有找到 .npz 文件！")
+        print(f"❌ 错误：在 {dataset_dir} 下没有找到 .npz 文件！")
         return
         
     # 按创建时间排序，取最新的一个
@@ -56,7 +62,8 @@ def main():
         axes[1, i].axis("off")
         
     plt.tight_layout() # 自动调整间距
-    save_img_path = "verify_camera_dual.png"
+    save_img_path = project_path(output)
+    os.makedirs(os.path.dirname(save_img_path), exist_ok=True)
     plt.savefig(save_img_path, bbox_inches='tight')
     
     print(f"\n📸 双摄视觉质检完毕！")
@@ -66,4 +73,8 @@ def main():
     print("2. 重点确认第二排【手腕视角】！看看它是不是以第一人称的视角，逐渐靠近目标绿块。")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Inspect the newest collected NPZ dataset.")
+    parser.add_argument("--dataset-dir", default="datasets")
+    parser.add_argument("--output", default="outputs/verify_camera_dual.png")
+    args = parser.parse_args()
+    main(args.dataset_dir, args.output)

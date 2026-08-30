@@ -389,8 +389,10 @@ def save_episode_video(frames, folder, episode_idx):
 # Main deployment / evaluation loop
 # =============================================================================
 def main(args):
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    xml_path = args.xml_path or os.path.join(base_dir, "dummyx_apf_scene.xml")
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    xml_path = args.xml_path or os.path.join(base_dir, "models", "dummyx_apf_scene.xml")
+    if not os.path.isabs(xml_path):
+        xml_path = os.path.join(base_dir, xml_path)
 
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)

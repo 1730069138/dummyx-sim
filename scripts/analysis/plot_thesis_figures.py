@@ -221,7 +221,7 @@ if __name__ == "__main__":
     
     # 自动定位到上一级 dummyx/recordings 目录
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    target_dir = os.path.join(base_dir, args.dir)
+    target_dir = args.dir if os.path.isabs(args.dir) else os.path.join(base_dir, args.dir)
     
     if os.path.exists(target_dir):
         print(f"🔍 正在扫描并处理目录: {target_dir}")

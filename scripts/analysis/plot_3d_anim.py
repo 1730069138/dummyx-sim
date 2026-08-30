@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from mpl_toolkits.mplot3d import Axes3D
 import os
+import argparse
 
 def create_multi_trajectory_gif(npz_file_paths, labels, colors, output_name="multi_comparison_anim.gif"):
     print("正在加载 4 种工况的轨迹数据...")
@@ -100,18 +101,15 @@ def create_multi_trajectory_gif(npz_file_paths, labels, colors, output_name="mul
 
 
 if __name__ == "__main__":
-    # 👇 修改位置 1：引入动态路径锁定寻找根目录
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    
-    # 👇 修改位置 2：基础目录变为根目录下的 recordings
-    base_dir = os.path.join(BASE_DIR, "recordings")
-    
-    # 假设你刚刚跑的一组数据前缀是 run_20260611_123615，分别对应 4 个 step
+    parser = argparse.ArgumentParser(description="Compare four recorded TCP trajectories.")
+    parser.add_argument("npz_files", nargs=4, help="Four NPZ paths, absolute or relative to the project root")
+    parser.add_argument("--output", default="outputs/thesis_4case_comparison.gif")
+    args = parser.parse_args()
+
     file_paths = [
-        f"{base_dir}/run_20260611_194053_step1_no_obs_no_apf/success/data_ep_001.npz",
-        f"{base_dir}/run_20260611_194053_step2_no_obs_apf/success/data_ep_001.npz",
-        f"{base_dir}/run_20260611_194053_step3_obs_no_apf/success/data_ep_001.npz",     # 注意：没开APF撞击可能在 fail 文件夹里
-        f"{base_dir}/run_20260611_194053_step4_obs_apf/success/data_ep_001.npz"
+        path if os.path.isabs(path) else os.path.join(BASE_DIR, path)
+        for path in args.npz_files
     ]
     
     labels = [
@@ -124,6 +122,7 @@ if __name__ == "__main__":
     # 配色方案：蓝色、绿色、红色(警告)、紫色(护盾)
     colors = ['#1f77b4', '#2ca02c', '#d62728', '#9467bd']
     
-    # 👇 修改位置 3：渲染输出文件保存在根目录，避免混入当前子目录乱排
-    output_path = os.path.join(BASE_DIR, "thesis_4case_comparison.gif")
+    output_path = args.output if os.path.isabs(args.output) else os.path.join(BASE_DIR, args.output)
+    output_dir = os.path.dirname(output_path)
+    os.makedirs(output_dir, exist_ok=True)
     create_multi_trajectory_gif(file_paths, labels, colors, output_name=output_path)

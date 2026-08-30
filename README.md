@@ -17,12 +17,12 @@
 
 ## Ubuntu 22.04 快速开始
 
-当前机器的 Conda 环境不会被修改。待代码验证完成后，再从原环境导出精简的复现文件。
+锁定依赖来自本机 `dummyx_vla` 环境（Python 3.10.20）。
 
 ```bash
-conda create -n dummyx-sim python=3.10
+conda create -n dummyx-sim python=3.10.20 -y
 conda activate dummyx-sim
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dummyx-lock.txt
 python scripts/tools/check_xml.py
 ```
 
@@ -43,3 +43,164 @@ python scripts/tools/img2video.py datasets/example/cam_wrist outputs/preview.mp4
 
 脚本使用相对于项目根目录的路径，不依赖原电脑上的 `/home/jun/...` 绝对路径。
 
+## 仿真数据采集
+
+```bash
+cd /path/to/dummyx-sim
+conda activate dummyx-sim
+python scripts/collect/data_collector_v2.py
+```
+
+每次运行会新采集 50 条成功轨迹，并从已有的最大 `ep_N` 编号继续保存，不覆盖旧数据。输出目录为：
+
+```text
+datasets/dataset_anomaly_cleanup/ep_N/
+```
+
+检查最近采集的数据：
+
+```bash
+python scripts/tools/check_dataset.py \
+  --dataset-dir datasets/dataset_anomaly_cleanup \
+  --output outputs/verify_camera_dual.png
+```
+
+## VLSA V2.7 推理端
+
+除两个感知探针外，推理脚本需要先启动 OpenPI WebSocket 策略服务器。默认连接 `localhost:8000`；远程服务器通过 `--host` 和 `--port` 指定。
+
+### Baseline
+
+有障碍物：
+
+```bash
+python scripts/deploy/deploy_screwdriver_client_vlsa_v2_7.py \
+  --host localhost --port 8000 \
+  --mode baseline --fixed_eval \
+  --num_episodes 10 --max_steps 600
+```
+
+无障碍物：
+
+```bash
+python scripts/deploy/deploy_screwdriver_client_vlsa_v2_7.py \
+  --host localhost --port 8000 \
+  --mode baseline --fixed_eval --no_obstacle \
+  --num_episodes 10 --max_steps 600
+```
+
+### Oracle VLSA
+
+该模式使用 MuJoCo 中的真实障碍物几何，适合先验证 CBF-QP 控制逻辑；不需要 GroundingDINO 或 VLM API。
+
+```bash
+python scripts/deploy/deploy_screwdriver_client_vlsa_v2_7.py \
+  --host localhost --port 8000 \
+  --mode vlsa --obstacle_source oracle --fixed_eval \
+  --show_ellipsoids --show_oracle_reference \
+  --num_episodes 10 --max_steps 600
+```
+
+### Oracle Shadow
+
+计算并记录安全修正，但仍执行 OpenPI 原始动作：
+
+```bash
+python scripts/deploy/deploy_screwdriver_client_vlsa_v2_7.py \
+  --host localhost --port 8000 \
+  --mode shadow --obstacle_source oracle --fixed_eval \
+  --show_ellipsoids \
+  --num_episodes 10 --max_steps 600
+```
+
+### GroundingDINO 文件
+
+Perception 模式默认从以下位置读取配置和权重：
+
+```text
+GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py
+GroundingDINO/groundingdino_swint_ogc.pth
+```
+
+也可通过参数显式指定：
+
+```bash
+--groundingdino_config /path/to/GroundingDINO_SwinT_OGC.py \
+--groundingdino_checkpoint /path/to/groundingdino_swint_ogc.pth
+```
+
+### Perception Probe
+
+探针会在连接 OpenPI 前退出，因此不需要策略服务器：
+
+```bash
+python scripts/deploy/deploy_screwdriver_client_vlsa_v2_7.py \
+  --perception_probe --fixed_eval \
+  --groundingdino_config GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py \
+  --groundingdino_checkpoint GroundingDINO/groundingdino_swint_ogc.pth \
+  --device cuda
+```
+
+双视角候选配对探针：
+
+```bash
+python scripts/deploy/deploy_screwdriver_client_vlsa_v2_7.py \
+  --candidate_pair_probe --fixed_eval \
+  --obstacle_text "gray pillar" --pair_probe_topk 15 \
+  --groundingdino_config GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py \
+  --groundingdino_checkpoint GroundingDINO/groundingdino_swint_ogc.pth \
+  --device cuda
+```
+
+### Perception VLSA：固定文本调试
+
+固定 `--obstacle_text` 会绕过 GLM-4.5V，只使用 GroundingDINO：
+
+```bash
+python scripts/deploy/deploy_screwdriver_client_vlsa_v2_7.py \
+  --host localhost --port 8000 \
+  --mode vlsa --obstacle_source perception --fixed_eval \
+  --obstacle_text "gray pillar" \
+  --groundingdino_config GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py \
+  --groundingdino_checkpoint GroundingDINO/groundingdino_swint_ogc.pth \
+  --device cuda --show_ellipsoids --save_perception_debug \
+  --num_episodes 10 --max_steps 600
+```
+
+### 完整 Perception VLSA：GLM-4.5V + GroundingDINO
+
+安装智谱客户端并通过环境变量提供密钥；不要把密钥提交到 Git：
+
+```bash
+python -m pip install zai-sdk
+export ZHIPU_API_KEY='your-api-key'
+
+python scripts/deploy/deploy_screwdriver_client_vlsa_v2_7.py \
+  --host localhost --port 8000 \
+  --mode vlsa --obstacle_source perception --fixed_eval \
+  --groundingdino_config GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py \
+  --groundingdino_checkpoint GroundingDINO/groundingdino_swint_ogc.pth \
+  --device cuda --show_ellipsoids --save_perception_debug \
+  --num_episodes 10 --max_steps 600
+```
+
+完整模式不要传 `--obstacle_text`，否则会绕过 GLM-4.5V。无 CUDA 时可用 `--device cpu` 做功能验证，但速度会显著下降。
+
+### Pickup Gate 与干预追踪
+
+```bash
+python scripts/deploy/deploy_screwdriver_client_vlsa_v2_7.py \
+  --host localhost --port 8000 \
+  --mode vlsa --obstacle_source oracle --fixed_eval \
+  --debug_gate_until_pickup --pickup_z 0.235 \
+  --trace_window 20 --trace_step 180 \
+  --num_episodes 1 --max_steps 600
+```
+
+`--debug_gate_until_pickup` 仅用于诊断，不应用于正式实验结果。推理记录统一保存在：
+
+```text
+recordings/run_<timestamp>_<mode>_<obstacle_source>_obs<0|1>/
+```
+
+推荐验证顺序：Baseline 无障碍 → Baseline 有障碍 → Oracle VLSA → Perception Probe → 固定文本 Perception VLSA → 完整 GLM-4.5V Perception VLSA。

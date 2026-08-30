@@ -287,8 +287,8 @@ def save_episode_video(frames, folder, episode_idx):
 # 🚀 部署主程序
 # ==========================================
 def main(args):
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    xml_path = os.path.join(BASE_DIR, "dummyx_apf_scene.xml")
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    xml_path = os.path.join(BASE_DIR, "models", "dummyx_apf_scene.xml")
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
     renderer_rgb = mujoco.Renderer(model, height=256, width=256)
