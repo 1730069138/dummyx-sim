@@ -1,0 +1,13 @@
+mujoco
+numpy
+opencv-python
+matplotlib
+scipy
+scikit-learn
+pillow
+tqdm
+tyro
+
+# Policy deployment scripts additionally require the OpenPI client package.
+# GroundingDINO and zai are optional and only used by advanced VLSA modes.
+

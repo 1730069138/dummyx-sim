@@ -1,0 +1,85 @@
+<mujoco model="dummyx_vla_scene">
+    <include file="dummyx2.xml"/> 
+
+    <statistic center="0.3 0 0.4" extent="1"/>
+
+    <visual>
+        <headlight diffuse="0.4 0.4 0.4" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+        <rgba haze="0.15 0.25 0.35 1"/>
+        <global azimuth="120" elevation="-20"/>
+    </visual>
+
+    <default>
+        <default class="grasp_obj">
+            <geom condim="4" friction="2.0 0.5 0.001" solref="0.001 1" solimp="0.95 0.99 0.001" />
+        </default>
+    </default>
+
+    <asset>
+        <texture name="texplane_vla" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane_vla" reflectance="0.3" texture="texplane_vla" texrepeat="1 1" texuniform="true"/>
+        <material name="mattable" rgba="0.7 0.6 0.5 1" reflectance="0.1"/>
+        <material name="matbox" rgba="0.6 0.4 0.2 1" reflectance="0.0"/>
+
+        <mesh name="flat_screwdriver_mesh" file="flat_screwdriver/textured.obj" />
+        <texture name="flat_screwdriver_tex" type="2d" file="meshes/flat_screwdriver/texture_map.png"/>
+        <material name="flat_screwdriver_mat" texture="flat_screwdriver_tex" specular="1" shininess="0.3" reflectance="0.0" rgba="1.0 1.0 1.0 1" />
+        <mesh name="flat_screwdriver_coacd_0" file="flat_screwdriver/textured_coacd_0.stl" />
+        <mesh name="flat_screwdriver_coacd_1" file="flat_screwdriver/textured_coacd_1.stl" />
+        <mesh name="flat_screwdriver_coacd_2" file="flat_screwdriver/textured_coacd_2.stl" />
+        <mesh name="flat_screwdriver_coacd_3" file="flat_screwdriver/textured_coacd_3.stl" />
+
+        <mesh name="scissors_mesh" file="scissors/textured.obj" />
+        <texture name="scissors_tex" type="2d" file="meshes/scissors/texture_map.png"/>
+        <material name="scissors_mat" texture="scissors_tex" specular="1" shininess="0.3" reflectance="0.0" rgba="1.0 1.0 1.0 1" />
+        <mesh name="scissors_coacd_0" file="scissors/textured_coacd_0.stl" />
+        <mesh name="scissors_coacd_1" file="scissors/textured_coacd_1.stl" />
+        <mesh name="scissors_coacd_2" file="scissors/textured_coacd_2.stl" />
+        <mesh name="scissors_coacd_3" file="scissors/textured_coacd_3.stl" />
+        <mesh name="scissors_coacd_4" file="scissors/textured_coacd_4.stl" />
+    </asset>
+
+    <worldbody>
+        <geom name="floor_vla" pos="0 0 0" size="0 0 1" type="plane" material="matplane_vla"/>
+        <light pos="0 0 1.5" dir="0 0 -1" directional="true" castshadow="false"/>
+
+        <body name="table" pos="0.3 0 0.1">
+            <geom type="box" size="0.5 0.4 0.1" material="mattable" friction="1 0.005 0.0001"/>
+        </body>
+
+        <body name="spawn_zone" pos="0.25 -0.075 0.201">
+            <geom type="box" size="0.1 0.125 0.001" rgba="0 1 0 0.2" contype="0" conaffinity="0"/>
+        </body>
+
+        <body name="cardboard_box" pos="0.5 -0.05 0.21">
+            <geom type="box" pos="0 0 0" size="0.12 0.12 0.005" material="matbox"/>
+            <geom type="box" pos="0.12 0 0.05" size="0.005 0.12 0.05" material="matbox"/>
+            <geom type="box" pos="-0.12 0 0.05" size="0.005 0.12 0.05" material="matbox"/>
+            <geom type="box" pos="0 0.12 0.05" size="0.12 0.005 0.05" material="matbox"/>
+            <geom type="box" pos="0 -0.12 0.05" size="0.12 0.005 0.05" material="matbox"/>
+        </body>
+
+        <body name="real_screwdriver" pos="0.25 -0.15 0.25">
+            <freejoint name="fj_screwdriver"/>
+            <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+            <geom type="mesh" mesh="flat_screwdriver_mesh" material="flat_screwdriver_mat" contype="0" conaffinity="0"/>
+            <geom type="mesh" mesh="flat_screwdriver_coacd_0" group="3" rgba="1 0 0 0" class="grasp_obj" />
+            <geom type="mesh" mesh="flat_screwdriver_coacd_1" group="3" rgba="1 0 0 0" class="grasp_obj" />
+            <geom type="mesh" mesh="flat_screwdriver_coacd_2" group="3" rgba="1 0 0 0" class="grasp_obj" />
+            <geom type="mesh" mesh="flat_screwdriver_coacd_3" group="3" rgba="1 0 0 0" class="grasp_obj" />
+        </body>
+
+        <body name="real_scissors" pos="0.35 -0.1 0.25">
+            <freejoint name="fj_scissors"/>
+            <inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002" />
+            <geom type="mesh" mesh="scissors_mesh" material="scissors_mat" contype="0" conaffinity="0"/>
+            <geom type="mesh" mesh="scissors_coacd_0" group="3" rgba="1 0 0 0" class="grasp_obj" />
+            <geom type="mesh" mesh="scissors_coacd_1" group="3" rgba="1 0 0 0" class="grasp_obj" />
+            <geom type="mesh" mesh="scissors_coacd_2" group="3" rgba="1 0 0 0" class="grasp_obj" />
+            <geom type="mesh" mesh="scissors_coacd_3" group="3" rgba="1 0 0 0" class="grasp_obj" />
+            <geom type="mesh" mesh="scissors_coacd_4" group="3" rgba="1 0 0 0" class="grasp_obj" />
+        </body>
+
+        <camera name="head_camera" pos="0.8 0 0.8" xyaxes="0 1 0 -1 0 1" mode="fixed"/>
+    </worldbody>
+</mujoco>

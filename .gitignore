@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.vscode/
+.idea/
+.env
+
+# Generated data and experiment output
+datasets/
+recordings/
+outputs/
+*.mp4
+*.gif
+*.npz
+
+# Conda and Python environments stay outside this repository
+.conda/
+.venv/
+env/
+
