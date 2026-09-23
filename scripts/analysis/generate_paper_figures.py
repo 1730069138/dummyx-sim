@@ -13,7 +13,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_OUTPUT = PROJECT_ROOT / "paper_assets" / "figures"
+PAPER_DIR = PROJECT_ROOT / "docs" / "paper"
+DEFAULT_OUTPUT = PAPER_DIR / "assets" / "figures"
 ACTION_DT = 0.05
 BOX_CENTER = np.array([0.0, -0.1, 0.24])
 
@@ -247,7 +248,7 @@ def plot_trajectories(paths: dict[str, Path], output: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--docx", type=Path, default=PROJECT_ROOT / "9.6小论文.docx")
+    parser.add_argument("--docx", type=Path, default=PAPER_DIR / "9.6小论文.docx")
     args = parser.parse_args()
 
     configure_style()

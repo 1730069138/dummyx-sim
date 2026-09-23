@@ -1,5 +1,7 @@
 """Generate a preview of per-line subequation numbering for Equation (10)."""
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 
 
@@ -20,7 +22,7 @@ for y, (formula, number) in zip((0.82, 0.62, 0.40, 0.18), lines):
     ax.text(0.94, y, number, ha="right", va="center", fontsize=15, color="black")
 
 fig.savefig(
-    "/home/jun/dummyx-sim/paper_assets/figures/preview_multiline_equation_numbering.png",
+    Path(__file__).with_name("preview_multiline_equation_numbering.png"),
     bbox_inches="tight",
     pad_inches=0.18,
     facecolor="white",
