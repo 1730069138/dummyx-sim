@@ -1,0 +1,3599 @@
+"""
+VLSA / AEGIS V2.12 reproduction for the user's MuJoCo screwdriver pick-and-place scene.
+
+What V2 adds over V1.1
+----------------------
+1) Full VLSA perception path for obstacle geometry:
+   rear_cam RGB + fixed RGB
+       -> VLM obstacle identification (GLM-4.5V, optional fixed text override for debug)
+       -> GroundingDINO 2D grounding in both views
+       -> MuJoCo RGB-D back-projection into world coordinates
+       -> workspace crop
+       -> remove farthest 20% from centroid
+       -> DBSCAN largest cluster
+       -> convex hull
+       -> CVXPY MVEE
+       -> obstacle ellipsoid (center, rotation, semi-axes)
+
+2) The V1.1 full-action AEGIS CBF-QP control core is retained:
+   pi0 joint targets -> nominal 6D EEF twist -> 9D AEGIS QP
+   -> safe 6D twist -> DLS joint correction -> position actuator command.
+
+3) Live MuJoCo debug visualization:
+   - EEF ellipsoid: translucent blue
+   - controlled obstacle MVEE: translucent red
+   - optional oracle reference ellipsoid: translucent yellow
+   Use --show_ellipsoids and optionally --show_oracle_reference.
+
+4) Perception debug artifacts (optional, --save_perception_debug):
+   - GroundingDINO bbox overlay for rear_cam and fixed camera
+   - projected oracle pillar box/center on each image
+   - three-view world point-cloud diagnostic (raw/filtered/MVEE/oracle centers)
+
+5) V2.6+ pure-perception probe (optional, --perception_probe):
+   - does not connect to OpenPI and does not move the robot
+   - runs a fixed set of obstacle queries on rear_cam and fixed
+   - saves every GroundingDINO candidate above --box_threshold
+   - yellow oracle projection is diagnostic only and is never used for selection/control
+
+6) V2.8 production cross-view candidate selection:
+   - keeps all valid DINO candidates in rear_cam and fixed
+   - builds an oracle-free 3D summary for every candidate
+   - selects the rear/fixed pair using normalized center disagreement + shape mismatch
+   - fuses the selected candidate clusters and fits the final MVEE
+   - oracle projection remains debug-only and is never read by the selector
+
+7) V2.9 point-cloud/MVEE stabilization:
+   - preserves both selected cross-view surface clusters instead of running DBSCAN a second time
+   - fits MVEE in centered/scaled coordinates for better numerical conditioning
+   - rejects nearly coplanar/implausible MVEE solutions instead of drawing huge degenerate ellipsoids
+   - resets the dynamic pillar at the table-contact height used by the updated scene XML
+
+8) V2.10 CBF execution-fidelity diagnostics:
+   - does NOT change the QP constraint or executed control command
+   - records the QP-predicted safe h derivative and one-step Euler h prediction
+   - measures the actually achieved EEF translational/rotational twist after the 50 servo substeps
+   - evaluates h again after execution, exposing continuous-CBF vs position-servo discretization error
+
+9) V2.12 servo-aware CBF adapter:
+   - starts from V2.10's original 50 ms position-target execution (V2.11 ramp is not used)
+   - reads MuJoCo's actual joint velocity data.qvel[:6] at every VLA action step
+   - maps actual qdot through the same EEF Jacobian to obtain the current real EEF twist
+   - keeps the original VLSA QP objective, but evaluates the CBF constraint on
+     actual_twist + (commanded_twist - nominal_twist)
+   - reduces exactly to the original VLSA constraint when actual_twist == nominal_twist
+
+Repository-layout note
+----------------------
+- This file targets the reorganized dummyx-sim repository layout:
+  scripts/deploy/ for deployment code, models/ for MuJoCo XML/meshes, and
+  recordings/ for outputs. Relative --xml_path and GroundingDINO paths are
+  resolved from the repository root.
+
+Scientific-use note
+-------------------
+- --obstacle_source perception is the intended VLSA reproduction.
+- --obstacle_source oracle is retained only to isolate/control-test the CBF-QP.
+- --obstacle_text bypasses the VLM and is DEBUG ONLY; omit it for the final
+  VLSA perception experiment.
+- If perception fails in an episode, the safety layer is disabled for that
+  episode (rather than silently falling back to oracle geometry), matching
+  the fact that upstream perception failure is part of the method's behavior.
+
+Required core packages:
+    mujoco, numpy, cv2, cvxpy, osqp, scipy, scikit-learn, openpi_client
+
+Additional packages for perception:
+    torch, torchvision, pillow, GroundingDINO
+
+Additional package for the original VLM identification stage:
+    zai
+and environment variable:
+    ZHIPU_API_KEY
+"""
+
+import argparse
+import base64
+import csv
+import os
+import time
+
+import cv2
+import mujoco
+import mujoco.viewer
+import numpy as np
+
+try:
+    import cvxpy as cp
+except ImportError as exc:
+    raise ImportError(
+        "VLSA V2 requires cvxpy. Install with: pip install cvxpy osqp scs"
+    ) from exc
+
+from openpi_client import websocket_client_policy
+
+
+# =============================================================================
+# Constants derived from the uploaded MuJoCo model / meshes
+# =============================================================================
+SERVO_SUBSTEPS = 50
+
+# EEF ellipsoid in link7 local frame, derived from the uploaded gripper meshes.
+Q_EEF_DIAG = np.array([0.10463687, 0.05344414, 0.10119984], dtype=np.float64)
+EEF_CENTER_IN_LINK7 = np.array([0.0, 0.00475000, 0.06999907], dtype=np.float64)
+
+# Oracle reference only. dynamic_pillar box half extents in the user's XML.
+PILLAR_HALF_EXTENTS = np.array([0.02, 0.02, 0.08], dtype=np.float64)
+Q_PILLAR_ORACLE_DIAG = np.sqrt(3.0) * PILLAR_HALF_EXTENTS
+
+# Updated scene: table top is z=0.20 m and pillar half-height is 0.08 m,
+# so the free pillar starts in contact with the table instead of dropping 0.10 m.
+PILLAR_INITIAL_POS = np.array([0.11, -0.1, 0.28], dtype=np.float64)
+
+# AEGIS settings following the released full-action implementation structure.
+CBF_ALPHA = 10.0
+Z_ASCENT_GAIN = 10.0
+QP_W_V = 1.0 / 25.0
+QP_W_Z = 1.0
+
+DLS_RHO = 0.05
+MAX_JOINT_DELTA = 0.25
+
+TASK_PROMPT = "Pick up the screwdriver and drop it into the box."
+
+# Debug-only phrases for the V2.6 pure perception probe. They are not used
+# by the final VLSA experiment and do not alter the production perception path.
+PERCEPTION_PROBE_QUERIES = [
+    "pillar",
+    "gray pillar",
+    "gray vertical block",
+    "vertical gray block",
+    "gray cuboid",
+    "upright gray block",
+    "gray obstacle",
+    "vertical obstacle",
+]
+
+
+# =============================================================================
+# AEGIS ellipsoid-CBF math
+# =============================================================================
+def vector_hat(v):
+    return np.array(
+        [[0.0, -v[2], v[1]], [v[2], 0.0, -v[0]], [-v[1], v[0], 0.0]],
+        dtype=np.float64,
+    )
+
+
+def project_tangent(z):
+    z = z / (np.linalg.norm(z) + 1e-12)
+    return np.eye(3) - np.outer(z, z)
+
+
+def rotation_delta_to_world_omega(r_start, r_end, dt, eps=1e-10):
+    """Finite-difference world-frame angular velocity from two rotation matrices."""
+    r_delta = np.asarray(r_end, dtype=np.float64) @ np.asarray(
+        r_start, dtype=np.float64
+    ).T
+    cos_theta = np.clip((np.trace(r_delta) - 1.0) * 0.5, -1.0, 1.0)
+    theta = float(np.arccos(cos_theta))
+    vee = np.array(
+        [
+            r_delta[2, 1] - r_delta[1, 2],
+            r_delta[0, 2] - r_delta[2, 0],
+            r_delta[1, 0] - r_delta[0, 1],
+        ],
+        dtype=np.float64,
+    )
+    if theta < 1e-7:
+        rotvec = 0.5 * vee
+    else:
+        sin_theta = np.sin(theta)
+        if abs(sin_theta) < eps:
+            rotvec = 0.5 * vee
+        else:
+            rotvec = (theta / (2.0 * sin_theta)) * vee
+    return rotvec / max(float(dt), eps)
+
+
+def compute_h_ellipsoids(p_i, q_i_diag, r_i, p_j, q_j_diag, r_j, z, eps=1e-10):
+    q_i = np.diag(q_i_diag)
+    q_j = np.diag(q_j_diag)
+    qbar_i = r_i @ q_i @ r_i.T
+    qbar_j = r_j @ q_j @ r_j.T
+    qbar_i_inv = np.linalg.inv(qbar_i)
+
+    z = z / (np.linalg.norm(z) + eps)
+    a = qbar_i_inv @ z
+    denom = np.linalg.norm(a) + eps
+    obstacle_support = np.linalg.norm(qbar_j @ a)
+    center_term = (p_j - p_i).T @ a
+    return float((-obstacle_support + center_term - 1.0) / denom)
+
+
+def compute_cbf_coeffs_world_twist(
+    p_i, q_i_diag, r_i, p_j, q_j_diag, r_j, z, eps=1e-10
+):
+    """
+    Official AEGIS derivative structure, expressed for world-frame v and omega.
+
+    The released code returns coefficients for local/body-frame control variables
+    after multiplying by R_i. MuJoCo mj_jac() gives world-frame linear/angular
+    velocity, so this adapter uses eta_row and zeta_tilde directly.
+    """
+    q_i = np.diag(q_i_diag)
+    q_j = np.diag(q_j_diag)
+    qbar_i = r_i @ q_i @ r_i.T
+    qbar_j = r_j @ q_j @ r_j.T
+
+    qbar_i_inv = np.linalg.inv(qbar_i)
+    qbar_i_inv2 = qbar_i_inv @ qbar_i_inv
+    qbar_j2 = qbar_j @ qbar_j
+
+    z = z / (np.linalg.norm(z) + eps)
+    a_vec = qbar_i_inv @ z
+    denom = np.linalg.norm(a_vec) + eps
+    b_vec = qbar_j @ a_vec
+    term1 = np.linalg.norm(b_vec) + eps
+    sigma = term1 * denom + eps
+    center_delta = p_j - p_i
+    rho = 1.0 - center_delta.T @ a_vec + term1
+
+    eta_row = -(z.T @ qbar_i_inv) / denom
+
+    term_mu_1 = (rho / (denom**3 + eps)) * (z.T @ qbar_i_inv2)
+    term_mu_2 = (center_delta.T @ qbar_i_inv) / denom
+    term_mu_3 = (
+        z.T @ qbar_i_inv @ qbar_j2 @ qbar_i_inv
+    ) / sigma
+    mu_row = term_mu_1 + term_mu_2 - term_mu_3
+
+    tmp1 = z.T @ qbar_i_inv2 @ vector_hat(z)
+    left_vec = z.T @ qbar_i_inv @ qbar_j2
+    ja_vec = vector_hat(a_vec)
+    tmp2 = left_vec @ (ja_vec - qbar_i_inv @ vector_hat(z))
+    part_a = center_delta.T @ qbar_i_inv @ vector_hat(z)
+    part_b = z.T @ qbar_i_inv @ vector_hat(center_delta)
+    tmp3 = part_a + part_b
+    zeta_tilde = (
+        rho * tmp1 / (denom**3 + eps)
+        + tmp2 / sigma
+        + tmp3 / denom
+    )
+
+    a_u_z = (mu_row @ project_tangent(z)).ravel()
+    h = compute_h_ellipsoids(p_i, q_i_diag, r_i, p_j, q_j_diag, r_j, z)
+
+    return (
+        eta_row.ravel(),
+        np.asarray(zeta_tilde).ravel(),
+        a_u_z,
+        h,
+        mu_row.ravel(),
+    )
+
+
+def damped_pinv(jacobian, rho=DLS_RHO):
+    return jacobian.T @ np.linalg.inv(
+        jacobian @ jacobian.T + (rho**2) * np.eye(jacobian.shape[0])
+    )
+
+
+class AEGISFullActionLayer:
+    def __init__(self, obstacle_center, obstacle_rotation, obstacle_axes, action_dt):
+        self.p_obs = np.asarray(obstacle_center, dtype=np.float64).copy()
+        self.r_obs = np.asarray(obstacle_rotation, dtype=np.float64).copy()
+        self.q_obs = np.asarray(obstacle_axes, dtype=np.float64).copy()
+        self.action_dt = float(action_dt)
+        self.z = None
+
+    def reset(self, eef_center):
+        direction = self.p_obs - np.asarray(eef_center, dtype=np.float64)
+        norm = np.linalg.norm(direction)
+        self.z = direction / norm if norm > 1e-9 else np.array([1.0, 0.0, 0.0])
+
+    def update_obstacle_pose(self, center, rotation, axes=None):
+        """Update the obstacle ellipsoid pose without resetting the CBF auxiliary state."""
+        self.p_obs = np.asarray(center, dtype=np.float64).copy()
+        self.r_obs = np.asarray(rotation, dtype=np.float64).copy()
+        if axes is not None:
+            self.q_obs = np.asarray(axes, dtype=np.float64).copy()
+
+    def current_h(self, eef_center, eef_rotation):
+        if self.z is None:
+            self.reset(eef_center)
+        return compute_h_ellipsoids(
+            eef_center,
+            Q_EEF_DIAG,
+            eef_rotation,
+            self.p_obs,
+            self.q_obs,
+            self.r_obs,
+            self.z,
+        )
+
+    def filter(
+        self,
+        eef_center,
+        eef_rotation,
+        v_nominal_world,
+        omega_nominal_world,
+        v_actual_world=None,
+        omega_actual_world=None,
+    ):
+        if self.z is None:
+            self.reset(eef_center)
+
+        a_v, a_omega, a_u_z, h, mu_row = compute_cbf_coeffs_world_twist(
+            eef_center,
+            Q_EEF_DIAG,
+            eef_rotation,
+            self.p_obs,
+            self.q_obs,
+            self.r_obs,
+            self.z,
+        )
+
+        v_nominal_world = np.asarray(v_nominal_world, dtype=np.float64)
+        omega_nominal_world = np.asarray(
+            omega_nominal_world, dtype=np.float64
+        )
+        if v_actual_world is None:
+            v_actual_world = v_nominal_world.copy()
+        else:
+            v_actual_world = np.asarray(
+                v_actual_world, dtype=np.float64
+            )
+        if omega_actual_world is None:
+            omega_actual_world = omega_nominal_world.copy()
+        else:
+            omega_actual_world = np.asarray(
+                omega_actual_world, dtype=np.float64
+            )
+
+        u_z_nom = Z_ASCENT_GAIN * mu_row
+        u_ref = np.hstack([v_nominal_world, omega_nominal_world, u_z_nom])
+
+        # V2.12 servo-aware execution model:
+        # The position servo may not realize the absolute nominal twist within
+        # one 50 ms VLA interval. We therefore treat the measured EEF twist as
+        # the current motion and assume the *incremental* safety correction
+        # (u_cmd - u_nom) is what the outer adapter can add.
+        #
+        # u_eff = u_actual + (u_cmd - u_nom)
+        #
+        # If u_actual == u_nom, this becomes the original VLSA constraint.
+        v_servo_offset = v_actual_world - v_nominal_world
+        omega_servo_offset = omega_actual_world - omega_nominal_world
+
+        u = cp.Variable(9)
+        weight = np.diag(
+            [
+                QP_W_V, QP_W_V, QP_W_V,
+                QP_W_V, QP_W_V, QP_W_V,
+                QP_W_Z, QP_W_Z, QP_W_Z,
+            ]
+        )
+        objective = cp.Minimize(cp.quad_form(u - u_ref, weight))
+        constraints = [
+            a_v @ (u[:3] + v_servo_offset)
+            + a_omega @ (u[3:6] + omega_servo_offset)
+            + a_u_z @ u[6:9]
+            + CBF_ALPHA * h
+            >= 0.0
+        ]
+        problem = cp.Problem(objective, constraints)
+
+        t0 = time.perf_counter()
+        qp_ok = True
+        try:
+            problem.solve(solver=cp.OSQP, warm_start=True, verbose=False)
+            qp_ok = u.value is not None and problem.status in (
+                cp.OPTIMAL,
+                cp.OPTIMAL_INACCURATE,
+            )
+        except Exception:
+            qp_ok = False
+        qp_ms = (time.perf_counter() - t0) * 1000.0
+
+        if qp_ok:
+            v_safe = np.asarray(u.value[:3], dtype=np.float64)
+            omega_safe = np.asarray(u.value[3:6], dtype=np.float64)
+            u_z = np.asarray(u.value[6:9], dtype=np.float64)
+        else:
+            v_safe = np.asarray(v_nominal_world, dtype=np.float64).copy()
+            omega_safe = np.asarray(omega_nominal_world, dtype=np.float64).copy()
+            u_z = u_z_nom.copy()
+
+        # V2.12 diagnostics use the same servo-aware twist model as the QP.
+        # "actual_nom" is what hdot would be if the measured motion simply
+        # continued; "safe" includes the commanded safety correction.
+        v_effective_safe = (
+            v_actual_world + (v_safe - v_nominal_world)
+        )
+        omega_effective_safe = (
+            omega_actual_world
+            + (omega_safe - omega_nominal_world)
+        )
+
+        hdot_nom = float(
+            a_v @ v_nominal_world
+            + a_omega @ omega_nominal_world
+            + a_u_z @ u_z_nom
+        )
+        hdot_actual_nom = float(
+            a_v @ v_actual_world
+            + a_omega @ omega_actual_world
+            + a_u_z @ u_z_nom
+        )
+        hdot_safe = float(
+            a_v @ v_effective_safe
+            + a_omega @ omega_effective_safe
+            + a_u_z @ u_z
+        )
+        cbf_lhs_nom = float(hdot_nom + CBF_ALPHA * h)
+        cbf_lhs_actual_nom = float(
+            hdot_actual_nom + CBF_ALPHA * h
+        )
+        cbf_lhs_safe = float(hdot_safe + CBF_ALPHA * h)
+        h_euler_pred = float(h + self.action_dt * hdot_safe)
+
+        z_before = self.z.copy()
+        dz = project_tangent(self.z) @ u_z
+        self.z = self.z + dz * self.action_dt
+        z_norm = np.linalg.norm(self.z)
+        if z_norm > 1e-9:
+            self.z /= z_norm
+
+        delta_twist = np.hstack(
+            [v_safe - v_nominal_world, omega_safe - omega_nominal_world]
+        )
+
+        return v_safe, omega_safe, {
+            "h": h,
+            "qp_ok": qp_ok,
+            "qp_status": str(problem.status),
+            "qp_ms": qp_ms,
+            "intervention": float(np.linalg.norm(delta_twist)),
+            "z": self.z.copy(),
+            "z_before": z_before,
+            "u_z": u_z.copy(),
+            "hdot_nom": hdot_nom,
+            "hdot_actual_nom": hdot_actual_nom,
+            "hdot_safe": hdot_safe,
+            "cbf_lhs_nom": cbf_lhs_nom,
+            "cbf_lhs_actual_nom": cbf_lhs_actual_nom,
+            "cbf_lhs_safe": cbf_lhs_safe,
+            "h_euler_pred": h_euler_pred,
+            "v_actual_start": v_actual_world.copy(),
+            "omega_actual_start": omega_actual_world.copy(),
+            "v_effective_safe": v_effective_safe.copy(),
+            "omega_effective_safe": omega_effective_safe.copy(),
+            "servo_twist_gap": float(
+                np.linalg.norm(
+                    np.hstack(
+                        [
+                            v_actual_world - v_nominal_world,
+                            omega_actual_world - omega_nominal_world,
+                        ]
+                    )
+                )
+            ),
+        }
+
+
+# =============================================================================
+# MuJoCo kinematics / geometry
+# =============================================================================
+def get_body_rotation(data, body_id):
+    return data.xmat[body_id].reshape(3, 3).copy()
+
+
+def get_eef_ellipsoid_pose(data, link7_id):
+    r_link7 = get_body_rotation(data, link7_id)
+    p_link7 = data.xpos[link7_id].copy()
+    p_center = p_link7 + r_link7 @ EEF_CENTER_IN_LINK7
+    return p_center, r_link7
+
+
+def get_point_jacobians(model, data, point_world, body_id):
+    jacp = np.zeros((3, model.nv), dtype=np.float64)
+    jacr = np.zeros((3, model.nv), dtype=np.float64)
+    mujoco.mj_jac(model, data, jacp, jacr, point_world, body_id)
+    return jacp, jacr
+
+
+def build_oracle_obstacle_ellipsoid(data, pillar_body_id):
+    p = data.xpos[pillar_body_id].copy()
+    r = get_body_rotation(data, pillar_body_id)
+    return p, r, Q_PILLAR_ORACLE_DIAG.copy()
+
+
+# =============================================================================
+# Live ellipsoid visualization in the MuJoCo viewer
+# =============================================================================
+def _append_debug_ellipsoid(scene, center, rotation, axes, rgba):
+    if scene.ngeom >= scene.maxgeom:
+        return
+    geom = scene.geoms[scene.ngeom]
+    mujoco.mjv_initGeom(
+        geom,
+        mujoco.mjtGeom.mjGEOM_ELLIPSOID,
+        np.asarray(axes, dtype=np.float64),
+        np.asarray(center, dtype=np.float64),
+        np.asarray(rotation, dtype=np.float64).reshape(9),
+        np.asarray(rgba, dtype=np.float32),
+    )
+    scene.ngeom += 1
+
+
+def update_debug_ellipsoids(
+    viewer,
+    data,
+    link7_id,
+    safety_layer,
+    show_ellipsoids,
+    show_oracle_reference,
+    pillar_body_id,
+):
+    """
+    Draw directly in viewer.user_scn. Nothing is saved as an image.
+
+    Colors:
+      EEF:                  blue
+      control obstacle:     red
+      oracle reference:     yellow
+    """
+    viewer.user_scn.ngeom = 0
+    if not show_ellipsoids:
+        return
+
+    eef_center, eef_rotation = get_eef_ellipsoid_pose(data, link7_id)
+    _append_debug_ellipsoid(
+        viewer.user_scn,
+        eef_center,
+        eef_rotation,
+        Q_EEF_DIAG,
+        [0.05, 0.35, 1.0, 0.28],
+    )
+
+    if safety_layer is not None:
+        _append_debug_ellipsoid(
+            viewer.user_scn,
+            safety_layer.p_obs,
+            safety_layer.r_obs,
+            safety_layer.q_obs,
+            [1.0, 0.1, 0.1, 0.28],
+        )
+
+    if show_oracle_reference and pillar_body_id >= 0:
+        p_ref, r_ref, q_ref = build_oracle_obstacle_ellipsoid(data, pillar_body_id)
+        _append_debug_ellipsoid(
+            viewer.user_scn,
+            p_ref,
+            r_ref,
+            q_ref,
+            [1.0, 0.85, 0.05, 0.18],
+        )
+
+
+# =============================================================================
+# VLSA perception: VLM -> GroundingDINO -> RGB-D -> filter -> MVEE
+# =============================================================================
+class GroundingDINOWrapper:
+    def __init__(self, config_path, checkpoint_path, device):
+        try:
+            import torch
+            from PIL import Image
+            import groundingdino.datasets.transforms as T
+            from groundingdino.util.inference import load_model, predict
+        except ImportError as exc:
+            raise ImportError(
+                "Perception mode requires GroundingDINO, torch, torchvision and pillow."
+            ) from exc
+
+        self.torch = torch
+        self.Image = Image
+        self.T = T
+        self.predict_fn = predict
+        self.device = device
+        self.model = load_model(config_path, checkpoint_path, device=device)
+
+        self.transform = T.Compose(
+            [
+                T.RandomResize([800], max_size=1333),
+                T.ToTensor(),
+                T.Normalize(
+                    [0.485, 0.456, 0.406],
+                    [0.229, 0.224, 0.225],
+                ),
+            ]
+        )
+
+    def detect_all_boxes(self, image_rgb, caption, box_threshold, text_threshold):
+        """Return every GroundingDINO candidate that survives predict() thresholds.
+
+        Candidates are sorted by confidence descending. V2.8 production perception
+        uses these candidates for oracle-free cross-view 3D pair selection.
+        """
+        image_pil = self.Image.fromarray(
+            np.asarray(image_rgb, dtype=np.uint8), mode="RGB"
+        )
+        image_tensor, _ = self.transform(image_pil, None)
+
+        boxes, logits, phrases = self.predict_fn(
+            model=self.model,
+            image=image_tensor,
+            caption=caption,
+            box_threshold=box_threshold,
+            text_threshold=text_threshold,
+            device=self.device,
+        )
+
+        if boxes is None or len(boxes) == 0:
+            return []
+
+        boxes_np = boxes.detach().cpu().numpy()
+        logits_np = logits.detach().cpu().numpy()
+        h, w = image_rgb.shape[:2]
+        detections = []
+
+        for idx, (cx, cy, bw, bh) in enumerate(boxes_np):
+            x1 = int(np.floor((cx - bw / 2.0) * w))
+            y1 = int(np.floor((cy - bh / 2.0) * h))
+            x2 = int(np.ceil((cx + bw / 2.0) * w))
+            y2 = int(np.ceil((cy + bh / 2.0) * h))
+
+            x1 = int(np.clip(x1, 0, w - 1))
+            x2 = int(np.clip(x2, x1 + 1, w))
+            y1 = int(np.clip(y1, 0, h - 1))
+            y2 = int(np.clip(y2, y1 + 1, h))
+
+            phrase = phrases[idx] if phrases and idx < len(phrases) else caption
+            detections.append(
+                {
+                    "xyxy": (x1, y1, x2, y2),
+                    "confidence": float(logits_np[idx]),
+                    "phrase": str(phrase),
+                }
+            )
+
+        detections.sort(key=lambda det: det["confidence"], reverse=True)
+        return detections
+
+    def detect_best_box(self, image_rgb, caption, box_threshold, text_threshold):
+        detections = self.detect_all_boxes(
+            image_rgb, caption, box_threshold, text_threshold
+        )
+        return detections[0] if detections else None
+
+
+
+def identify_obstacle_with_glm(image_rgb, instruction):
+    """
+    Reproduce the released AEGIS VLM obstacle-identification stage without
+    writing an intermediate image file.
+    """
+    try:
+        from zai import ZhipuAiClient
+    except ImportError as exc:
+        raise ImportError(
+            "VLM obstacle identification requires the 'zai' package. "
+            "Install it or use --obstacle_text for a debug fixed query."
+        ) from exc
+
+    api_key = os.environ.get("ZHIPU_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError(
+            "ZHIPU_API_KEY is not set. For a debug run you may pass "
+            "--obstacle_text 'gray pillar'; omit that override for the final VLSA run."
+        )
+
+    ok, encoded = cv2.imencode(
+        ".jpg",
+        cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR),
+        [int(cv2.IMWRITE_JPEG_QUALITY), 95],
+    )
+    if not ok:
+        raise RuntimeError("Failed to encode VLM input image.")
+
+    b64 = base64.b64encode(encoded.tobytes()).decode("utf-8")
+    client = ZhipuAiClient(api_key=api_key)
+
+    preferred = [
+        "gray pillar",
+        "screwdriver",
+        "storage box",
+    ]
+
+    response = client.chat.completions.create(
+        model="glm-4.5v",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{b64}"},
+                    },
+                    {
+                        "type": "text",
+                        "text": (
+                            f"The robot must follow this instruction: {instruction}. "
+                            "Based on both the instruction and the image, identify exactly "
+                            "one non-robot object that is most likely to obstruct the robot's "
+                            "motion during task execution. Output a uniquely identifiable "
+                            "obstacle name including color and object type, preferably from "
+                            f"this list when applicable: {preferred}. Output only the object "
+                            "name, with no additional words."
+                        ),
+                    },
+                ],
+            }
+        ],
+        temperature=0.1,
+        top_p=0.1,
+        thinking={"type": "enabled"},
+    )
+
+    text = response.choices[0].message.content
+    return (
+        text.replace("<|begin_of_box|>", "")
+        .replace("<|end_of_box|>", "")
+        .strip()
+    )
+
+
+def render_rgb_depth(renderer, data, camera_name):
+    renderer.disable_depth_rendering()
+    renderer.update_scene(data, camera=camera_name)
+    rgb = renderer.render().copy()
+
+    renderer.enable_depth_rendering()
+    renderer.update_scene(data, camera=camera_name)
+    depth = renderer.render().copy()
+    renderer.disable_depth_rendering()
+
+    return rgb, depth
+
+
+def camera_intrinsics_from_fovy(model, camera_id, height, width):
+    fovy = np.deg2rad(float(model.cam_fovy[camera_id]))
+    fy = 0.5 * height / np.tan(0.5 * fovy)
+    fx = fy  # MuJoCo assumes square pixels for this camera model.
+    cx = (width - 1.0) / 2.0
+    cy = (height - 1.0) / 2.0
+    return fx, fy, cx, cy
+
+
+def bbox_depth_to_world_points(model, data, camera_name, depth, bbox_xyxy):
+    """
+    MuJoCo fixed cameras look along local -Z, with +X right and +Y up.
+    Renderer depth is metric distance to the camera plane (optical-axis depth).
+    """
+    cam_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, camera_name)
+    if cam_id < 0:
+        raise RuntimeError(f"Camera not found: {camera_name}")
+
+    h, w = depth.shape
+    fx, fy, cx, cy = camera_intrinsics_from_fovy(model, cam_id, h, w)
+
+    x1, y1, x2, y2 = bbox_xyxy
+    uu, vv = np.meshgrid(
+        np.arange(x1, x2, dtype=np.float64),
+        np.arange(y1, y2, dtype=np.float64),
+    )
+    zz = depth[y1:y2, x1:x2].astype(np.float64)
+
+    valid = np.isfinite(zz) & (zz > 1e-5)
+    if not np.any(valid):
+        return np.empty((0, 3), dtype=np.float64)
+
+    u = uu[valid]
+    v = vv[valid]
+    z_depth = zz[valid]
+
+    x_cam = (u - cx) * z_depth / fx
+    y_cam = -(v - cy) * z_depth / fy
+    z_cam = -z_depth
+
+    points_cam = np.stack([x_cam, y_cam, z_cam], axis=1)
+
+    p_cam = data.cam_xpos[cam_id].copy()
+    r_cam = data.cam_xmat[cam_id].reshape(3, 3).copy()
+    points_world = points_cam @ r_cam.T + p_cam
+    return points_world
+
+
+def world_points_to_image(model, data, camera_name, points_world, image_shape):
+    """Project world points into a MuJoCo camera image using the inverse of the
+    back-projection convention in bbox_depth_to_world_points().
+
+    Returns:
+        pixels: (N, 2) float array in (u, v)
+        valid:  (N,) mask for points in front of the camera
+    """
+    cam_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, camera_name)
+    if cam_id < 0:
+        raise RuntimeError(f"Camera not found: {camera_name}")
+
+    points_world = np.asarray(points_world, dtype=np.float64).reshape(-1, 3)
+    h, w = image_shape[:2]
+    fx, fy, cx, cy = camera_intrinsics_from_fovy(model, cam_id, h, w)
+
+    p_cam = data.cam_xpos[cam_id].copy()
+    r_cam = data.cam_xmat[cam_id].reshape(3, 3).copy()
+    points_cam = (points_world - p_cam) @ r_cam
+
+    depth = -points_cam[:, 2]
+    valid = np.isfinite(points_cam).all(axis=1) & (depth > 1e-6)
+
+    pixels = np.full((len(points_world), 2), np.nan, dtype=np.float64)
+    if np.any(valid):
+        x_cam = points_cam[valid, 0]
+        y_cam = points_cam[valid, 1]
+        z_depth = depth[valid]
+        pixels[valid, 0] = fx * x_cam / z_depth + cx
+        pixels[valid, 1] = cy - fy * y_cam / z_depth
+
+    return pixels, valid
+
+
+def oracle_pillar_image_geometry(model, data, camera_name, pillar_body_id, image_shape):
+    """Project the known MuJoCo pillar box into a camera for perception debugging.
+
+    The returned 2D geometry is diagnostic only and is never used by the VLSA
+    perception/control path.
+    """
+    if pillar_body_id < 0:
+        return None
+
+    p_body = data.xpos[pillar_body_id].copy()
+    r_body = get_body_rotation(data, pillar_body_id)
+
+    sx, sy, sz = PILLAR_HALF_EXTENTS
+    corners_local = np.array(
+        [
+            [dx, dy, dz]
+            for dx in (-sx, sx)
+            for dy in (-sy, sy)
+            for dz in (-sz, sz)
+        ],
+        dtype=np.float64,
+    )
+    corners_world = corners_local @ r_body.T + p_body
+
+    corner_px, corner_valid = world_points_to_image(
+        model, data, camera_name, corners_world, image_shape
+    )
+    center_px, center_valid = world_points_to_image(
+        model, data, camera_name, p_body[None, :], image_shape
+    )
+
+    if not np.any(corner_valid):
+        bbox = None
+    else:
+        pts = corner_px[corner_valid]
+        x1 = int(np.floor(np.min(pts[:, 0])))
+        y1 = int(np.floor(np.min(pts[:, 1])))
+        x2 = int(np.ceil(np.max(pts[:, 0])))
+        y2 = int(np.ceil(np.max(pts[:, 1])))
+        bbox = (x1, y1, x2, y2)
+
+    center = None
+    if center_valid[0]:
+        center = tuple(np.round(center_px[0]).astype(int))
+
+    return {
+        "bbox": bbox,
+        "center": center,
+        "corners_px": corner_px,
+        "corners_valid": corner_valid,
+    }
+
+
+def _draw_cross(image_bgr, center, color, size=7, thickness=2):
+    if center is None:
+        return
+    x, y = int(center[0]), int(center[1])
+    cv2.line(image_bgr, (x - size, y), (x + size, y), color, thickness)
+    cv2.line(image_bgr, (x, y - size), (x, y + size), color, thickness)
+
+
+def save_detection_debug_image(
+    save_path,
+    image_rgb,
+    detection,
+    oracle_geometry,
+    camera_name,
+    obstacle_text,
+):
+    """Save a 2D diagnostic overlay.
+
+    Red rectangle: GroundingDINO detection.
+    Yellow rectangle/cross: projected oracle pillar geometry (debug reference only).
+    """
+    image_bgr = cv2.cvtColor(
+        np.asarray(image_rgb, dtype=np.uint8), cv2.COLOR_RGB2BGR
+    )
+    h, w = image_bgr.shape[:2]
+
+    if detection is not None:
+        x1, y1, x2, y2 = detection["xyxy"]
+        cv2.rectangle(image_bgr, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        label = f"DINO {detection['confidence']:.3f}: {detection['phrase']}"
+        cv2.putText(
+            image_bgr,
+            label,
+            (max(2, x1), max(16, y1 - 6)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.45,
+            (0, 0, 255),
+            1,
+            cv2.LINE_AA,
+        )
+
+    if oracle_geometry is not None:
+        bbox = oracle_geometry.get("bbox")
+        if bbox is not None:
+            x1, y1, x2, y2 = bbox
+            x1 = int(np.clip(x1, 0, w - 1))
+            x2 = int(np.clip(x2, 0, w - 1))
+            y1 = int(np.clip(y1, 0, h - 1))
+            y2 = int(np.clip(y2, 0, h - 1))
+            cv2.rectangle(image_bgr, (x1, y1), (x2, y2), (0, 255, 255), 2)
+        _draw_cross(image_bgr, oracle_geometry.get("center"), (0, 255, 255))
+
+    cv2.putText(
+        image_bgr,
+        f"camera={camera_name} query={obstacle_text}",
+        (8, h - 10),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.42,
+        (255, 255, 255),
+        1,
+        cv2.LINE_AA,
+    )
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    if not cv2.imwrite(save_path, image_bgr):
+        raise RuntimeError(f"Failed to save perception debug image: {save_path}")
+
+
+
+def bbox_iou_xyxy(box_a, box_b):
+    """2D IoU used only as an oracle diagnostic metric in perception_probe."""
+    if box_a is None or box_b is None:
+        return float("nan")
+    ax1, ay1, ax2, ay2 = box_a
+    bx1, by1, bx2, by2 = box_b
+    ix1, iy1 = max(ax1, bx1), max(ay1, by1)
+    ix2, iy2 = min(ax2, bx2), min(ay2, by2)
+    iw, ih = max(0, ix2 - ix1), max(0, iy2 - iy1)
+    inter = float(iw * ih)
+    area_a = float(max(0, ax2 - ax1) * max(0, ay2 - ay1))
+    area_b = float(max(0, bx2 - bx1) * max(0, by2 - by1))
+    union = area_a + area_b - inter
+    return inter / union if union > 0.0 else 0.0
+
+
+def _safe_filename(text):
+    cleaned = "".join(ch if ch.isalnum() else "_" for ch in text.strip().lower())
+    return "_".join(part for part in cleaned.split("_") if part) or "query"
+
+
+def save_all_candidates_debug_image(
+    save_path,
+    image_rgb,
+    detections,
+    oracle_geometry,
+    camera_name,
+    obstacle_text,
+):
+    """Save all GroundingDINO candidates for the V2.6 pure perception probe.
+
+    Candidate rank colors are visualization-only. Yellow is the projected oracle
+    pillar and is never used to choose a candidate or drive the controller.
+    """
+    image_bgr = cv2.cvtColor(
+        np.asarray(image_rgb, dtype=np.uint8), cv2.COLOR_RGB2BGR
+    )
+    h, w = image_bgr.shape[:2]
+    # BGR: rank1 red, rank2 cyan, rank3 magenta, rank4 blue, rank5 green,
+    # later ranks orange. Yellow is reserved for the oracle reference.
+    rank_colors = [
+        (0, 0, 255),
+        (255, 255, 0),
+        (255, 0, 255),
+        (255, 0, 0),
+        (0, 180, 0),
+        (0, 128, 255),
+    ]
+
+    for rank, det in enumerate(detections, start=1):
+        x1, y1, x2, y2 = det["xyxy"]
+        color = rank_colors[min(rank - 1, len(rank_colors) - 1)]
+        thickness = 3 if rank == 1 else 2
+        cv2.rectangle(image_bgr, (x1, y1), (x2, y2), color, thickness)
+        label = f"#{rank} {det['confidence']:.3f} {det['phrase']}"
+        label_y = int(np.clip(y1 - 5 - 13 * (rank - 1), 14, h - 8))
+        cv2.putText(
+            image_bgr,
+            label,
+            (max(2, x1), label_y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.38,
+            color,
+            1,
+            cv2.LINE_AA,
+        )
+
+    if oracle_geometry is not None:
+        bbox = oracle_geometry.get("bbox")
+        if bbox is not None:
+            x1, y1, x2, y2 = bbox
+            x1 = int(np.clip(x1, 0, w - 1))
+            x2 = int(np.clip(x2, 0, w - 1))
+            y1 = int(np.clip(y1, 0, h - 1))
+            y2 = int(np.clip(y2, 0, h - 1))
+            cv2.rectangle(image_bgr, (x1, y1), (x2, y2), (0, 255, 255), 2)
+        _draw_cross(image_bgr, oracle_geometry.get("center"), (0, 255, 255))
+
+    cv2.putText(
+        image_bgr,
+        f"{camera_name} query={obstacle_text} candidates={len(detections)}",
+        (6, h - 26),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.38,
+        (255, 255, 255),
+        1,
+        cv2.LINE_AA,
+    )
+    cv2.putText(
+        image_bgr,
+        "rank1=red other ranks=cyan/magenta/blue/green/orange oracle=yellow",
+        (6, h - 9),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.30,
+        (255, 255, 255),
+        1,
+        cv2.LINE_AA,
+    )
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    if not cv2.imwrite(save_path, image_bgr):
+        raise RuntimeError(f"Failed to save perception probe image: {save_path}")
+
+
+def run_perception_probe(
+    model,
+    data,
+    renderer,
+    dino,
+    args,
+    record_root,
+    pillar_body_id,
+):
+    """Run 2D grounding only, save all candidates, then return without OpenPI."""
+    target_xy = (0.28, -0.10) if args.fixed_eval else None
+    reset_scene(model, data, use_obstacle=not args.no_obstacle, target_xy=target_xy)
+
+    camera_frames = {}
+    for camera_name in ("rear_cam", "fixed"):
+        rgb, _ = render_rgb_depth(renderer, data, camera_name)
+        camera_frames[camera_name] = rgb
+
+    probe_root = os.path.join(record_root, "perception_probe")
+    os.makedirs(probe_root, exist_ok=True)
+    csv_path = os.path.join(probe_root, "probe_candidates.csv")
+    txt_path = os.path.join(probe_root, "probe_summary.txt")
+    rows = []
+    summary_lines = [
+        "VLSA/AEGIS V2.8 pure perception probe",
+        "Oracle projection/IoU below is diagnostic only; it is never used for candidate selection/control.",
+        f"box_threshold={args.box_threshold}",
+        f"text_threshold={args.text_threshold}",
+        "",
+    ]
+
+    print("\n" + "=" * 90)
+    print("V2.8 PERCEPTION PROBE: no OpenPI connection, no robot motion")
+    print(f"queries={PERCEPTION_PROBE_QUERIES}")
+    print(f"box_threshold={args.box_threshold:.3f} text_threshold={args.text_threshold:.3f}")
+    print("Yellow oracle overlay/IoU is diagnostic only.")
+    print("=" * 90)
+
+    for query_index, query in enumerate(PERCEPTION_PROBE_QUERIES, start=1):
+        print(f"\n[Probe query {query_index}/{len(PERCEPTION_PROBE_QUERIES)}] {query!r}")
+        summary_lines.append(f"QUERY: {query}")
+        query_slug = f"{query_index:02d}_{_safe_filename(query)}"
+
+        for camera_name, rgb in camera_frames.items():
+            detections = dino.detect_all_boxes(
+                rgb,
+                query,
+                args.box_threshold,
+                args.text_threshold,
+            )
+            oracle_geometry = oracle_pillar_image_geometry(
+                model,
+                data,
+                camera_name,
+                pillar_body_id,
+                rgb.shape,
+            )
+            oracle_bbox = (
+                oracle_geometry.get("bbox") if oracle_geometry is not None else None
+            )
+
+            camera_dir = os.path.join(probe_root, camera_name)
+            image_path = os.path.join(camera_dir, f"{query_slug}.png")
+            save_all_candidates_debug_image(
+                image_path,
+                rgb,
+                detections,
+                oracle_geometry,
+                camera_name,
+                query,
+            )
+
+            print(f"  {camera_name}: {len(detections)} candidate(s) -> {image_path}")
+            summary_lines.append(f"  CAMERA: {camera_name} candidates={len(detections)}")
+            if not detections:
+                summary_lines.append("    no detections")
+                continue
+
+            for rank, det in enumerate(detections, start=1):
+                iou = bbox_iou_xyxy(det["xyxy"], oracle_bbox)
+                iou_text = "nan" if not np.isfinite(iou) else f"{iou:.4f}"
+                print(
+                    f"    #{rank}: conf={det['confidence']:.3f} "
+                    f"phrase={det['phrase']!r} bbox={det['xyxy']} "
+                    f"oracle_iou={iou_text}"
+                )
+                summary_lines.append(
+                    f"    #{rank}: conf={det['confidence']:.6f} phrase={det['phrase']!r} "
+                    f"bbox={det['xyxy']} oracle_iou={iou_text}"
+                )
+                rows.append(
+                    {
+                        "query": query,
+                        "camera": camera_name,
+                        "rank": rank,
+                        "confidence": det["confidence"],
+                        "phrase": det["phrase"],
+                        "x1": det["xyxy"][0],
+                        "y1": det["xyxy"][1],
+                        "x2": det["xyxy"][2],
+                        "y2": det["xyxy"][3],
+                        "oracle_iou_debug_only": iou,
+                    }
+                )
+        summary_lines.append("")
+
+    fieldnames = [
+        "query",
+        "camera",
+        "rank",
+        "confidence",
+        "phrase",
+        "x1",
+        "y1",
+        "x2",
+        "y2",
+        "oracle_iou_debug_only",
+    ]
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(summary_lines) + "\n")
+
+    print("\nPerception probe complete.")
+    print(f"Candidate CSV: {csv_path}")
+    print(f"Summary TXT:   {txt_path}")
+    print("No candidate was selected with oracle geometry; this run is diagnostic only.")
+
+
+
+def _candidate_geometry_from_detection(
+    model,
+    data,
+    camera_name,
+    depth,
+    detection,
+    args,
+):
+    """Build a robust 3D summary for one DINO candidate.
+
+    This is diagnostic only. It uses exactly the existing RGB-D back-projection and
+    VLSA-style point filtering, but does not use oracle geometry or modify control.
+    """
+    raw = bbox_depth_to_world_points(
+        model,
+        data,
+        camera_name,
+        depth,
+        detection["xyxy"],
+    )
+    filtered = filter_obstacle_points(raw, args)
+    if len(filtered) == 0:
+        return {
+            "raw_points": raw,
+            "filtered_points": filtered,
+            "center": None,
+            "extent": None,
+        }
+
+    center = np.median(filtered, axis=0)
+    if len(filtered) >= 2:
+        lo = np.quantile(filtered, 0.05, axis=0)
+        hi = np.quantile(filtered, 0.95, axis=0)
+        extent = np.maximum(hi - lo, 1e-6)
+    else:
+        extent = np.full(3, 1e-6, dtype=np.float64)
+
+    return {
+        "raw_points": raw,
+        "filtered_points": filtered,
+        "center": center,
+        "extent": extent,
+    }
+
+
+def run_candidate_pair_probe(
+    model,
+    data,
+    renderer,
+    dino,
+    args,
+    record_root,
+    pillar_body_id,
+):
+    """Rank rear/fixed DINO candidate pairs by cross-view 3D consistency.
+
+    IMPORTANT: pair ranking is oracle-free. Oracle IoU/center error are appended only
+    after ranking as diagnostics so we can verify whether geometry alone recovers the
+    real obstacle before changing the production selector.
+    """
+    target_xy = (0.28, -0.10) if args.fixed_eval else None
+    reset_scene(model, data, use_obstacle=not args.no_obstacle, target_xy=target_xy)
+
+    query = (args.obstacle_text or "pillar").strip()
+    probe_root = os.path.join(record_root, "candidate_pair_probe")
+    os.makedirs(probe_root, exist_ok=True)
+
+    geometries_by_camera = {}
+
+    print("\n" + "=" * 96)
+    print("V2.8 CROSS-VIEW CANDIDATE PAIR PROBE: no OpenPI connection, no robot motion")
+    print(f"query={query!r} box_threshold={args.box_threshold:.3f} text_threshold={args.text_threshold:.3f}")
+    print("PAIR RANKING USES ONLY RGB-D GEOMETRY; oracle IoU/center error are diagnostic only.")
+    print("=" * 96)
+
+    geometry_rows = []
+    for camera_name in ("rear_cam", "fixed"):
+        rgb, depth = render_rgb_depth(renderer, data, camera_name)
+        detections = dino.detect_all_boxes(
+            rgb,
+            query,
+            args.box_threshold,
+            args.text_threshold,
+        )
+        oracle_geometry = oracle_pillar_image_geometry(
+            model,
+            data,
+            camera_name,
+            pillar_body_id,
+            rgb.shape,
+        )
+        overlay_path = os.path.join(probe_root, f"{camera_name}_candidates.png")
+        save_all_candidates_debug_image(
+            overlay_path,
+            rgb,
+            detections,
+            oracle_geometry,
+            camera_name,
+            query,
+        )
+        print(f"\n[{camera_name}] {len(detections)} candidate(s) -> {overlay_path}")
+
+        camera_geometries = []
+        oracle_bbox = oracle_geometry.get("bbox") if oracle_geometry else None
+        for rank, det in enumerate(detections, start=1):
+            geom = _candidate_geometry_from_detection(
+                model,
+                data,
+                camera_name,
+                depth,
+                det,
+                args,
+            )
+            geom["rank"] = rank
+            geom["detection"] = det
+            iou = bbox_iou_xyxy(det["xyxy"], oracle_bbox)
+            geom["oracle_iou_debug_only"] = iou
+            camera_geometries.append(geom)
+
+            center = geom["center"]
+            extent = geom["extent"]
+            center_text = "none" if center is None else np.array2string(center, precision=4)
+            extent_text = "none" if extent is None else np.array2string(extent, precision=4)
+            print(
+                f"  #{rank}: conf={det['confidence']:.3f} bbox={det['xyxy']} "
+                f"raw={len(geom['raw_points'])} filtered={len(geom['filtered_points'])} "
+                f"center={center_text} extent90={extent_text} oracle_iou={iou:.4f}"
+            )
+            geometry_rows.append(
+                {
+                    "camera": camera_name,
+                    "rank": rank,
+                    "confidence": det["confidence"],
+                    "phrase": det["phrase"],
+                    "x1": det["xyxy"][0],
+                    "y1": det["xyxy"][1],
+                    "x2": det["xyxy"][2],
+                    "y2": det["xyxy"][3],
+                    "raw_points": len(geom["raw_points"]),
+                    "filtered_points": len(geom["filtered_points"]),
+                    "center_x": np.nan if center is None else center[0],
+                    "center_y": np.nan if center is None else center[1],
+                    "center_z": np.nan if center is None else center[2],
+                    "extent_x": np.nan if extent is None else extent[0],
+                    "extent_y": np.nan if extent is None else extent[1],
+                    "extent_z": np.nan if extent is None else extent[2],
+                    "oracle_iou_debug_only": iou,
+                }
+            )
+        geometries_by_camera[camera_name] = camera_geometries
+
+    pair_rows = []
+    rear_geoms = geometries_by_camera.get("rear_cam", [])
+    fixed_geoms = geometries_by_camera.get("fixed", [])
+    p_oracle = data.xpos[pillar_body_id].copy() if pillar_body_id >= 0 else None
+
+    for rear in rear_geoms:
+        if rear["center"] is None or rear["extent"] is None:
+            continue
+        for fixed in fixed_geoms:
+            if fixed["center"] is None or fixed["extent"] is None:
+                continue
+            center_dist = float(np.linalg.norm(rear["center"] - fixed["center"]))
+            extent_log_mismatch = float(
+                np.linalg.norm(
+                    np.log((rear["extent"] + 1e-6) / (fixed["extent"] + 1e-6))
+                )
+            )
+            object_scale = 0.5 * (
+                float(np.linalg.norm(rear["extent"]))
+                + float(np.linalg.norm(fixed["extent"]))
+            )
+            cross_view_score = center_dist / max(object_scale, 1e-6) + extent_log_mismatch
+            conf_mean = 0.5 * (
+                rear["detection"]["confidence"] + fixed["detection"]["confidence"]
+            )
+            fused_center = 0.5 * (rear["center"] + fixed["center"])
+            oracle_center_error = (
+                np.nan
+                if p_oracle is None
+                else float(np.linalg.norm(fused_center - p_oracle))
+            )
+            pair_rows.append(
+                {
+                    "rear_rank": rear["rank"],
+                    "fixed_rank": fixed["rank"],
+                    "rear_confidence": rear["detection"]["confidence"],
+                    "fixed_confidence": fixed["detection"]["confidence"],
+                    "confidence_mean": conf_mean,
+                    "center_distance_m": center_dist,
+                    "extent_log_mismatch": extent_log_mismatch,
+                    "object_scale_m": object_scale,
+                    "cross_view_score": cross_view_score,
+                    "rear_filtered_points": len(rear["filtered_points"]),
+                    "fixed_filtered_points": len(fixed["filtered_points"]),
+                    "fused_center_x": fused_center[0],
+                    "fused_center_y": fused_center[1],
+                    "fused_center_z": fused_center[2],
+                    "rear_oracle_iou_debug_only": rear["oracle_iou_debug_only"],
+                    "fixed_oracle_iou_debug_only": fixed["oracle_iou_debug_only"],
+                    "oracle_center_error_m_debug_only": oracle_center_error,
+                }
+            )
+
+    # Oracle-free ordering. Center disagreement is normalized by the candidate
+    # object scale, then combined with log-extent disagreement. This avoids a
+    # sub-millimeter center-distance advantage dominating a much worse shape match.
+    pair_rows.sort(
+        key=lambda row: (
+            row["cross_view_score"],
+            -row["confidence_mean"],
+        )
+    )
+    for idx, row in enumerate(pair_rows, start=1):
+        row["geometry_rank"] = idx
+
+    geom_csv = os.path.join(probe_root, "candidate_geometry.csv")
+    pair_csv = os.path.join(probe_root, "pair_ranking.csv")
+    summary_txt = os.path.join(probe_root, "pair_summary.txt")
+
+    geom_fields = list(geometry_rows[0].keys()) if geometry_rows else []
+    if geom_fields:
+        with open(geom_csv, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=geom_fields)
+            writer.writeheader()
+            writer.writerows(geometry_rows)
+
+    pair_fields = list(pair_rows[0].keys()) if pair_rows else []
+    if pair_fields:
+        with open(pair_csv, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=pair_fields)
+            writer.writeheader()
+            writer.writerows(pair_rows)
+
+    print("\nTop cross-view pairs (oracle-free ordering):")
+    top_n = min(args.pair_probe_topk, len(pair_rows))
+    summary_lines = [
+        "VLSA/AEGIS V2.8 cross-view candidate pair probe",
+        f"query={query}",
+        "Ranking key: cross_view_score ASC, confidence_mean DESC. cross_view_score = center_distance/object_scale + extent_log_mismatch.",
+        "IMPORTANT: oracle_* columns are diagnostic only and are not used in ranking.",
+        "",
+    ]
+    for row in pair_rows[:top_n]:
+        line = (
+            f"#{row['geometry_rank']}: rear#{row['rear_rank']} fixed#{row['fixed_rank']} "
+            f"score={row['cross_view_score']:.4f} "
+            f"center_dist={row['center_distance_m']:.4f}m "
+            f"extent_mismatch={row['extent_log_mismatch']:.4f} "
+            f"conf_mean={row['confidence_mean']:.3f} "
+            f"oracle_iou=({row['rear_oracle_iou_debug_only']:.3f},"
+            f"{row['fixed_oracle_iou_debug_only']:.3f}) "
+            f"oracle_center_err={row['oracle_center_error_m_debug_only']:.4f}m"
+        )
+        print("  " + line)
+        summary_lines.append(line)
+
+    with open(summary_txt, "w", encoding="utf-8") as f:
+        f.write("\n".join(summary_lines) + "\n")
+
+    print("\nCandidate-pair probe complete.")
+    if geom_fields:
+        print(f"Candidate geometry CSV: {geom_csv}")
+    if pair_fields:
+        print(f"Pair ranking CSV:       {pair_csv}")
+    print(f"Summary TXT:            {summary_txt}")
+    print("This probe does NOT alter production candidate selection or control.")
+
+def _project_debug_view(points, x_index, y_index, x_range, y_range, origin, size):
+    """Map selected world-coordinate axes into one raster panel."""
+    points = np.asarray(points, dtype=np.float64).reshape(-1, 3)
+    ox, oy = origin
+    width, height = size
+    if len(points) == 0:
+        return np.empty((0, 2), dtype=np.int32)
+
+    x0, x1 = x_range
+    y0, y1 = y_range
+    x = (points[:, x_index] - x0) / max(x1 - x0, 1e-12)
+    y = (points[:, y_index] - y0) / max(y1 - y0, 1e-12)
+    px = ox + np.round(x * (width - 1)).astype(int)
+    py = oy + height - 1 - np.round(y * (height - 1)).astype(int)
+    return np.stack([px, py], axis=1)
+
+
+def save_pointcloud_debug_image(
+    save_path,
+    raw_points,
+    filtered_points,
+    workspace,
+    oracle_center=None,
+    mvee_center=None,
+):
+    """Save XY/XZ/YZ world-coordinate views of the perception point cloud."""
+    raw_points = np.asarray(raw_points, dtype=np.float64).reshape(-1, 3)
+    filtered_points = np.asarray(filtered_points, dtype=np.float64).reshape(-1, 3)
+
+    # Limit only visualization density; saved numeric data remains untouched.
+    if len(raw_points) > 20000:
+        ids = np.linspace(0, len(raw_points) - 1, 20000).astype(int)
+        raw_draw = raw_points[ids]
+    else:
+        raw_draw = raw_points
+
+    canvas_h = 430
+    panel_w = 390
+    margin = 40
+    canvas_w = panel_w * 3
+    canvas = np.full((canvas_h, canvas_w, 3), 245, dtype=np.uint8)
+
+    xmin, xmax, ymin, ymax, zmin, zmax = [float(v) for v in workspace]
+    views = [
+        ("XY", 0, 1, (xmin, xmax), (ymin, ymax)),
+        ("XZ", 0, 2, (xmin, xmax), (zmin, zmax)),
+        ("YZ", 1, 2, (ymin, ymax), (zmin, zmax)),
+    ]
+
+    panel_height = 330
+    for panel_idx, (name, xi, yi, xr, yr) in enumerate(views):
+        x0 = panel_idx * panel_w + margin
+        y0 = 45
+        width = panel_w - 2 * margin
+        height = panel_height
+
+        cv2.rectangle(canvas, (x0, y0), (x0 + width, y0 + height), (80, 80, 80), 1)
+        cv2.putText(
+            canvas,
+            name,
+            (x0, 28),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (20, 20, 20),
+            1,
+            cv2.LINE_AA,
+        )
+
+        raw_px = _project_debug_view(raw_draw, xi, yi, xr, yr, (x0, y0), (width, height))
+        for px, py in raw_px:
+            if x0 <= px <= x0 + width and y0 <= py <= y0 + height:
+                canvas[py, px] = (175, 175, 175)
+
+        filt_px = _project_debug_view(
+            filtered_points, xi, yi, xr, yr, (x0, y0), (width, height)
+        )
+        for px, py in filt_px:
+            if x0 <= px <= x0 + width and y0 <= py <= y0 + height:
+                cv2.circle(canvas, (int(px), int(py)), 1, (0, 150, 0), -1)
+
+        if oracle_center is not None:
+            oracle_px = _project_debug_view(
+                np.asarray(oracle_center)[None, :], xi, yi, xr, yr, (x0, y0), (width, height)
+            )
+            if len(oracle_px):
+                _draw_cross(canvas, oracle_px[0], (0, 200, 255), size=6, thickness=2)
+
+        if mvee_center is not None:
+            mvee_px = _project_debug_view(
+                np.asarray(mvee_center)[None, :], xi, yi, xr, yr, (x0, y0), (width, height)
+            )
+            if len(mvee_px):
+                _draw_cross(canvas, mvee_px[0], (0, 0, 255), size=6, thickness=2)
+
+        range_text = f"x:[{xr[0]:.2f},{xr[1]:.2f}] y:[{yr[0]:.2f},{yr[1]:.2f}]"
+        cv2.putText(
+            canvas,
+            range_text,
+            (x0, y0 + height + 18),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.34,
+            (40, 40, 40),
+            1,
+            cv2.LINE_AA,
+        )
+
+    cv2.putText(
+        canvas,
+        "raw=gray  filtered=green  oracle center=yellow  MVEE center=red",
+        (40, canvas_h - 12),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.45,
+        (30, 30, 30),
+        1,
+        cv2.LINE_AA,
+    )
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    if not cv2.imwrite(save_path, canvas):
+        raise RuntimeError(f"Failed to save point-cloud debug image: {save_path}")
+
+
+def filter_obstacle_points(points, args):
+    """
+    VLSA preprocessing structure:
+      workspace crop -> retain nearest 80% to centroid -> DBSCAN largest cluster.
+    """
+    points = np.asarray(points, dtype=np.float64)
+    if points.ndim != 2 or points.shape[1] != 3 or len(points) == 0:
+        return np.empty((0, 3), dtype=np.float64)
+
+    finite = np.isfinite(points).all(axis=1)
+    points = points[finite]
+    if len(points) == 0:
+        return points
+
+    xmin, xmax, ymin, ymax, zmin, zmax = args.workspace
+    keep = (
+        (points[:, 0] >= xmin)
+        & (points[:, 0] <= xmax)
+        & (points[:, 1] >= ymin)
+        & (points[:, 1] <= ymax)
+        & (points[:, 2] >= zmin)
+        & (points[:, 2] <= zmax)
+    )
+    points = points[keep]
+    if len(points) == 0:
+        return points
+
+    # Released VLSA code removes the farthest 20% before DBSCAN.
+    center = points.mean(axis=0)
+    distances = np.linalg.norm(points - center, axis=1)
+    keep_count = max(1, int(len(points) * 0.8))
+    points = points[np.argsort(distances)[:keep_count]]
+
+    if len(points) < args.dbscan_min_samples:
+        return points
+
+    try:
+        from sklearn.cluster import DBSCAN
+    except ImportError as exc:
+        raise ImportError(
+            "Perception mode requires scikit-learn for DBSCAN: pip install scikit-learn"
+        ) from exc
+
+    labels = DBSCAN(
+        eps=args.dbscan_eps,
+        min_samples=args.dbscan_min_samples,
+    ).fit_predict(points)
+
+    valid_labels = labels[labels >= 0]
+    if len(valid_labels) > 0:
+        largest = np.bincount(valid_labels).argmax()
+        points = points[labels == largest]
+
+    return points
+
+
+def mvee_cvxpy(points):
+    """Fit the convex MVEE after centering and isotropically scaling the cloud.
+
+    The released VLSA formulation optimizes ||M x - g|| <= 1.  Solving that
+    formulation directly in world coordinates is poorly conditioned when a small
+    tabletop object occupies only a few centimeters around a nonzero world pose.
+    We therefore solve the *same* convex problem in normalized coordinates and
+    transform the resulting ellipsoid back to world coordinates.
+    """
+    points = np.asarray(points, dtype=np.float64)
+    n, d = points.shape
+
+    origin = points.mean(axis=0)
+    centered = points - origin
+    scale = max(float(np.max(np.linalg.norm(centered, axis=1))), 1e-4)
+    points_n = centered / scale
+
+    m_var = cp.Variable((d, d), PSD=True)
+    g_var = cp.Variable(d)
+
+    objective = cp.Minimize(-cp.log_det(m_var))
+    constraints = [cp.norm(m_var @ points_n[i] - g_var) <= 1 for i in range(n)]
+    problem = cp.Problem(objective, constraints)
+
+    try:
+        problem.solve(solver=cp.SCS, verbose=False, eps=1e-5, max_iters=20000)
+    except cp.SolverError:
+        problem.solve(verbose=False)
+
+    if problem.status not in (cp.OPTIMAL, cp.OPTIMAL_INACCURATE):
+        raise RuntimeError(f"MVEE optimization failed: {problem.status}")
+    if m_var.value is None or g_var.value is None:
+        raise RuntimeError("MVEE optimization returned no solution")
+
+    m_opt = np.asarray(m_var.value, dtype=np.float64)
+    g_opt = np.asarray(g_var.value, dtype=np.float64)
+    if not np.isfinite(m_opt).all() or not np.isfinite(g_opt).all():
+        raise RuntimeError("MVEE optimization returned non-finite values")
+
+    center_n = np.linalg.solve(m_opt, g_opt)
+    center = origin + scale * center_n
+
+    # If A_n describes the normalized cloud, then A_world = A_n / scale^2.
+    a_mat = (m_opt.T @ m_opt) / (scale * scale)
+    return center, a_mat
+
+
+def fit_mvee(points):
+    try:
+        from scipy.spatial import ConvexHull
+    except ImportError as exc:
+        raise ImportError("Perception mode requires scipy.") from exc
+
+    points = np.asarray(points, dtype=np.float64)
+    if len(points) < 4:
+        raise RuntimeError(f"Not enough points for 3D MVEE: {len(points)}")
+
+    # A single RGB-D view often contributes one nearly planar visible face.
+    # The final fused cloud must contain genuine 3D support before fitting an
+    # ellipsoid; otherwise the log-det problem is unbounded/ill-conditioned and
+    # can produce the giant flat ellipsoid observed in V2.8.
+    centered = points - points.mean(axis=0)
+    singular_values = np.linalg.svd(centered, compute_uv=False)
+    if len(singular_values) < 3 or singular_values[2] <= max(1e-7, singular_values[0] * 1e-5):
+        raise RuntimeError(
+            "Fused obstacle cloud is nearly coplanar; refusing degenerate 3D MVEE "
+            f"(singular_values={np.array2string(singular_values, precision=4)})"
+        )
+
+    hull = ConvexHull(points, qhull_options="QJ")
+    hull_points = points[hull.vertices]
+
+    center, a_mat = mvee_cvxpy(hull_points)
+    eigvals, eigvecs = np.linalg.eigh(a_mat)
+    if not np.isfinite(eigvals).all() or np.any(eigvals <= 0.0):
+        raise RuntimeError(f"MVEE has invalid eigenvalues: {eigvals}")
+    axes = 1.0 / np.sqrt(eigvals)
+
+    order = np.argsort(axes)[::-1]
+    axes = axes[order]
+    rotation = eigvecs[:, order]
+
+    if np.linalg.det(rotation) < 0:
+        rotation[:, -1] *= -1.0
+
+    # Numerical sanity checks: the solution must enclose the fitted hull and its
+    # longest semi-axis must remain commensurate with the observed point-cloud span.
+    delta = hull_points - center
+    quad = np.einsum("ni,ij,nj->n", delta, a_mat, delta)
+    max_quad = float(np.max(quad))
+    cloud_span = float(np.linalg.norm(np.ptp(hull_points, axis=0)))
+    if not np.isfinite(axes).all() or np.any(axes <= 0.0):
+        raise RuntimeError(f"MVEE has invalid axes: {axes}")
+    if max_quad > 1.10:
+        raise RuntimeError(f"MVEE does not enclose hull numerically: max quadratic={max_quad:.4f}")
+    if axes[0] > 20.0 * max(cloud_span, 1e-4):
+        raise RuntimeError(
+            "MVEE is numerically implausible relative to the observed cloud: "
+            f"axes={np.array2string(axes, precision=4)}, span={cloud_span:.6f}"
+        )
+
+    return center, rotation, axes, hull_points
+
+
+def _select_cross_view_candidate_pair(
+    model,
+    data,
+    dino,
+    args,
+    obstacle_text,
+    rear_rgb,
+    rear_depth,
+    fixed_rgb,
+    fixed_depth,
+):
+    """Select one rear/fixed GroundingDINO pair without oracle geometry.
+
+    Selection uses only RGB-D geometry already available to the perception stack:
+      normalized 3D center disagreement + log-extent disagreement,
+    with mean DINO confidence as a tie-breaker.  Oracle geometry is never read here.
+    """
+    per_camera = {}
+    for camera_name, rgb, depth in (
+        ("rear_cam", rear_rgb, rear_depth),
+        ("fixed", fixed_rgb, fixed_depth),
+    ):
+        detections = dino.detect_all_boxes(
+            rgb,
+            obstacle_text,
+            args.box_threshold,
+            args.text_threshold,
+        )
+        geometries = []
+        for rank, det in enumerate(detections, start=1):
+            geom = _candidate_geometry_from_detection(
+                model,
+                data,
+                camera_name,
+                depth,
+                det,
+                args,
+            )
+            if geom["center"] is None or geom["extent"] is None:
+                continue
+            geom["rank"] = rank
+            geom["detection"] = det
+            geometries.append(geom)
+        per_camera[camera_name] = geometries
+
+    pair_options = []
+    for rear in per_camera.get("rear_cam", []):
+        for fixed in per_camera.get("fixed", []):
+            center_dist = float(np.linalg.norm(rear["center"] - fixed["center"]))
+            extent_log_mismatch = float(
+                np.linalg.norm(
+                    np.log((rear["extent"] + 1e-6) / (fixed["extent"] + 1e-6))
+                )
+            )
+            object_scale = 0.5 * (
+                float(np.linalg.norm(rear["extent"]))
+                + float(np.linalg.norm(fixed["extent"]))
+            )
+            cross_view_score = (
+                center_dist / max(object_scale, 1e-6) + extent_log_mismatch
+            )
+            confidence_mean = 0.5 * (
+                rear["detection"]["confidence"]
+                + fixed["detection"]["confidence"]
+            )
+            pair_options.append(
+                {
+                    "rear": rear,
+                    "fixed": fixed,
+                    "center_distance_m": center_dist,
+                    "extent_log_mismatch": extent_log_mismatch,
+                    "object_scale_m": object_scale,
+                    "cross_view_score": cross_view_score,
+                    "confidence_mean": confidence_mean,
+                }
+            )
+
+    if not pair_options:
+        return None, per_camera
+
+    pair_options.sort(
+        key=lambda row: (
+            row["cross_view_score"],
+            -row["confidence_mean"],
+        )
+    )
+    return pair_options[0], per_camera
+
+
+def build_perception_obstacle_ellipsoid(
+    model,
+    data,
+    renderer,
+    dino,
+    args,
+    debug_dir=None,
+    pillar_body_id=-1,
+):
+    rear_rgb, rear_depth = render_rgb_depth(renderer, data, "rear_cam")
+    fixed_rgb, fixed_depth = render_rgb_depth(renderer, data, "fixed")
+
+    if args.obstacle_text:
+        obstacle_text = args.obstacle_text.strip()
+        vlm_used = False
+    else:
+        obstacle_text = identify_obstacle_with_glm(rear_rgb, TASK_PROMPT)
+        vlm_used = True
+
+    print(
+        f"  [VLSA perception] obstacle query: {obstacle_text!r}"
+        + (" (VLM)" if vlm_used else " (fixed debug override)")
+    )
+
+    selected_pair, candidate_geometries = _select_cross_view_candidate_pair(
+        model,
+        data,
+        dino,
+        args,
+        obstacle_text,
+        rear_rgb,
+        rear_depth,
+        fixed_rgb,
+        fixed_depth,
+    )
+
+    if selected_pair is None:
+        print("  [CrossView] no valid rear/fixed candidate pair")
+        return None, {
+            "obstacle_text": obstacle_text,
+            "raw_points": np.empty((0, 3)),
+            "filtered_points": np.empty((0, 3)),
+            "detections": {},
+            "reason": "no_valid_cross_view_pair",
+        }
+
+    rear_sel = selected_pair["rear"]
+    fixed_sel = selected_pair["fixed"]
+    detection_log = {
+        "rear_cam": rear_sel["detection"],
+        "fixed": fixed_sel["detection"],
+    }
+
+    print(
+        "  [CrossView] selected "
+        f"rear#{rear_sel['rank']} + fixed#{fixed_sel['rank']} | "
+        f"score={selected_pair['cross_view_score']:.4f} | "
+        f"center_dist={selected_pair['center_distance_m']:.4f} m | "
+        f"extent_mismatch={selected_pair['extent_log_mismatch']:.4f} | "
+        f"conf_mean={selected_pair['confidence_mean']:.3f}"
+    )
+
+    for camera_name, rgb, selected in (
+        ("rear_cam", rear_rgb, rear_sel),
+        ("fixed", fixed_rgb, fixed_sel),
+    ):
+        det = selected["detection"]
+        print(
+            f"  [GroundingDINO] {camera_name}: selected rank={selected['rank']} "
+            f"bbox={det['xyxy']} conf={det['confidence']:.3f} "
+            f"phrase={det['phrase']!r} raw_points={len(selected['raw_points'])} "
+            f"candidate_filtered={len(selected['filtered_points'])}"
+        )
+
+        if debug_dir is not None:
+            oracle_geometry = oracle_pillar_image_geometry(
+                model,
+                data,
+                camera_name,
+                pillar_body_id,
+                rgb.shape,
+            )
+            debug_path = os.path.join(debug_dir, f"{camera_name}_detection.png")
+            save_detection_debug_image(
+                debug_path,
+                rgb,
+                det,
+                oracle_geometry,
+                camera_name,
+                obstacle_text,
+            )
+            print(f"  [Perception debug] saved: {debug_path}")
+
+    # Each selected candidate has already undergone workspace crop, 20% outlier
+    # removal and DBSCAN *within its own camera view*.  Do not run DBSCAN again
+    # after fusion: rear/fixed cameras can observe opposite faces of the same thin
+    # obstacle, and their surfaces are legitimately separated by the obstacle
+    # thickness.  V2.8's second DBSCAN kept only one face, leaving a nearly planar
+    # cloud and causing the MVEE to explode numerically.
+    selected_clusters = [
+        selected["filtered_points"]
+        for selected in (rear_sel, fixed_sel)
+        if len(selected["filtered_points"]) > 0
+    ]
+    selected_raw = [
+        selected["raw_points"]
+        for selected in (rear_sel, fixed_sel)
+        if len(selected["raw_points"]) > 0
+    ]
+
+    if not selected_clusters:
+        return None, {
+            "obstacle_text": obstacle_text,
+            "raw_points": np.empty((0, 3)),
+            "filtered_points": np.empty((0, 3)),
+            "detections": detection_log,
+            "reason": "selected_pair_has_no_points",
+        }
+
+    raw_points = (
+        np.vstack(selected_raw)
+        if selected_raw
+        else np.vstack(selected_clusters)
+    )
+    filtered_points = np.vstack(selected_clusters)
+    finite = np.isfinite(filtered_points).all(axis=1)
+    filtered_points = filtered_points[finite]
+
+    print(
+        f"  [PointCloud] selected_raw={len(raw_points)} "
+        f"cross_view_cluster_union={len(filtered_points)} "
+        "(no second DBSCAN)"
+    )
+
+    pair_meta = {
+        "rear_rank": rear_sel["rank"],
+        "fixed_rank": fixed_sel["rank"],
+        "center_distance_m": selected_pair["center_distance_m"],
+        "extent_log_mismatch": selected_pair["extent_log_mismatch"],
+        "object_scale_m": selected_pair["object_scale_m"],
+        "cross_view_score": selected_pair["cross_view_score"],
+        "confidence_mean": selected_pair["confidence_mean"],
+        "rear_valid_candidates": len(candidate_geometries.get("rear_cam", [])),
+        "fixed_valid_candidates": len(candidate_geometries.get("fixed", [])),
+    }
+
+    if len(filtered_points) < 4:
+        if debug_dir is not None:
+            p_oracle = (
+                data.xpos[pillar_body_id].copy()
+                if pillar_body_id >= 0
+                else None
+            )
+            pc_path = os.path.join(debug_dir, "pointcloud_views.png")
+            save_pointcloud_debug_image(
+                pc_path,
+                raw_points,
+                filtered_points,
+                args.workspace,
+                oracle_center=p_oracle,
+                mvee_center=None,
+            )
+            print(f"  [Perception debug] saved: {pc_path}")
+        return None, {
+            "obstacle_text": obstacle_text,
+            "raw_points": raw_points,
+            "filtered_points": filtered_points,
+            "detections": detection_log,
+            "pair_selection": pair_meta,
+            "reason": "insufficient_filtered_points",
+        }
+
+    try:
+        center, rotation, axes, hull_points = fit_mvee(filtered_points)
+    except Exception as exc:
+        if debug_dir is not None:
+            p_oracle = (
+                data.xpos[pillar_body_id].copy()
+                if pillar_body_id >= 0
+                else None
+            )
+            pc_path = os.path.join(debug_dir, "pointcloud_views.png")
+            save_pointcloud_debug_image(
+                pc_path,
+                raw_points,
+                filtered_points,
+                args.workspace,
+                oracle_center=p_oracle,
+                mvee_center=None,
+            )
+            print(f"  [Perception debug] saved: {pc_path}")
+        return None, {
+            "obstacle_text": obstacle_text,
+            "raw_points": raw_points,
+            "filtered_points": filtered_points,
+            "detections": detection_log,
+            "pair_selection": pair_meta,
+            "reason": f"mvee_failed:{type(exc).__name__}:{exc}",
+        }
+
+    print(f"  [MVEE] center={np.array2string(center, precision=4)}")
+    print(f"  [MVEE] axes  ={np.array2string(axes, precision=4)}")
+
+    if debug_dir is not None:
+        p_oracle = (
+            data.xpos[pillar_body_id].copy()
+            if pillar_body_id >= 0
+            else None
+        )
+        pc_path = os.path.join(debug_dir, "pointcloud_views.png")
+        save_pointcloud_debug_image(
+            pc_path,
+            raw_points,
+            filtered_points,
+            args.workspace,
+            oracle_center=p_oracle,
+            mvee_center=center,
+        )
+        print(f"  [Perception debug] saved: {pc_path}")
+
+    return (center, rotation, axes), {
+        "obstacle_text": obstacle_text,
+        "raw_points": raw_points,
+        "filtered_points": filtered_points,
+        "hull_points": hull_points,
+        "detections": detection_log,
+        "pair_selection": pair_meta,
+        "reason": "ok",
+    }
+
+
+# =============================================================================
+# Joint-action adapter
+# =============================================================================
+def adapt_joint_target_through_vlsa(
+    model,
+    data,
+    current_action,
+    safety_layer,
+    link7_id,
+    action_dt,
+):
+    q = data.qpos[:6].copy()
+    q_delta_nom = np.clip(
+        current_action[:6] - q,
+        -MAX_JOINT_DELTA,
+        MAX_JOINT_DELTA,
+    )
+    qdot_nom = q_delta_nom / action_dt
+
+    eef_center, eef_rotation = get_eef_ellipsoid_pose(data, link7_id)
+    jacp_full, jacr_full = get_point_jacobians(
+        model,
+        data,
+        eef_center,
+        link7_id,
+    )
+    j_pos = jacp_full[:, :6]
+    j_rot = jacr_full[:, :6]
+    j_twist = np.vstack([j_pos, j_rot])
+
+    v_nom = j_pos @ qdot_nom
+    omega_nom = j_rot @ qdot_nom
+
+    # V2.12: MuJoCo's actual generalized velocity is the measured robot
+    # motion. This is intentionally distinct from (q_target - q) / dt.
+    qdot_actual = data.qvel[:6].copy()
+    v_actual = j_pos @ qdot_actual
+    omega_actual = j_rot @ qdot_actual
+
+    v_safe, omega_safe, debug = safety_layer.filter(
+        eef_center,
+        eef_rotation,
+        v_nom,
+        omega_nom,
+        v_actual,
+        omega_actual,
+    )
+
+    delta_twist = np.hstack(
+        [v_safe - v_nom, omega_safe - omega_nom]
+    )
+    delta_qdot = damped_pinv(j_twist, DLS_RHO) @ delta_twist
+
+    q_delta_safe = (qdot_nom + delta_qdot) * action_dt
+    q_delta_safe = np.clip(
+        q_delta_safe,
+        -MAX_JOINT_DELTA,
+        MAX_JOINT_DELTA,
+    )
+
+    ctrl = np.zeros(8, dtype=np.float64)
+    ctrl[:6] = q + q_delta_safe
+    gripper_val = 0.04 if current_action[6] > 0.02 else 0.0
+    ctrl[6:8] = gripper_val
+
+    debug.update(
+        {
+            "eef_center": eef_center.copy(),
+            "eef_rotation": eef_rotation.copy(),
+            "v_nom": v_nom.copy(),
+            "v_safe": v_safe.copy(),
+            "omega_nom": omega_nom.copy(),
+            "omega_safe": omega_safe.copy(),
+            "qdot_nom": qdot_nom.copy(),
+            "qdot_actual": qdot_actual.copy(),
+            "v_actual_start": v_actual.copy(),
+            "omega_actual_start": omega_actual.copy(),
+            "q_delta_nom": q_delta_nom.copy(),
+            "q_delta_safe": q_delta_safe.copy(),
+        }
+    )
+    return ctrl, debug
+
+
+def build_baseline_ctrl(data, current_action):
+    q = data.qpos[:6].copy()
+    q_delta = np.clip(
+        current_action[:6] - q,
+        -MAX_JOINT_DELTA,
+        MAX_JOINT_DELTA,
+    )
+    ctrl = np.zeros(8, dtype=np.float64)
+    ctrl[:6] = q + q_delta
+    ctrl[6:8] = 0.04 if current_action[6] > 0.02 else 0.0
+    return ctrl
+
+
+# =============================================================================
+# Existing paper metrics
+# =============================================================================
+def get_target_table_force(model, data, valid_body_ids):
+    f_xyz = np.zeros(3)
+    for i in range(data.ncon):
+        contact = data.contact[i]
+        if 0.18 < contact.pos[2] < 0.22:
+            geom1 = contact.geom1
+            geom2 = contact.geom2
+            body1 = model.geom_bodyid[geom1]
+            body2 = model.geom_bodyid[geom2]
+            if body1 in valid_body_ids or body2 in valid_body_ids:
+                c_force = np.zeros(6, dtype=np.float64)
+                mujoco.mj_contactForce(model, data, i, c_force)
+                c_mat = contact.frame.reshape(3, 3)
+                f_world = c_mat.T @ c_force[:3]
+                if f_world[2] < 0:
+                    f_world = -f_world
+                f_xyz += f_world
+    return f_xyz
+
+
+def reset_scene(model, data, use_obstacle=True, target_xy=None):
+    if target_xy is not None:
+        target_x, target_y = target_xy
+    else:
+        target_x = np.random.uniform(0.20, 0.35)
+        target_y = np.random.uniform(-0.15, -0.05)
+
+    target_jnt_id = mujoco.mj_name2id(
+        model,
+        mujoco.mjtObj.mjOBJ_JOINT,
+        "fj_screwdriver",
+    )
+    if target_jnt_id != -1:
+        adr = model.jnt_qposadr[target_jnt_id]
+        data.qpos[adr : adr + 3] = [target_x, target_y, 0.22]
+        data.qpos[adr + 3 : adr + 7] = [1, 0, 0, 0]
+
+    pillar_jnt_id = mujoco.mj_name2id(
+        model,
+        mujoco.mjtObj.mjOBJ_JOINT,
+        "pillar_joint",
+    )
+    if pillar_jnt_id != -1:
+        q_adr = model.jnt_qposadr[pillar_jnt_id]
+        v_adr = model.jnt_dofadr[pillar_jnt_id]
+        if use_obstacle:
+            data.qpos[q_adr : q_adr + 3] = PILLAR_INITIAL_POS
+            data.qpos[q_adr + 3 : q_adr + 7] = [1, 0, 0, 0]
+        else:
+            data.qpos[q_adr : q_adr + 3] = [10.0, 10.0, -10.0]
+        data.qvel[v_adr : v_adr + 6] = 0.0
+
+    data.qpos[:8] = 0.0
+    data.qvel[:8] = 0.0
+    data.ctrl[:] = 0.0
+    mujoco.mj_forward(model, data)
+
+
+def settle_pillar(model, data, pillar_joint_id, max_steps=500):
+    """Advance physics until the reset pillar is stably resting on the table."""
+    if pillar_joint_id == -1:
+        return 0
+
+    v_adr = model.jnt_dofadr[pillar_joint_id]
+    stable_steps = 0
+    for settle_step in range(1, max_steps + 1):
+        mujoco.mj_step(model, data)
+        linear_speed = np.linalg.norm(data.qvel[v_adr : v_adr + 3])
+        angular_speed = np.linalg.norm(data.qvel[v_adr + 3 : v_adr + 6])
+        if settle_step >= 100 and linear_speed < 1e-3 and angular_speed < 1e-3:
+            stable_steps += 1
+            if stable_steps >= 50:
+                return settle_step
+        else:
+            stable_steps = 0
+    return max_steps
+
+
+def save_episode_video(frames, folder, episode_idx):
+    if not frames:
+        return
+    os.makedirs(folder, exist_ok=True)
+    filename = os.path.join(
+        folder,
+        f"ep_{episode_idx:03d}_{time.strftime('%H%M%S')}.mp4",
+    )
+    height, width, _ = frames[0].shape
+    writer = cv2.VideoWriter(
+        filename,
+        cv2.VideoWriter_fourcc(*"mp4v"),
+        10.0,
+        (width, height),
+    )
+    for frame in frames:
+        writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+    writer.release()
+
+
+def resolve_groundingdino_paths(args, base_dir):
+    def first_existing(candidates):
+        for path in candidates:
+            if not path:
+                continue
+            resolved = path if os.path.isabs(path) else os.path.join(base_dir, path)
+            if os.path.isfile(resolved):
+                return os.path.abspath(resolved)
+        return None
+
+    config = first_existing(
+        [
+            args.groundingdino_config,
+            "GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py",
+            "GroundingDINO/GroundingDINO_SwinT_OGC.py",
+        ]
+    )
+    checkpoint = first_existing(
+        [
+            args.groundingdino_checkpoint,
+            "GroundingDINO/groundingdino_swint_ogc.pth",
+        ]
+    )
+
+    if config is None:
+        raise FileNotFoundError(
+            "GroundingDINO config not found. Pass --groundingdino_config PATH."
+        )
+    if checkpoint is None:
+        raise FileNotFoundError(
+            "GroundingDINO checkpoint not found. Pass --groundingdino_checkpoint PATH."
+        )
+    return config, checkpoint
+
+
+
+def _vec3_to_text(v):
+    v = np.asarray(v, dtype=np.float64).reshape(-1)
+    if len(v) < 3:
+        return "[nan nan nan]"
+    return f"[{v[0]: .4f} {v[1]: .4f} {v[2]: .4f}]"
+
+
+def save_and_print_trace(trace_records, save_folder, episode_idx, window, manual_step=None):
+    """
+    Save/print a compact window around the strongest VLSA intervention.
+
+    Each record is one policy step. The nominal/safe twists and h correspond to
+    the action computed at the beginning of that policy step; the positions and
+    box distances are sampled immediately after its 50 MuJoCo servo substeps.
+    """
+    if not trace_records or window <= 0:
+        return None
+
+    valid = [r for r in trace_records if np.isfinite(r["intervention"])]
+    if not valid:
+        return None
+
+    if manual_step is None:
+        center_record = max(valid, key=lambda r: r["intervention"])
+    else:
+        center_record = min(valid, key=lambda r: abs(r["step"] - manual_step))
+
+    center_step = int(center_record["step"])
+    lo = center_step - int(window)
+    hi = center_step + int(window)
+    selected = [r for r in trace_records if lo <= r["step"] <= hi]
+
+    csv_path = os.path.join(
+        save_folder,
+        f"trace_ep_{episode_idx:03d}_center_{center_step:04d}.csv",
+    )
+    fieldnames = [
+        "step",
+        "h",
+        "h_end",
+        "h_euler_pred",
+        "hdot_safe",
+        "hdot_actual",
+        "hdot_actual_nom",
+        "cbf_lhs_safe",
+        "cbf_lhs_actual_nom",
+        "servo_twist_gap",
+        "twist_tracking_error",
+        "intervention",
+        "cbf_applied",
+        "shadow_only",
+        "gripper_cmd",
+        "screw_z",
+        "tcp_box_dist",
+        "screw_box_dist",
+        "eef_x", "eef_y", "eef_z",
+        "screw_x", "screw_y", "screw_z_pos",
+        "v_nom_x", "v_nom_y", "v_nom_z",
+        "v_safe_x", "v_safe_y", "v_safe_z",
+        "v_actual_start_x", "v_actual_start_y", "v_actual_start_z",
+        "v_effective_safe_x", "v_effective_safe_y", "v_effective_safe_z",
+        "v_achieved_x", "v_achieved_y", "v_achieved_z",
+        "dv_x", "dv_y", "dv_z",
+        "omega_nom_x", "omega_nom_y", "omega_nom_z",
+        "omega_safe_x", "omega_safe_y", "omega_safe_z",
+        "omega_achieved_x", "omega_achieved_y", "omega_achieved_z",
+        "domega_x", "domega_y", "domega_z",
+    ]
+
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for r in selected:
+            row = {
+                "step": r["step"],
+                "h": r["h"],
+                "h_end": r["h_end"],
+                "h_euler_pred": r["h_euler_pred"],
+                "hdot_safe": r["hdot_safe"],
+                "hdot_actual": r["hdot_actual"],
+                "hdot_actual_nom": r["hdot_actual_nom"],
+                "cbf_lhs_safe": r["cbf_lhs_safe"],
+                "cbf_lhs_actual_nom": r["cbf_lhs_actual_nom"],
+                "servo_twist_gap": r["servo_twist_gap"],
+                "twist_tracking_error": r["twist_tracking_error"],
+                "intervention": r["intervention"],
+                "cbf_applied": int(r["cbf_applied"]),
+                "shadow_only": int(r["shadow_only"]),
+                "gripper_cmd": r["gripper_cmd"],
+                "screw_z": r["screw_z"],
+                "tcp_box_dist": r["tcp_box_dist"],
+                "screw_box_dist": r["screw_box_dist"],
+            }
+            for prefix, vec in (
+                ("eef", r["eef_pos"]),
+                ("screw", r["screw_pos"]),
+                ("v_nom", r["v_nom"]),
+                ("v_safe", r["v_safe"]),
+                ("v_actual_start", r["v_actual_start"]),
+                ("v_effective_safe", r["v_effective_safe"]),
+                ("v_achieved", r["v_achieved"]),
+                ("dv", r["dv"]),
+                ("omega_nom", r["omega_nom"]),
+                ("omega_safe", r["omega_safe"]),
+                ("omega_achieved", r["omega_achieved"]),
+                ("domega", r["domega"]),
+            ):
+                suffixes = ("x", "y", "z")
+                if prefix == "screw":
+                    keys = ("screw_x", "screw_y", "screw_z_pos")
+                else:
+                    keys = tuple(f"{prefix}_{s}" for s in suffixes)
+                for key, value in zip(keys, np.asarray(vec).reshape(-1)[:3]):
+                    row[key] = float(value)
+            writer.writerow(row)
+
+    txt_path = os.path.join(
+        save_folder,
+        f"trace_ep_{episode_idx:03d}_center_{center_step:04d}.txt",
+    )
+
+    lines = []
+    lines.append(
+        f"Peak-intervention trace: episode={episode_idx}, "
+        f"center_step={center_step}, window=±{window}"
+    )
+    lines.append(
+        "Columns: step | h_start -> h_end | h_euler | "
+        "hdot(measured/CBF/actual) | lhs(measured/CBF) | intv | "
+        "v0 -> v_eff -> v_achieved | servo_gap | twist_err"
+    )
+
+    for r in selected:
+        mark = " <<<" if r["step"] == center_step else ""
+        lines.append(
+            f"{r['step']:4d} | "
+            f"h={r['h']: .5f}->{r['h_end']: .5f} | "
+            f"hEuler={r['h_euler_pred']: .5f} | "
+            f"hdot={r['hdot_actual_nom']: .4f}/"
+            f"{r['hdot_safe']: .4f}/{r['hdot_actual']: .4f} | "
+            f"lhs={r['cbf_lhs_actual_nom']: .3e}/"
+            f"{r['cbf_lhs_safe']: .3e} | "
+            f"intv={r['intervention']: .5f} | "
+            f"v {_vec3_to_text(r['v_actual_start'])} -> "
+            f"{_vec3_to_text(r['v_effective_safe'])} -> "
+            f"{_vec3_to_text(r['v_achieved'])} | "
+            f"sgap={r['servo_twist_gap']: .4f} | "
+            f"twerr={r['twist_tracking_error']: .4f}"
+            f"{mark}"
+        )
+
+    trace_text = "\n".join(lines)
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write(trace_text + "\n")
+
+    print("\n" + "-" * 110)
+    print(trace_text)
+    print("-" * 110)
+    print(f"Trace CSV saved to: {csv_path}")
+    print(f"Trace TXT saved to: {txt_path}\n")
+
+    return {
+        "center_step": center_step,
+        "csv_path": csv_path,
+        "txt_path": txt_path,
+    }
+
+
+# =============================================================================
+# Main
+# =============================================================================
+def _find_project_root(script_file):
+    """Find the repository root by locating models/dummyx_apf_scene.xml."""
+    current = os.path.abspath(os.path.dirname(script_file))
+    for _ in range(8):
+        candidate = os.path.join(current, "models", "dummyx_apf_scene.xml")
+        if os.path.isfile(candidate):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+    raise FileNotFoundError(
+        "Could not locate repository root containing models/dummyx_apf_scene.xml "
+        f"from script path: {os.path.abspath(script_file)}"
+    )
+
+
+def main(args):
+    # Repository layout may evolve; resolve the root from the scene file rather
+    # than depending on a fixed number of parent directories.
+    base_dir = _find_project_root(__file__)
+    xml_path = args.xml_path or os.path.join(base_dir, "models", "dummyx_apf_scene.xml")
+    if not os.path.isabs(xml_path):
+        xml_path = os.path.join(base_dir, xml_path)
+
+    print(f"[Paths] project_root = {base_dir}")
+    print(f"[Paths] scene_xml    = {xml_path}")
+
+    model = mujoco.MjModel.from_xml_path(xml_path)
+    data = mujoco.MjData(model)
+    renderer = mujoco.Renderer(model, height=256, width=256)
+
+    action_dt = SERVO_SUBSTEPS * model.opt.timestep
+
+    target_body_id = mujoco.mj_name2id(
+        model, mujoco.mjtObj.mjOBJ_BODY, "real_screwdriver"
+    )
+    pillar_body_id = mujoco.mj_name2id(
+        model, mujoco.mjtObj.mjOBJ_BODY, "dynamic_pillar"
+    )
+    tcp_id = mujoco.mj_name2id(
+        model, mujoco.mjtObj.mjOBJ_SITE, "tcp_site"
+    )
+    link7_id = mujoco.mj_name2id(
+        model, mujoco.mjtObj.mjOBJ_BODY, "link7"
+    )
+    link8_id = mujoco.mj_name2id(
+        model, mujoco.mjtObj.mjOBJ_BODY, "link8"
+    )
+    link9_id = mujoco.mj_name2id(
+        model, mujoco.mjtObj.mjOBJ_BODY, "link9"
+    )
+
+    if min(target_body_id, pillar_body_id, tcp_id, link7_id) < 0:
+        raise RuntimeError("Required MuJoCo body/site names are missing.")
+
+    valid_collision_bodies = [target_body_id, link7_id]
+    if link8_id != -1:
+        valid_collision_bodies.append(link8_id)
+    if link9_id != -1:
+        valid_collision_bodies.append(link9_id)
+
+    dino = None
+    if (
+        args.perception_probe
+        or args.candidate_pair_probe
+        or (
+            args.mode in ("vlsa", "shadow")
+            and args.obstacle_source == "perception"
+            and not args.no_obstacle
+        )
+    ):
+        config_path, checkpoint_path = resolve_groundingdino_paths(args, base_dir)
+        print(f"Loading GroundingDINO config: {config_path}")
+        print(f"Loading GroundingDINO checkpoint: {checkpoint_path}")
+        dino = GroundingDINOWrapper(
+            config_path,
+            checkpoint_path,
+            args.device,
+        )
+
+    fixed_targets = None
+    if args.fixed_eval:
+        fixed_xy = (0.28, -0.10)
+        fixed_targets = [fixed_xy for _ in range(args.num_episodes)]
+        print(
+            f"Fixed evaluation target: "
+            f"X={fixed_xy[0]:.2f}, Y={fixed_xy[1]:.2f}"
+        )
+
+    use_obstacle = not args.no_obstacle
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    if args.candidate_pair_probe:
+        run_name = f"run_{timestamp}_candidate_pair_probe_obs{int(use_obstacle)}"
+    elif args.perception_probe:
+        run_name = f"run_{timestamp}_perception_probe_obs{int(use_obstacle)}"
+    else:
+        run_name = (
+            f"run_{timestamp}_{args.mode}_"
+            f"{args.obstacle_source}_obs{int(use_obstacle)}"
+        )
+    record_root = os.path.join(base_dir, "recordings", run_name)
+    os.makedirs(record_root, exist_ok=True)
+
+    if args.candidate_pair_probe:
+        if dino is None:
+            raise RuntimeError("--candidate_pair_probe requires GroundingDINO.")
+        run_candidate_pair_probe(
+            model,
+            data,
+            renderer,
+            dino,
+            args,
+            record_root,
+            pillar_body_id,
+        )
+        return
+
+    if args.perception_probe:
+        if dino is None:
+            raise RuntimeError("--perception_probe requires GroundingDINO.")
+        run_perception_probe(
+            model,
+            data,
+            renderer,
+            dino,
+            args,
+            record_root,
+            pillar_body_id,
+        )
+        return
+
+    policy = websocket_client_policy.WebsocketClientPolicy(
+        host=args.host,
+        port=args.port,
+    )
+
+    success_count = 0
+    collision_count = 0
+    perception_failures = 0
+    episode_peak_forces = []
+    succ_peak_forces = []
+    all_impulses = []
+    succ_impulses = []
+    episode_peak_torques = []
+    all_qp_times = []
+    all_h_values = []
+    qp_failures = 0
+
+    print("\n" + "=" * 90)
+    print("VLSA/AEGIS V2.12 — servo-aware qvel CBF adapter + stabilized perception")
+    print(
+        f"mode={args.mode} | obstacle={use_obstacle} | "
+        f"obstacle_source={args.obstacle_source} | "
+        f"episodes={args.num_episodes}"
+    )
+    print(f"EEF ellipsoid semi-axes: {Q_EEF_DIAG} m")
+    print(f"EEF center in link7:     {EEF_CENTER_IN_LINK7} m")
+    if args.show_ellipsoids:
+        print(
+            "Live debug ellipsoids ON: "
+            "blue=EEF, red=control obstacle, yellow=oracle reference"
+        )
+        if args.obstacle_source == "oracle":
+            print(
+                "Oracle red ellipsoid is LIVE: it follows dynamic_pillar xpos/xmat "
+                "every policy step."
+            )
+    if args.obstacle_text:
+        print(
+            "DEBUG: --obstacle_text bypasses the VLM; "
+            "do not use that override in the final VLSA result."
+        )
+    if args.save_perception_debug:
+        print(
+            "Perception debug image saving ON: DINO bbox=red, projected oracle "
+            "pillar=yellow; oracle overlays are diagnostic only."
+        )
+    if args.debug_gate_until_pickup:
+        print(
+            f"DEBUG ONLY: VLSA disabled until screwdriver z > {args.pickup_z:.3f} m. "
+            "Do NOT use this gate for the final VLSA baseline."
+        )
+    print("=" * 90 + "\n")
+
+    with mujoco.viewer.launch_passive(model, data) as viewer:
+        for episode in range(args.num_episodes):
+            if not viewer.is_running():
+                break
+
+            target_xy = (
+                fixed_targets[episode]
+                if fixed_targets is not None
+                else None
+            )
+            reset_scene(
+                model,
+                data,
+                use_obstacle=use_obstacle,
+                target_xy=target_xy,
+            )
+            if use_obstacle and args.settle_before_start:
+                pillar_joint_id = mujoco.mj_name2id(
+                    model,
+                    mujoco.mjtObj.mjOBJ_JOINT,
+                    "pillar_joint",
+                )
+                settle_pillar(model, data, pillar_joint_id)
+            viewer.sync()
+
+            safety_layer = None
+            perception_meta = {
+                "reason": "not_used",
+                "raw_points": np.empty((0, 3)),
+                "filtered_points": np.empty((0, 3)),
+                "obstacle_text": "",
+            }
+
+            p_obs = np.full(3, np.nan)
+            r_obs = np.full((3, 3), np.nan)
+            q_obs = np.full(3, np.nan)
+
+            if args.mode in ("vlsa", "shadow") and use_obstacle:
+                if args.obstacle_source == "oracle":
+                    p_obs, r_obs, q_obs = build_oracle_obstacle_ellipsoid(
+                        data,
+                        pillar_body_id,
+                    )
+                    perception_meta["reason"] = "oracle_debug"
+                else:
+                    perception_debug_dir = None
+                    if args.save_perception_debug:
+                        perception_debug_dir = os.path.join(
+                            record_root,
+                            "perception_debug",
+                            f"episode_{episode + 1:03d}",
+                        )
+                    result, perception_meta = build_perception_obstacle_ellipsoid(
+                        model,
+                        data,
+                        renderer,
+                        dino,
+                        args,
+                        debug_dir=perception_debug_dir,
+                        pillar_body_id=pillar_body_id,
+                    )
+                    if result is not None:
+                        p_obs, r_obs, q_obs = result
+                    else:
+                        perception_failures += 1
+                        print(
+                            f"  [VLSA perception] FAILED: "
+                            f"{perception_meta['reason']}. "
+                            "Safety layer disabled for this episode."
+                        )
+
+                if np.isfinite(p_obs).all():
+                    eef_center0, _ = get_eef_ellipsoid_pose(
+                        data,
+                        link7_id,
+                    )
+                    safety_layer = AEGISFullActionLayer(
+                        p_obs,
+                        r_obs,
+                        q_obs,
+                        action_dt,
+                    )
+                    safety_layer.reset(eef_center0)
+
+                    p_oracle, _, _ = build_oracle_obstacle_ellipsoid(
+                        data,
+                        pillar_body_id,
+                    )
+                    print(
+                        f"  [Geometry check] perceived/oracle center error = "
+                        f"{np.linalg.norm(p_obs - p_oracle):.4f} m"
+                    )
+
+            step_counter = 0
+            in_box_counter = 0
+            is_success = False
+            episode_collision = False
+            action_chunk_cache = None
+            video_frames = []
+
+            ep_peak_force = 0.0
+            ep_impulse = 0.0
+            ep_torques = []
+            ep_qp_times = []
+            ep_h = []
+            ep_h_end = []
+            ep_h_euler_pred = []
+            ep_hdot_safe = []
+            ep_hdot_actual = []
+            ep_hdot_actual_nom = []
+            ep_cbf_lhs_safe = []
+            ep_cbf_lhs_actual_nom = []
+            ep_servo_twist_gap = []
+            ep_v_actual_start = []
+            ep_v_effective_safe = []
+            ep_v_achieved = []
+            ep_omega_achieved = []
+            ep_interventions = []
+            ep_qp_ok = []
+            ep_v_nom = []
+            ep_v_safe = []
+            ep_omega_nom = []
+            ep_omega_safe = []
+            ep_z = []
+            ep_screw_z = []
+            ep_tcp_box_dist = []
+            ep_screw_box_dist = []
+            ep_gripper_cmd = []
+            ep_eef_pos = []
+            ep_tcp_pos = []
+            ep_screw_pos = []
+            ep_cbf_applied = []
+            ep_shadow_only = []
+            ep_intervention_step = []
+            ep_h_step = []
+            ep_q_pos_vla = []
+            ep_q_dot_vla = []
+            trace_records = []
+            pickup_step = None
+            cbf_started_after_gate = False
+
+            record_cam = mujoco.MjvCamera()
+            mujoco.mjv_defaultFreeCamera(model, record_cam)
+            record_cam.lookat[:] = [0.25, -0.05, 0.22]
+            record_cam.distance = 1.0
+            record_cam.azimuth = 180
+            record_cam.elevation = -20
+
+            box_center = np.array([-0.05, 0.0, 0.24])
+
+            while viewer.is_running() and step_counter < args.max_steps:
+                if step_counter % 8 == 0 or action_chunk_cache is None:
+                    renderer.disable_depth_rendering()
+                    renderer.update_scene(data, camera="rear_cam")
+                    img_external = renderer.render()
+                    renderer.update_scene(data, camera="wrist_cam")
+                    img_wrist = renderer.render()
+
+                    result = policy.infer(
+                        {
+                            "observation/image": img_external,
+                            "observation/wrist_image": img_wrist,
+                            "observation/state": data.qpos[:8].copy(),
+                            "prompt": TASK_PROMPT,
+                        }
+                    )
+                    action_chunk_cache = result["actions"]
+
+                renderer.disable_depth_rendering()
+                renderer.update_scene(data, camera=record_cam)
+                video_frames.append(renderer.render())
+
+                current_action = action_chunk_cache[step_counter % 8]
+                raw_q_pos_vla = current_action[:6].copy()
+                raw_q_dot_vla = raw_q_pos_vla - data.qpos[:6].copy()
+                ep_q_pos_vla.append(raw_q_pos_vla)
+                ep_q_dot_vla.append(raw_q_dot_vla)
+                ep_gripper_cmd.append(float(current_action[6]))
+
+                debug = None
+
+                screw_z_before = float(data.xpos[target_body_id][2])
+                if pickup_step is None and screw_z_before > args.pickup_z:
+                    pickup_step = int(step_counter)
+
+                gate_blocks_cbf = (
+                    args.mode == "vlsa"
+                    and args.debug_gate_until_pickup
+                    and screw_z_before <= args.pickup_z
+                )
+
+                if safety_layer is not None and not gate_blocks_cbf:
+                    # When the diagnostic gate opens, initialize the CBF auxiliary
+                    # state from the CURRENT EEF pose. This prevents stale z-state
+                    # evolution during the gated reach phase.
+                    if (
+                        args.mode == "vlsa"
+                        and args.debug_gate_until_pickup
+                        and not cbf_started_after_gate
+                    ):
+                        eef_now, _ = get_eef_ellipsoid_pose(data, link7_id)
+                        safety_layer.reset(eef_now)
+                        cbf_started_after_gate = True
+
+                    # In oracle-debug mode the pillar is a free body. Keep the
+                    # controlled obstacle ellipsoid attached to the current
+                    # MuJoCo body pose. Perception mode does not read ground truth.
+                    if args.obstacle_source == "oracle":
+                        p_live, r_live, q_live = build_oracle_obstacle_ellipsoid(
+                            data,
+                            pillar_body_id,
+                        )
+                        safety_layer.update_obstacle_pose(
+                            p_live,
+                            r_live,
+                            q_live,
+                        )
+
+                    safe_ctrl_candidate, debug = adapt_joint_target_through_vlsa(
+                        model,
+                        data,
+                        current_action,
+                        safety_layer,
+                        link7_id,
+                        action_dt,
+                    )
+
+                    if args.mode == "shadow":
+                        base_ctrl = build_baseline_ctrl(data, current_action)
+                        ep_shadow_only.append(True)
+                        ep_cbf_applied.append(False)
+                    else:
+                        base_ctrl = safe_ctrl_candidate
+                        ep_shadow_only.append(False)
+                        ep_cbf_applied.append(True)
+
+                    ep_qp_times.append(debug["qp_ms"])
+                    ep_h.append(debug["h"])
+                    ep_interventions.append(debug["intervention"])
+                    ep_intervention_step.append(step_counter)
+                    ep_h_step.append(step_counter)
+                    ep_qp_ok.append(debug["qp_ok"])
+                    ep_v_nom.append(debug["v_nom"])
+                    ep_v_safe.append(debug["v_safe"])
+                    ep_omega_nom.append(debug["omega_nom"])
+                    ep_omega_safe.append(debug["omega_safe"])
+                    ep_z.append(debug["z"])
+                    if not debug["qp_ok"]:
+                        qp_failures += 1
+                else:
+                    # Either baseline mode, perception failure, or the explicit
+                    # diagnostic gate is blocking VLSA before pickup.
+                    base_ctrl = build_baseline_ctrl(
+                        data,
+                        current_action,
+                    )
+                    ep_cbf_applied.append(False)
+                    ep_shadow_only.append(False)
+
+                for _ in range(SERVO_SUBSTEPS):
+                    current_f_xyz = get_target_table_force(
+                        model,
+                        data,
+                        valid_collision_bodies,
+                    )
+                    force_norm = np.linalg.norm(current_f_xyz)
+                    ep_peak_force = max(ep_peak_force, force_norm)
+                    ep_impulse += force_norm * model.opt.timestep
+
+                    data.ctrl[:8] = base_ctrl
+                    mujoco.mj_step(model, data)
+                    tau = data.qfrc_actuator[:6].copy()
+                    ep_torques.append(np.max(np.abs(tau)))
+
+                if use_obstacle:
+                    pillar_up = data.xmat[pillar_body_id].reshape(3, 3)[2, 2]
+                    if pillar_up < 0.9:
+                        episode_collision = True
+
+                current_tcp = data.site_xpos[tcp_id].copy()
+                screw_pos = data.xpos[target_body_id].copy()
+                eef_center_now, eef_rotation_now = get_eef_ellipsoid_pose(
+                    data,
+                    link7_id,
+                )
+
+                # V2.12 diagnostic: compare the servo-aware CBF prediction
+                # against what the position-controlled MuJoCo plant actually
+                # achieved over the full 50-substep action interval.
+                if debug is not None and safety_layer is not None:
+                    h_end = float(
+                        safety_layer.current_h(eef_center_now, eef_rotation_now)
+                    )
+                    hdot_actual = float(
+                        (h_end - float(debug["h"])) / action_dt
+                    )
+                    v_achieved = (
+                        eef_center_now - np.asarray(debug["eef_center"])
+                    ) / action_dt
+                    omega_achieved = rotation_delta_to_world_omega(
+                        debug["eef_rotation"],
+                        eef_rotation_now,
+                        action_dt,
+                    )
+                    debug["h_end"] = h_end
+                    debug["hdot_actual"] = hdot_actual
+                    debug["v_achieved"] = v_achieved
+                    debug["omega_achieved"] = omega_achieved
+                    debug["twist_tracking_error"] = float(
+                        np.linalg.norm(
+                            np.hstack(
+                                [
+                                    v_achieved - np.asarray(debug["v_safe"]),
+                                    omega_achieved
+                                    - np.asarray(debug["omega_safe"]),
+                                ]
+                            )
+                        )
+                    )
+
+                ep_screw_z.append(float(screw_pos[2]))
+                ep_tcp_box_dist.append(
+                    float(np.linalg.norm(current_tcp - box_center))
+                )
+                ep_screw_box_dist.append(
+                    float(np.linalg.norm(screw_pos - box_center))
+                )
+                ep_eef_pos.append(eef_center_now)
+                ep_tcp_pos.append(current_tcp)
+                ep_screw_pos.append(screw_pos)
+
+                if debug is not None:
+                    ep_h_end.append(float(debug["h_end"]))
+                    ep_h_euler_pred.append(float(debug["h_euler_pred"]))
+                    ep_hdot_safe.append(float(debug["hdot_safe"]))
+                    ep_hdot_actual.append(float(debug["hdot_actual"]))
+                    ep_hdot_actual_nom.append(
+                        float(debug["hdot_actual_nom"])
+                    )
+                    ep_cbf_lhs_safe.append(float(debug["cbf_lhs_safe"]))
+                    ep_cbf_lhs_actual_nom.append(
+                        float(debug["cbf_lhs_actual_nom"])
+                    )
+                    ep_servo_twist_gap.append(
+                        float(debug["servo_twist_gap"])
+                    )
+                    ep_v_actual_start.append(
+                        np.asarray(
+                            debug["v_actual_start"],
+                            dtype=np.float64,
+                        )
+                    )
+                    ep_v_effective_safe.append(
+                        np.asarray(
+                            debug["v_effective_safe"],
+                            dtype=np.float64,
+                        )
+                    )
+                    ep_v_achieved.append(
+                        np.asarray(debug["v_achieved"], dtype=np.float64)
+                    )
+                    ep_omega_achieved.append(
+                        np.asarray(debug["omega_achieved"], dtype=np.float64)
+                    )
+
+                    v_nom_trace = np.asarray(debug["v_nom"], dtype=np.float64)
+                    v_safe_trace = np.asarray(debug["v_safe"], dtype=np.float64)
+                    w_nom_trace = np.asarray(debug["omega_nom"], dtype=np.float64)
+                    w_safe_trace = np.asarray(debug["omega_safe"], dtype=np.float64)
+                    trace_records.append(
+                        {
+                            "step": int(step_counter),
+                            "h": float(debug["h"]),
+                            "h_end": float(debug["h_end"]),
+                            "h_euler_pred": float(debug["h_euler_pred"]),
+                            "hdot_safe": float(debug["hdot_safe"]),
+                            "hdot_actual": float(debug["hdot_actual"]),
+                            "hdot_actual_nom": float(
+                                debug["hdot_actual_nom"]
+                            ),
+                            "cbf_lhs_safe": float(debug["cbf_lhs_safe"]),
+                            "cbf_lhs_actual_nom": float(
+                                debug["cbf_lhs_actual_nom"]
+                            ),
+                            "servo_twist_gap": float(
+                                debug["servo_twist_gap"]
+                            ),
+                            "twist_tracking_error": float(
+                                debug["twist_tracking_error"]
+                            ),
+                            "intervention": float(debug["intervention"]),
+                            "cbf_applied": bool(args.mode == "vlsa"),
+                            "shadow_only": bool(args.mode == "shadow"),
+                            "gripper_cmd": float(current_action[6]),
+                            "screw_z": float(screw_pos[2]),
+                            "tcp_box_dist": float(
+                                np.linalg.norm(current_tcp - box_center)
+                            ),
+                            "screw_box_dist": float(
+                                np.linalg.norm(screw_pos - box_center)
+                            ),
+                            "eef_pos": eef_center_now.copy(),
+                            "screw_pos": screw_pos.copy(),
+                            "v_nom": v_nom_trace.copy(),
+                            "v_safe": v_safe_trace.copy(),
+                            "v_actual_start": np.asarray(
+                                debug["v_actual_start"],
+                                dtype=np.float64,
+                            ).copy(),
+                            "v_effective_safe": np.asarray(
+                                debug["v_effective_safe"],
+                                dtype=np.float64,
+                            ).copy(),
+                            "v_achieved": np.asarray(
+                                debug["v_achieved"], dtype=np.float64
+                            ).copy(),
+                            "dv": (v_safe_trace - v_nom_trace).copy(),
+                            "omega_nom": w_nom_trace.copy(),
+                            "omega_safe": w_safe_trace.copy(),
+                            "omega_achieved": np.asarray(
+                                debug["omega_achieved"], dtype=np.float64
+                            ).copy(),
+                            "domega": (w_safe_trace - w_nom_trace).copy(),
+                        }
+                    )
+
+                in_box = (
+                    abs(screw_pos[0] - (-0.05)) < 0.12
+                    and abs(screw_pos[1]) < 0.12
+                    and screw_pos[2] < 0.34
+                )
+                is_released = (
+                    current_action[6] > 0.02
+                    or np.linalg.norm(current_tcp - screw_pos) > 0.06
+                )
+                in_box_counter = (
+                    in_box_counter + 1
+                    if in_box and is_released
+                    else 0
+                )
+
+                update_debug_ellipsoids(
+                    viewer,
+                    data,
+                    link7_id,
+                    safety_layer,
+                    args.show_ellipsoids,
+                    args.show_oracle_reference,
+                    pillar_body_id,
+                )
+                viewer.sync()
+
+                if in_box_counter >= 5:
+                    is_success = True
+                    break
+
+                step_counter += 1
+
+            if is_success:
+                success_count += 1
+            if episode_collision:
+                collision_count += 1
+
+            ep_peak_tau = (
+                float(np.max(ep_torques))
+                if ep_torques
+                else 0.0
+            )
+            episode_peak_torques.append(ep_peak_tau)
+            episode_peak_forces.append(ep_peak_force)
+            all_impulses.append(ep_impulse)
+
+            if is_success:
+                succ_peak_forces.append(ep_peak_force)
+                succ_impulses.append(ep_impulse)
+
+            if ep_qp_times:
+                all_qp_times.extend(ep_qp_times)
+                all_h_values.extend(ep_h)
+
+            save_folder = os.path.join(
+                record_root,
+                "success" if is_success else "fail",
+            )
+            os.makedirs(save_folder, exist_ok=True)
+            save_episode_video(
+                video_frames,
+                save_folder,
+                episode + 1,
+            )
+
+            np.savez(
+                os.path.join(
+                    save_folder,
+                    f"data_ep_{episode + 1:03d}.npz",
+                ),
+                episode_success=np.array(is_success),
+                episode_knockdown=np.array(episode_collision),
+                episode_peak_contact_force=np.array(ep_peak_force),
+                episode_contact_impulse=np.array(ep_impulse),
+                episode_peak_joint_torque=np.array(ep_peak_tau),
+                q_pos_vla=np.asarray(ep_q_pos_vla),
+                q_dot_vla=np.asarray(ep_q_dot_vla),
+                v_nom=np.asarray(ep_v_nom),
+                v_safe=np.asarray(ep_v_safe),
+                omega_nom=np.asarray(ep_omega_nom),
+                omega_safe=np.asarray(ep_omega_safe),
+                cbf_h=np.asarray(ep_h),
+                cbf_h_end=np.asarray(ep_h_end),
+                cbf_h_euler_pred=np.asarray(ep_h_euler_pred),
+                cbf_hdot_safe=np.asarray(ep_hdot_safe),
+                cbf_hdot_actual=np.asarray(ep_hdot_actual),
+                cbf_hdot_actual_nom=np.asarray(ep_hdot_actual_nom),
+                cbf_lhs_safe=np.asarray(ep_cbf_lhs_safe),
+                cbf_lhs_actual_nom=np.asarray(ep_cbf_lhs_actual_nom),
+                servo_twist_gap=np.asarray(ep_servo_twist_gap),
+                v_actual_start=np.asarray(ep_v_actual_start),
+                v_effective_safe=np.asarray(ep_v_effective_safe),
+                v_achieved=np.asarray(ep_v_achieved),
+                omega_achieved=np.asarray(ep_omega_achieved),
+                cbf_applied=np.asarray(ep_cbf_applied, dtype=bool),
+                shadow_only=np.asarray(ep_shadow_only, dtype=bool),
+                intervention_step=np.asarray(ep_intervention_step, dtype=int),
+                h_step=np.asarray(ep_h_step, dtype=int),
+                screw_z=np.asarray(ep_screw_z),
+                tcp_box_dist=np.asarray(ep_tcp_box_dist),
+                screw_box_dist=np.asarray(ep_screw_box_dist),
+                gripper_cmd=np.asarray(ep_gripper_cmd),
+                eef_pos=np.asarray(ep_eef_pos),
+                tcp_pos=np.asarray(ep_tcp_pos),
+                screw_pos=np.asarray(ep_screw_pos),
+                qp_time_ms=np.asarray(ep_qp_times),
+                qp_ok=np.asarray(ep_qp_ok, dtype=bool),
+                intervention_norm=np.asarray(ep_interventions),
+                z_state=np.asarray(ep_z),
+                eef_axes=Q_EEF_DIAG,
+                eef_center_in_link7=EEF_CENTER_IN_LINK7,
+                obstacle_center=np.asarray(p_obs),
+                obstacle_rotation=np.asarray(r_obs),
+                obstacle_axes=np.asarray(q_obs),
+                obstacle_source=np.array(args.obstacle_source),
+                obstacle_text=np.array(
+                    perception_meta.get("obstacle_text", "")
+                ),
+                perception_status=np.array(
+                    perception_meta.get("reason", "")
+                ),
+                obstacle_raw_points=np.asarray(
+                    perception_meta.get(
+                        "raw_points",
+                        np.empty((0, 3)),
+                    )
+                ),
+                obstacle_filtered_points=np.asarray(
+                    perception_meta.get(
+                        "filtered_points",
+                        np.empty((0, 3)),
+                    )
+                ),
+            )
+
+            if args.mode in ("vlsa", "shadow") and args.trace_window > 0:
+                save_and_print_trace(
+                    trace_records,
+                    save_folder,
+                    episode + 1,
+                    args.trace_window,
+                    args.trace_step,
+                )
+
+            max_screw_z = (
+                float(np.max(ep_screw_z))
+                if ep_screw_z
+                else float(data.xpos[target_body_id][2])
+            )
+            picked_up = max_screw_z > 0.235
+            qp_text = (
+                f" | picked={'YES' if picked_up else 'NO'}"
+                f" | z_obj_max={max_screw_z:.3f}"
+            )
+
+            if ep_qp_times:
+                h_arr = np.asarray(ep_h)
+                int_arr = np.asarray(ep_interventions)
+                peak_idx = int(np.argmax(int_arr))
+                peak_step = (
+                    ep_intervention_step[peak_idx]
+                    if peak_idx < len(ep_intervention_step)
+                    else -1
+                )
+                qp_text += (
+                    f" | h0={h_arr[0]:.4f}"
+                    f" | h_min={np.min(h_arr):.4f}"
+                    f" | h<0={100.0*np.mean(h_arr < 0):.1f}%"
+                    f" | QP={np.mean(ep_qp_times):.3f} ms"
+                    f" | intervention_mean="
+                    f"{np.mean(int_arr):.4f}"
+                    f" | intervention_max="
+                    f"{np.max(int_arr):.4f}@step{peak_step}"
+                )
+                if args.mode == "shadow":
+                    qp_text += " | EXECUTED=BASELINE"
+            else:
+                qp_text += (
+                    f" | safety=OFF"
+                    f" | perception="
+                    f"{perception_meta.get('reason', 'not_used')}"
+                )
+
+            gate_text = ""
+            if args.debug_gate_until_pickup and args.mode == "vlsa":
+                gate_text = (
+                    f" | pickup_step={pickup_step if pickup_step is not None else 'NONE'}"
+                    f" | gate_until_z>{args.pickup_z:.3f}"
+                )
+
+            print(
+                f"Episode {episode + 1}/{args.num_episodes}: "
+                f"{'SUCCESS' if is_success else 'FAIL'} | "
+                f"{'COLLISION' if episode_collision else 'NO COLLISION'} | "
+                f"peakF={ep_peak_force:.2f} N | "
+                f"impulse={ep_impulse:.2f} N*s | "
+                f"peakTau={ep_peak_tau:.2f} N*m"
+                f"{qp_text}"
+                f"{gate_text}"
+            )
+
+    episodes_done = max(len(episode_peak_forces), 1)
+    sr = 100.0 * success_count / episodes_done
+    cr = (
+        100.0 * collision_count / episodes_done
+        if use_obstacle
+        else None
+    )
+    avg_peak_f_succ = (
+        float(np.mean(succ_peak_forces))
+        if succ_peak_forces
+        else None
+    )
+    avg_imp_all = (
+        float(np.mean(all_impulses))
+        if all_impulses
+        else 0.0
+    )
+    avg_imp_succ = (
+        float(np.mean(succ_impulses))
+        if succ_impulses
+        else None
+    )
+    std_imp_succ = (
+        float(np.std(succ_impulses))
+        if succ_impulses
+        else None
+    )
+    avg_tau = (
+        float(np.mean(episode_peak_torques))
+        if episode_peak_torques
+        else 0.0
+    )
+    avg_qp_ms = (
+        float(np.mean(all_qp_times))
+        if all_qp_times
+        else None
+    )
+    min_h = (
+        float(np.min(all_h_values))
+        if all_h_values
+        else None
+    )
+
+    lines = [
+        "================ VLSA/AEGIS V2 SUMMARY ================",
+        f"mode: {args.mode}",
+        "shadow_note: QP computed but not executed" if args.mode == "shadow" else "shadow_note: —",
+        f"obstacle: {use_obstacle}",
+        f"obstacle_source: {args.obstacle_source}",
+        f"episodes: {episodes_done}",
+        f"perception_failures: {perception_failures}",
+        f"SR: {sr:.1f}%",
+        f"CR: {cr:.1f}%" if cr is not None else "CR: —",
+        (
+            f"f_hat_success: {avg_peak_f_succ:.2f} N"
+            if avg_peak_f_succ is not None
+            else "f_hat_success: —"
+        ),
+        f"I_all: {avg_imp_all:.2f} N*s",
+        (
+            f"I_success: {avg_imp_succ:.2f} N*s"
+            if avg_imp_succ is not None
+            else "I_success: —"
+        ),
+        (
+            f"sigma_I_success: {std_imp_succ:.2f} N*s"
+            if std_imp_succ is not None
+            else "sigma_I_success: —"
+        ),
+        f"tau_bar_max: {avg_tau:.2f} N*m",
+        (
+            f"QP_mean: {avg_qp_ms:.3f} ms"
+            if avg_qp_ms is not None
+            else "QP_mean: —"
+        ),
+        (
+            f"h_min: {min_h:.6f}"
+            if min_h is not None
+            else "h_min: —"
+        ),
+        f"QP_failures: {qp_failures}",
+        "=======================================================",
+    ]
+    summary = "\n".join(lines)
+    print("\n" + summary + "\n")
+
+    summary_path = os.path.join(record_root, "summary.txt")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        f.write(summary + "\n")
+    print(f"Saved summary to: {summary_path}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=(
+            "VLSA/AEGIS V2.12: servo-aware qvel CBF adapter + execution diagnostics + stabilized perception "
+            "for screwdriver pick-and-place"
+        )
+    )
+    parser.add_argument(
+        "--host",
+        default="localhost",
+        help="OpenPI WebSocket server IP",
+    )
+    parser.add_argument(
+        "--port",
+        default=8000,
+        type=int,
+        help="OpenPI WebSocket server port",
+    )
+    parser.add_argument(
+        "--num_episodes",
+        default=10,
+        type=int,
+        help="Number of evaluation episodes",
+    )
+    parser.add_argument(
+        "--max_steps",
+        default=600,
+        type=int,
+        help="Maximum policy steps per episode",
+    )
+    parser.add_argument(
+        "--settle_before_start",
+        action="store_true",
+        help="Wait for the obstacle pillar to settle before perception, inference, and recording",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["baseline", "vlsa", "shadow"],
+        default="vlsa",
+        help=(
+            "baseline: execute original pi0; "
+            "vlsa: execute AEGIS safety correction; "
+            "shadow: compute/log AEGIS QP but execute original pi0 unchanged."
+        ),
+    )
+    parser.add_argument(
+        "--obstacle_source",
+        choices=["oracle", "perception"],
+        default="perception",
+        help=(
+            "perception: VLSA VLM+DINO+RGB-D+MVEE; "
+            "oracle: debug-only MuJoCo geometry"
+        ),
+    )
+    parser.add_argument(
+        "--fixed_eval",
+        action="store_true",
+        help="Use fixed screwdriver XY=(0.28,-0.10)",
+    )
+    parser.add_argument(
+        "--no_obstacle",
+        action="store_true",
+        help="Remove dynamic pillar",
+    )
+    parser.add_argument(
+        "--xml_path",
+        default=None,
+        help="Optional explicit path to dummyx_apf_scene.xml",
+    )
+
+    parser.add_argument(
+        "--perception_probe",
+        action="store_true",
+        help=(
+            "DEBUG ONLY: run all-candidate GroundingDINO probes for a fixed set "
+            "of obstacle phrases on rear_cam/fixed, save overlays/CSV/TXT, and "
+            "exit before connecting to OpenPI or moving the robot."
+        ),
+    )
+
+    parser.add_argument(
+        "--candidate_pair_probe",
+        action="store_true",
+        help=(
+            "DEBUG ONLY: for one obstacle_text query, back-project every rear/fixed "
+            "GroundingDINO candidate to 3D, rank cross-view pairs by oracle-free "
+            "geometry consistency, save CSV/TXT, and exit before OpenPI/robot motion."
+        ),
+    )
+    parser.add_argument(
+        "--pair_probe_topk",
+        default=15,
+        type=int,
+        help="Number of top geometry-ranked pairs printed by --candidate_pair_probe.",
+    )
+
+    # Live visualization.
+    parser.add_argument(
+        "--show_ellipsoids",
+        action="store_true",
+        help="Show live EEF and obstacle ellipsoids in the MuJoCo viewer.",
+    )
+    parser.add_argument(
+        "--show_oracle_reference",
+        action="store_true",
+        help=(
+            "With --show_ellipsoids, also show the oracle pillar ellipsoid "
+            "in yellow for geometry debugging. It is not used for control."
+        ),
+    )
+    parser.add_argument(
+        "--save_perception_debug",
+        action="store_true",
+        help=(
+            "Save GroundingDINO bbox overlays with projected oracle pillar geometry "
+            "and XY/XZ/YZ point-cloud diagnostics. Debug only; oracle geometry is "
+            "never used for perception or control."
+        ),
+    )
+
+    # VLM / GroundingDINO.
+    parser.add_argument(
+        "--obstacle_text",
+        default=None,
+        help=(
+            "DEBUG ONLY: fixed GroundingDINO query such as 'gray pillar'. "
+            "If omitted, GLM-4.5V identifies the obstacle."
+        ),
+    )
+    parser.add_argument(
+        "--groundingdino_config",
+        default=None,
+        help="Path to GroundingDINO config.",
+    )
+    parser.add_argument(
+        "--groundingdino_checkpoint",
+        default=None,
+        help="Path to groundingdino_swint_ogc.pth.",
+    )
+    parser.add_argument(
+        "--device",
+        default="cuda",
+        choices=["cuda", "cpu"],
+        help="GroundingDINO device.",
+    )
+    parser.add_argument(
+        "--box_threshold",
+        default=0.35,
+        type=float,
+    )
+    parser.add_argument(
+        "--text_threshold",
+        default=0.25,
+        type=float,
+    )
+
+    # User-scene point-cloud preprocessing.
+    parser.add_argument(
+        "--workspace",
+        nargs=6,
+        type=float,
+        default=[-0.20, 0.55, -0.25, 0.35, 0.22, 0.60],
+        metavar=("XMIN", "XMAX", "YMIN", "YMAX", "ZMIN", "ZMAX"),
+        help=(
+            "Workspace crop in world coordinates. Defaults are adapted only "
+            "to this uploaded MuJoCo scene."
+        ),
+    )
+    parser.add_argument(
+        "--dbscan_eps",
+        default=0.01,
+        type=float,
+        help=(
+            "DBSCAN radius in meters. Scene/resolution-specific adaptation; "
+            "the VLSA method itself is unchanged."
+        ),
+    )
+    parser.add_argument(
+        "--dbscan_min_samples",
+        default=20,
+        type=int,
+    )
+
+    # Peak-intervention trace.
+    parser.add_argument(
+        "--trace_window",
+        default=15,
+        type=int,
+        help=(
+            "For vlsa/shadow modes, print and save +/- N policy steps around "
+            "the strongest intervention. Set 0 to disable. Default: 15."
+        ),
+    )
+    parser.add_argument(
+        "--trace_step",
+        default=None,
+        type=int,
+        help=(
+            "Optional manual trace center step. If omitted, the strongest "
+            "intervention step is selected automatically."
+        ),
+    )
+
+    # Diagnostic gate to isolate whether early reach-phase VLSA intervention
+    # is what causes downstream task failure.
+    parser.add_argument(
+        "--debug_gate_until_pickup",
+        action="store_true",
+        help=(
+            "DEBUG ONLY: execute original pi0 before pickup, then enable VLSA "
+            "after screwdriver z exceeds --pickup_z. Never use for final VLSA results."
+        ),
+    )
+    parser.add_argument(
+        "--pickup_z",
+        default=0.235,
+        type=float,
+        help="Screwdriver z threshold used only by --debug_gate_until_pickup.",
+    )
+
+    main(parser.parse_args())

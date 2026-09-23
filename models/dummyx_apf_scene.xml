@@ -43,9 +43,9 @@
             <geom type="box" size="0.005 0.12 0.03" pos="-0.115 0 0.035" rgba="0.6 0.4 0.2 0.4" />
         </body>
 
-        <body name="dynamic_pillar" pos="0.11 -0.1 0.38">
+        <body name="dynamic_pillar" pos="0.11 -0.1 0.28">
             <freejoint name="pillar_joint"/>
-            <geom name="pillar_geom" type="box" size="0.02 0.02 0.08" rgba="0.5 0.5 0.5 1" mass="0.2" friction="1 0.05 0.0001"/>
+            <geom name="pillar_geom" type="box" size="0.02 0.02 0.08" rgba="1 0 0 1" mass="0.2" friction="1 0.05 0.0001"/>
         </body>
     </worldbody>
 </mujoco>
