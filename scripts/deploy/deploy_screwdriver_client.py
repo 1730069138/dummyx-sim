@@ -6,6 +6,9 @@ import argparse
 import cv2  
 import os   
 import json
+from joint_torque_observer import (MujocoTorqueObserver, ForceEstimate, ForceLog,
+    add_observer_arguments, config_from_args, select_control_force,
+    robot_contact_truth, arm_body_ids)
 
 # ==========================================
 # 📡 导入 OpenPI 官方 WebSocket 客户端
@@ -430,6 +433,7 @@ def main(args):
             perception_renderer.close()
             renderer_rgb.close()
         return
+    observer_config = config_from_args(args)
     policy = websocket_client_policy.WebsocketClientPolicy(host=args.host, port=args.port)
     
     target_body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "real_screwdriver")
@@ -437,6 +441,9 @@ def main(args):
     pillar_jnt_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "pillar_joint")
     tcp_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "tcp_site")
     
+    torque_observer = MujocoTorqueObserver(model, tcp_id, observer_config)
+    robot_bodies = arm_body_ids(model)
+
     link7_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "link7")
     link8_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "link8")
     link9_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "link9")
@@ -518,9 +525,9 @@ def main(args):
             succ_impulses = []
             all_safety_layer_times = []
             
-            run_folder_name = f"run_{timestamp}_{cfg['mode']}_Case{cfg['case_id']}_{cfg['tag_obs']}_{cfg['tag_apf']}_{cfg['tag_cont']}_{args.obstacle_source}"
+            run_folder_name = f"run_{timestamp}_{cfg['mode']}_Case{cfg['case_id']}_{cfg['tag_obs']}_{cfg['tag_apf']}_{cfg['tag_cont']}_{args.obstacle_source}_{args.contact_force_source}"
             base_record_dir = os.path.join(BASE_DIR, "recordings", run_folder_name)
-            os.makedirs(base_record_dir, exist_ok=True)
+            os.makedirs(base_record_dir, exist_ok=False)
 
             print("\n" + "="*80)
             print(f" 📊 [运行工况 Case {cfg['case_id']}] 策略: [{cfg['mode_str']}] | 障碍: [{cfg['str_obs']}] | APF: [{cfg['str_apf']}] | 保护: [{cfg['str_cont']}]")
@@ -549,6 +556,9 @@ def main(args):
                             f"Perception failed; simulation stopped before policy actions. Evidence: {perception_dir}"
                         ) from exc
                 
+                torque_observer.reset(data)
+                force_estimate = ForceEstimate(np.zeros(3), np.zeros(6), False)
+                force_log = ForceLog()
                 step_counter, in_box_counter = 0, 0
                 is_success, episode_col = False, False
                 action_chunk_cache = None
@@ -622,13 +632,21 @@ def main(args):
                     contact_compute_ns = 0
                     
                     for _ in range(50):
-                        current_f_xyz = get_target_table_force(model, data, valid_collision_bodies)
-                        current_force_norm = np.linalg.norm(current_f_xyz)
                         contact_t0 = time.perf_counter_ns() if cfg["contact"] else None
+                        current_f_xyz = select_control_force(
+                            args.contact_force_source, force_estimate,
+                            lambda: get_target_table_force(model, data, valid_collision_bodies))
+                        if contact_t0 is not None:
+                            contact_compute_ns += time.perf_counter_ns() - contact_t0
+                        # Legacy experiment metrics only; never fed back in joint_torque mode.
+                        legacy_truth = get_target_table_force(model, data, valid_collision_bodies)
+                        current_force_norm = np.linalg.norm(legacy_truth)
+                        if contact_t0 is not None:
+                            contact_t0 = time.perf_counter_ns()
                         
                         if current_force_norm > max_f_norm_step:
                             max_f_norm_step = current_force_norm
-                            max_f_xyz_step = current_f_xyz.copy()
+                            max_f_xyz_step = legacy_truth.copy()
 
                         if current_force_norm > ep_true_peak_f:
                             ep_true_peak_f = current_force_norm
@@ -646,7 +664,14 @@ def main(args):
 
                         data.ctrl[:8] = current_ctrl
                         mujoco.mj_step(model, data)
-                        
+                        observer_t0 = time.perf_counter_ns()
+                        force_estimate = torque_observer.sample_after_step(data)
+                        if cfg["contact"] and args.contact_force_source == "joint_torque":
+                            contact_compute_ns += time.perf_counter_ns() - observer_t0
+                        truth = robot_contact_truth(model, data, robot_bodies)
+                        force_log.append(data.time - model.opt.timestep, force_estimate,
+                                         truth, current_f_xyz, observer_config.enter_force)
+
                         current_tau = data.qfrc_actuator[:6].copy()
                         episode_taus.append(np.max(np.abs(current_tau)))
                     step_contact_controller_ms = contact_compute_ns / 1e6
@@ -731,7 +756,11 @@ def main(args):
                 save_episode_video(video_frames, save_folder, episode + 1)
                 
                 data_filename = os.path.join(save_folder, f"data_ep_{episode+1:03d}.npz")
-                np.savez(data_filename, 
+                np.savez(data_filename,
+                         **force_log.arrays(),
+                         contact_force_source=np.array(args.contact_force_source),
+                         force_observer_config=np.array(json.dumps(vars(observer_config))),
+                         force_sample_period_s=np.array(model.opt.timestep),
                          episode_success=np.array(is_success),
                          episode_knockdown=np.array(episode_col),
                          episode_peak_contact_force=np.array(ep_true_peak_f),
@@ -805,7 +834,8 @@ def main(args):
 
     summary_str = f"\n======================================= 📜 最终消融实验总结表 [多模态协同验证] =======================================\n"
     summary_str += f"Obstacle source: {args.obstacle_source}\n"
-    summary_str += "Latency scope: total safety computation (APF + 50 contact-protection substeps when enabled); excludes OpenPI, rendering, perception and physics.\n"
+    summary_str += f"Contact force source: {args.contact_force_source}; observer: {vars(observer_config)}\n"
+    summary_str += "Latency scope: total safety computation (APF + 50 contact-protection substeps when enabled); includes the joint-torque observer when enabled; excludes truth evaluation, OpenPI, rendering, perception and physics.\n"
     summary_str += "| 编号 | 力控策略 | 障碍物状态 | 宏观避障策略 | 末端接触保护 | 任务成功率(SR) | 碰撞率(CR) | 平均最大力矩 | 瞬时冲力峰值 | 冲量(全量) | 成功冲量(均值±标准差) | 成功冲量方差 | 安全算法总延迟 mean/P95/P99 | 50ms超时率 |\n"
     summary_str += "| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |\n"
     for res in report_summary:
@@ -824,6 +854,7 @@ def main(args):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="VLA 宏微观安全保护策略部署脚本")
+    add_observer_arguments(p)
     p.add_argument("--host", default="localhost", help="OpenPI WebSocket 服务器 IP")
     p.add_argument("--port", default=8000, type=int, help="OpenPI WebSocket 服务器端口")
     p.add_argument("--num_episodes", default=100, type=int, help="每个工况需要测试的次数（默认：100）")

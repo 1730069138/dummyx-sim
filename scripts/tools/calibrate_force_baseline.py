@@ -1,14 +1,14 @@
 import mujoco
-import mujoco.viewer
 import numpy as np
 import os
 import time
-import matplotlib.pyplot as plt
 
 def damped_pinv(J, rho=0.05):
     return J.T @ np.linalg.inv(J @ J.T + (rho**2) * np.eye(J.shape[0]))
 
 def run_infinite_press_with_derivatives():
+    import mujoco.viewer
+    import matplotlib.pyplot as plt
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     xml_path = os.path.join(BASE_DIR, "models", "dummyx_apf_scene.xml")
     
@@ -96,4 +96,10 @@ def run_infinite_press_with_derivatives():
         plt.show()
 
 if __name__ == "__main__":
-    run_infinite_press_with_derivatives()
+    import sys
+    if "--headless" in sys.argv:
+        sys.argv.remove("--headless")
+        from validate_force_observer import main
+        main()
+    else:
+        run_infinite_press_with_derivatives()
