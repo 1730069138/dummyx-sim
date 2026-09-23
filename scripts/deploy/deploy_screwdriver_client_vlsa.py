@@ -2078,6 +2078,7 @@ def adapt_joint_target_through_vlsa(
     link7_id,
     action_dt,
 ):
+    safety_t0 = time.perf_counter_ns()
     q = data.qpos[:6].copy()
     q_delta_nom = np.clip(
         current_action[:6] - q,
@@ -2148,6 +2149,9 @@ def adapt_joint_target_through_vlsa(
             "q_delta_safe": q_delta_safe.copy(),
         }
     )
+    # Same boundary used by the APF benchmark: safety-layer input to safe action.
+    # This includes kinematics, CBF construction, QP solve and joint adaptation.
+    debug["safety_layer_ms"] = (time.perf_counter_ns() - safety_t0) / 1e6
     return ctrl, debug
 
 
@@ -2561,6 +2565,13 @@ def main(args):
             f"Fixed evaluation target: "
             f"X={fixed_xy[0]:.2f}, Y={fixed_xy[1]:.2f}"
         )
+    elif args.eval_seed is not None:
+        eval_rng = np.random.default_rng(args.eval_seed)
+        fixed_targets = [
+            (float(eval_rng.uniform(0.20, 0.35)), float(eval_rng.uniform(-0.15, -0.05)))
+            for _ in range(args.num_episodes)
+        ]
+        print(f"Paired deterministic evaluation sequence: seed={args.eval_seed}")
 
     use_obstacle = not args.no_obstacle
     timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -2618,6 +2629,7 @@ def main(args):
     succ_impulses = []
     episode_peak_torques = []
     all_qp_times = []
+    all_safety_layer_times = []
     all_h_values = []
     qp_failures = 0
 
@@ -2673,6 +2685,7 @@ def main(args):
                 use_obstacle=use_obstacle,
                 target_xy=target_xy,
             )
+            episode_initial_target_xy = data.xpos[target_body_id][:2].copy()
             if use_obstacle and args.settle_before_start:
                 pillar_joint_id = mujoco.mj_name2id(
                     model,
@@ -2761,6 +2774,7 @@ def main(args):
             ep_impulse = 0.0
             ep_torques = []
             ep_qp_times = []
+            ep_safety_layer_times = []
             ep_h = []
             ep_h_end = []
             ep_h_euler_pred = []
@@ -2894,6 +2908,7 @@ def main(args):
                         ep_cbf_applied.append(True)
 
                     ep_qp_times.append(debug["qp_ms"])
+                    ep_safety_layer_times.append(debug["safety_layer_ms"])
                     ep_h.append(debug["h"])
                     ep_interventions.append(debug["intervention"])
                     ep_intervention_step.append(step_counter)
@@ -3135,6 +3150,7 @@ def main(args):
 
             if ep_qp_times:
                 all_qp_times.extend(ep_qp_times)
+                all_safety_layer_times.extend(ep_safety_layer_times)
                 all_h_values.extend(ep_h)
 
             save_folder = os.path.join(
@@ -3158,6 +3174,7 @@ def main(args):
                 episode_peak_contact_force=np.array(ep_peak_force),
                 episode_contact_impulse=np.array(ep_impulse),
                 episode_peak_joint_torque=np.array(ep_peak_tau),
+                episode_initial_target_xy=episode_initial_target_xy,
                 q_pos_vla=np.asarray(ep_q_pos_vla),
                 q_dot_vla=np.asarray(ep_q_dot_vla),
                 v_nom=np.asarray(ep_v_nom),
@@ -3189,6 +3206,8 @@ def main(args):
                 tcp_pos=np.asarray(ep_tcp_pos),
                 screw_pos=np.asarray(ep_screw_pos),
                 qp_time_ms=np.asarray(ep_qp_times),
+                safety_layer_time_ms=np.asarray(ep_safety_layer_times),
+                control_period_s=np.array(action_dt),
                 qp_ok=np.asarray(ep_qp_ok, dtype=bool),
                 intervention_norm=np.asarray(ep_interventions),
                 z_state=np.asarray(ep_z),
@@ -3252,6 +3271,8 @@ def main(args):
                     f" | h_min={np.min(h_arr):.4f}"
                     f" | h<0={100.0*np.mean(h_arr < 0):.1f}%"
                     f" | QP={np.mean(ep_qp_times):.3f} ms"
+                    f" | layer={np.mean(ep_safety_layer_times):.3f} ms"
+                    f"/P95={np.percentile(ep_safety_layer_times, 95):.3f} ms"
                     f" | intervention_mean="
                     f"{np.mean(int_arr):.4f}"
                     f" | intervention_max="
@@ -3321,6 +3342,21 @@ def main(args):
         if all_qp_times
         else None
     )
+    safety_latency = np.asarray(all_safety_layer_times, dtype=float)
+    safety_mean_ms = (
+        float(np.mean(safety_latency)) if len(safety_latency) else None
+    )
+    safety_p95_ms = (
+        float(np.percentile(safety_latency, 95)) if len(safety_latency) else None
+    )
+    safety_p99_ms = (
+        float(np.percentile(safety_latency, 99)) if len(safety_latency) else None
+    )
+    deadline_miss_pct = (
+        float(100.0 * np.mean(safety_latency > action_dt * 1000.0))
+        if len(safety_latency)
+        else None
+    )
     min_h = (
         float(np.min(all_h_values))
         if all_h_values
@@ -3358,6 +3394,18 @@ def main(args):
             f"QP_mean: {avg_qp_ms:.3f} ms"
             if avg_qp_ms is not None
             else "QP_mean: —"
+        ),
+        "latency_scope: safety-layer input to safe joint action; excludes OpenPI, rendering, perception and physics",
+        (
+            f"safety_layer_mean/P95/P99: {safety_mean_ms:.3f} / "
+            f"{safety_p95_ms:.3f} / {safety_p99_ms:.3f} ms"
+            if safety_mean_ms is not None
+            else "safety_layer_mean/P95/P99: —"
+        ),
+        (
+            f"deadline_miss_{action_dt * 1000.0:.1f}ms: {deadline_miss_pct:.2f}%"
+            if deadline_miss_pct is not None
+            else f"deadline_miss_{action_dt * 1000.0:.1f}ms: —"
         ),
         (
             f"h_min: {min_h:.6f}"
@@ -3434,6 +3482,12 @@ if __name__ == "__main__":
         "--fixed_eval",
         action="store_true",
         help="Use fixed screwdriver XY=(0.28,-0.10)",
+    )
+    parser.add_argument(
+        "--eval_seed",
+        default=None,
+        type=int,
+        help="Generate a reproducible multi-position sequence; reuse the seed for paired runs",
     )
     parser.add_argument(
         "--no_obstacle",

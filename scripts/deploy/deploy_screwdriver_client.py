@@ -5,6 +5,7 @@ import time
 import argparse
 import cv2  
 import os   
+import json
 
 # ==========================================
 # 📡 导入 OpenPI 官方 WebSocket 客户端
@@ -53,8 +54,10 @@ SCREWDRIVER_CAPSULE_R = 0.02
 # ==========================================
 last_q_dot = np.zeros(6)
 
-def process_apf_action(model, data, current_action, use_obstacle, step_counter):
+def process_apf_action(model, data, current_action, use_obstacle, step_counter,
+                       obstacle_source="oracle", perceived_capsule=None):
     global last_q_dot
+    safety_t0 = time.perf_counter_ns()
     
     current_qpos = data.qpos[:8].copy()
     q_dot_vla = current_action[:6] - current_qpos[:6]
@@ -90,7 +93,12 @@ def process_apf_action(model, data, current_action, use_obstacle, step_counter):
 
     has_picked_up = screw_pos[2] > 0.235
     obstacle_capsule = None
-    if use_obstacle and pillar_id != -1 and has_picked_up:
+    if use_obstacle and obstacle_source == "groundingdino":
+        if perceived_capsule is None:
+            raise RuntimeError("Grounding DINO geometry is unavailable; refusing unprotected APF execution.")
+        if has_picked_up:
+            obstacle_capsule = perceived_capsule
+    elif use_obstacle and pillar_id != -1 and has_picked_up:
         obs_pos = data.xpos[pillar_id]
         obs_mat = data.xmat[pillar_id].reshape(3, 3)
         obs_z = obs_mat[:, 2]
@@ -160,7 +168,9 @@ def process_apf_action(model, data, current_action, use_obstacle, step_counter):
     debug_info = {
         "min_dist": current_min_dist,
         "influence": current_influence,
-        "q_dot": q_dot_smooth.copy()
+        "q_dot": q_dot_smooth.copy(),
+        "intervention_norm": float(np.linalg.norm(delta_q_apf)),
+        "apf_time_ms": (time.perf_counter_ns() - safety_t0) / 1e6,
     }
     return final_ctrl, active_capsules, obstacle_capsule, is_apf_active, debug_info
 
@@ -375,6 +385,51 @@ def main(args):
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
     renderer_rgb = mujoco.Renderer(model, height=256, width=256)
+    detector, perception_renderer = None, None
+    if args.obstacle_source == "groundingdino" or args.perception_probe:
+        from groundingdino_obstacle import GroundingDINOWrapper, localize_pillar
+        if not args.groundingdino_config or not args.groundingdino_checkpoint:
+            raise ValueError("Specify --groundingdino_config and --groundingdino_checkpoint.")
+        for path in (args.groundingdino_config, args.groundingdino_checkpoint):
+            if not os.path.isfile(os.path.expanduser(path)):
+                raise FileNotFoundError(path)
+        detector = GroundingDINOWrapper(os.path.expanduser(args.groundingdino_config),
+                                       os.path.expanduser(args.groundingdino_checkpoint), args.device)
+        perception_renderer = mujoco.Renderer(model, height=480, width=640)
+    if args.perception_probe:
+        # No viewer or OpenPI connection is needed for the perception check.
+        from datetime import datetime
+        output_dir = os.path.join(BASE_DIR, "recordings", "groundingdino_probe",
+                                  datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+        try:
+            reset_scene(model, data, use_obstacle=True, target_xy=(0.28, -0.10))
+            joint_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "pillar_joint")
+            settle_pillar(model, data, joint_id)
+            capsule, metadata = localize_pillar(
+                model, data, perception_renderer, detector, args.obstacle_text,
+                args.box_threshold, args.text_threshold, output_dir)
+            # Oracle is used only for this diagnostic, never to correct perception.
+            body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "dynamic_pillar")
+            estimated = (capsule["p1"] + capsule["p2"]) / 2
+            corners_local = np.array([[x, y, z] for x in (-0.02, 0.02)
+                                      for y in (-0.02, 0.02) for z in (-0.08, 0.08)])
+            corners = corners_local @ data.xmat[body_id].reshape(3, 3).T + data.xpos[body_id]
+            axis = capsule["p2"] - capsule["p1"]
+            t = np.clip((corners - capsule["p1"]) @ axis / np.dot(axis, axis), 0, 1)
+            corner_distances = np.linalg.norm(corners - (capsule["p1"] + t[:, None] * axis), axis=1)
+            evaluation = {"center_error_m": float(np.linalg.norm(estimated - data.xpos[body_id])),
+                          "minimum_corner_clearance_m": float(capsule["r"] - corner_distances.max()),
+                          "oracle_center": data.xpos[body_id].tolist(),
+                          "estimated_center": estimated.tolist(),
+                          "elapsed_seconds": metadata["elapsed_seconds"]}
+            with open(os.path.join(output_dir, "evaluation.json"), "w", encoding="utf-8") as f:
+                json.dump(evaluation, f, indent=2)
+            print(json.dumps(evaluation, indent=2))
+        finally:
+            print(f"Perception artifacts: {output_dir}")
+            perception_renderer.close()
+            renderer_rgb.close()
+        return
     policy = websocket_client_policy.WebsocketClientPolicy(host=args.host, port=args.port)
     
     target_body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "real_screwdriver")
@@ -445,6 +500,13 @@ def main(args):
         absolute_fixed_xy = (0.28, -0.10) # 设为一个易于 VLA 抓取的中心偏上位置
         fixed_targets = [absolute_fixed_xy for _ in range(args.num_episodes)]
         print(f"📌 [绝对静止] 螺丝刀坐标已焊死在: X={absolute_fixed_xy[0]}, Y={absolute_fixed_xy[1]}")
+    elif args.eval_seed is not None:
+        eval_rng = np.random.default_rng(args.eval_seed)
+        fixed_targets = [
+            (float(eval_rng.uniform(0.20, 0.35)), float(eval_rng.uniform(-0.15, -0.05)))
+            for _ in range(args.num_episodes)
+        ]
+        print(f"🎲 [配对评测] 使用确定性初始位置序列: seed={args.eval_seed}")
 
     with mujoco.viewer.launch_passive(model, data) as viewer:
         for cfg in test_queue:
@@ -452,10 +514,11 @@ def main(args):
             total_max_tau = 0.0
             
             episode_peak_forces = [] 
-            all_impulses = []        
-            succ_impulses = []       
+            all_impulses = []
+            succ_impulses = []
+            all_safety_layer_times = []
             
-            run_folder_name = f"run_{timestamp}_{cfg['mode']}_Case{cfg['case_id']}_{cfg['tag_obs']}_{cfg['tag_apf']}_{cfg['tag_cont']}"
+            run_folder_name = f"run_{timestamp}_{cfg['mode']}_Case{cfg['case_id']}_{cfg['tag_obs']}_{cfg['tag_apf']}_{cfg['tag_cont']}_{args.obstacle_source}"
             base_record_dir = os.path.join(BASE_DIR, "recordings", run_folder_name)
             os.makedirs(base_record_dir, exist_ok=True)
 
@@ -468,9 +531,23 @@ def main(args):
                 
                 current_target_xy = fixed_targets[episode] if fixed_targets is not None else None
                 reset_scene(model, data, use_obstacle=cfg["obs"], target_xy=current_target_xy)
-                if cfg["obs"] and args.settle_before_start:
+                episode_initial_target_xy = data.xpos[target_body_id][:2].copy()
+                if cfg["obs"] and (args.settle_before_start or detector is not None):
                     settle_pillar(model, data, pillar_jnt_id)
                 viewer.sync()
+                perceived_capsule = None
+                if cfg["obs"] and detector is not None:
+                    perception_dir = os.path.join(base_record_dir, f"perception_ep_{episode+1:03d}")
+                    try:
+                        perceived_capsule, _ = localize_pillar(
+                            model, data, perception_renderer, detector, args.obstacle_text,
+                            args.box_threshold, args.text_threshold, perception_dir)
+                    except Exception as exc:
+                        perception_renderer.close()
+                        renderer_rgb.close()
+                        raise RuntimeError(
+                            f"Perception failed; simulation stopped before policy actions. Evidence: {perception_dir}"
+                        ) from exc
                 
                 step_counter, in_box_counter = 0, 0
                 is_success, episode_col = False, False
@@ -480,6 +557,8 @@ def main(args):
                 
                 episode_data = {
                     "steps": [], "min_dist": [], "influence": [], "is_apf_active": [],
+                    "apf_time_ms": [], "contact_controller_time_ms": [],
+                    "safety_layer_time_ms": [], "intervention_norm": [],
                     "tcp_pos": [], "q_dot": [],
                     "q_pos": [], "q_vel": [], "q_acc": [], "q_tau": [],
                     "f_z": [], "is_contact": [],
@@ -518,11 +597,17 @@ def main(args):
                     step_influence = 0.0
                     
                     if cfg["apf"]:
-                        base_ctrl, active_capsules, obs_capsule, is_apf_active, debug_info = process_apf_action(model, data, current_action, cfg["obs"], step_counter)
+                        base_ctrl, active_capsules, obs_capsule, is_apf_active, debug_info = process_apf_action(
+                            model, data, current_action, cfg["obs"], step_counter,
+                            obstacle_source=args.obstacle_source, perceived_capsule=perceived_capsule)
                         step_min_dist = debug_info["min_dist"]
                         step_influence = debug_info["influence"]
                         step_q_dot_vla = debug_info["q_dot"]
+                        step_apf_time_ms = debug_info["apf_time_ms"]
+                        step_intervention_norm = debug_info["intervention_norm"]
                     else:
+                        step_apf_time_ms = 0.0
+                        step_intervention_norm = 0.0
                         step_q_dot_vla = np.clip(raw_q_dot_vla, -0.25, 0.25)
                         base_ctrl = np.zeros(8)
                         base_ctrl[:6] = data.qpos[:6] + step_q_dot_vla
@@ -534,15 +619,17 @@ def main(args):
                     is_contact_ui = False
                     max_f_norm_step = 0.0  
                     max_f_xyz_step = np.zeros(3) 
+                    contact_compute_ns = 0
                     
                     for _ in range(50):
                         current_f_xyz = get_target_table_force(model, data, valid_collision_bodies)
                         current_force_norm = np.linalg.norm(current_f_xyz)
+                        contact_t0 = time.perf_counter_ns() if cfg["contact"] else None
                         
                         if current_force_norm > max_f_norm_step:
                             max_f_norm_step = current_force_norm
                             max_f_xyz_step = current_f_xyz.copy()
-                            
+
                         if current_force_norm > ep_true_peak_f:
                             ep_true_peak_f = current_force_norm
                         ep_true_impulse += current_force_norm * model.opt.timestep
@@ -553,6 +640,7 @@ def main(args):
                             )
                             if wall_active_step: 
                                 is_contact_ui = True
+                            contact_compute_ns += time.perf_counter_ns() - contact_t0
                         else:
                             current_ctrl = base_ctrl.copy()
 
@@ -561,6 +649,12 @@ def main(args):
                         
                         current_tau = data.qfrc_actuator[:6].copy()
                         episode_taus.append(np.max(np.abs(current_tau)))
+                    step_contact_controller_ms = contact_compute_ns / 1e6
+                    if cfg["apf"] or cfg["contact"]:
+                        step_safety_layer_ms = step_apf_time_ms + step_contact_controller_ms
+                        all_safety_layer_times.append(step_safety_layer_ms)
+                    else:
+                        step_safety_layer_ms = np.nan
                     
                     final_step_q_dot = current_ctrl[:6] - data.qpos[:6].copy()
 
@@ -568,6 +662,10 @@ def main(args):
                     episode_data["min_dist"].append(step_min_dist)
                     episode_data["influence"].append(step_influence)
                     episode_data["is_apf_active"].append(is_apf_active)
+                    episode_data["apf_time_ms"].append(step_apf_time_ms)
+                    episode_data["contact_controller_time_ms"].append(step_contact_controller_ms)
+                    episode_data["safety_layer_time_ms"].append(step_safety_layer_ms)
+                    episode_data["intervention_norm"].append(step_intervention_norm)
                     episode_data["tcp_pos"].append(current_tcp)
                     episode_data["q_dot"].append(final_step_q_dot)
                     episode_data["q_pos"].append(data.qpos[:6].copy())
@@ -634,10 +732,22 @@ def main(args):
                 
                 data_filename = os.path.join(save_folder, f"data_ep_{episode+1:03d}.npz")
                 np.savez(data_filename, 
+                         episode_success=np.array(is_success),
+                         episode_knockdown=np.array(episode_col),
+                         episode_peak_contact_force=np.array(ep_true_peak_f),
+                         episode_contact_impulse=np.array(ep_true_impulse),
+                         episode_peak_joint_torque=np.array(ep_max_t),
+                         control_period_s=np.array(50 * model.opt.timestep),
+                         episode_initial_target_xy=episode_initial_target_xy,
+                         obstacle_source=np.array(args.obstacle_source),
                          steps=np.array(episode_data["steps"]),
                          min_dist=np.array(episode_data["min_dist"]),
                          influence=np.array(episode_data["influence"]),
                          is_apf_active=np.array(episode_data["is_apf_active"]),
+                         apf_time_ms=np.array(episode_data["apf_time_ms"]),
+                         contact_controller_time_ms=np.array(episode_data["contact_controller_time_ms"]),
+                         safety_layer_time_ms=np.array(episode_data["safety_layer_time_ms"]),
+                         intervention_norm=np.array(episode_data["intervention_norm"]),
                          tcp_pos=np.array(episode_data["tcp_pos"]),
                          q_dot=np.array(episode_data["q_dot"]),
                          q_pos=np.array(episode_data["q_pos"]),
@@ -652,7 +762,12 @@ def main(args):
                          q_pos_vla=np.array(episode_data["q_pos_vla"]),
                          q_dot_vla=np.array(episode_data["q_dot_vla"])) 
                 
-                print(f"  └─ 回合 {episode+1}/{args.num_episodes}: {'✅ 成功' if is_success else '❌ 失败'} | {'💥 撞倒' if episode_col else '🛡️ 绕开'} | 最大力矩: {ep_max_t:.2f}N·m | 峰值冲力: {ep_true_peak_f:.2f}N | 冲量: {ep_true_impulse:.2f}N·s")
+                latency_text = ""
+                ep_latency = np.asarray(episode_data["safety_layer_time_ms"], dtype=float)
+                ep_latency = ep_latency[np.isfinite(ep_latency)]
+                if len(ep_latency):
+                    latency_text = f" | safety={np.mean(ep_latency):.3f}ms, P95={np.percentile(ep_latency, 95):.3f}ms"
+                print(f"  └─ 回合 {episode+1}/{args.num_episodes}: {'✅ 成功' if is_success else '❌ 失败'} | {'💥 撞倒' if episode_col else '🛡️ 绕开'} | 最大力矩: {ep_max_t:.2f}N·m | 峰值冲力: {ep_true_peak_f:.2f}N | 冲量: {ep_true_impulse:.2f}N·s{latency_text}")
 
             sr = (success_count / args.num_episodes) * 100
             cr = (collision_count / args.num_episodes) * 100
@@ -663,6 +778,12 @@ def main(args):
             avg_imp_succ = np.mean(succ_impulses) if succ_impulses else 0.0
             var_imp_succ = np.var(succ_impulses) if succ_impulses else 0.0
             std_imp_succ = np.std(succ_impulses) if succ_impulses else 0.0
+            latency = np.asarray(all_safety_layer_times, dtype=float)
+            latency_mean = float(np.mean(latency)) if len(latency) else np.nan
+            latency_p95 = float(np.percentile(latency, 95)) if len(latency) else np.nan
+            latency_p99 = float(np.percentile(latency, 99)) if len(latency) else np.nan
+            deadline_ms = 50 * model.opt.timestep * 1000.0
+            deadline_miss = float(100.0 * np.mean(latency > deadline_ms)) if len(latency) else np.nan
             
             report_summary.append({
                 "case_id": cfg["case_id"],
@@ -676,14 +797,19 @@ def main(args):
                 "peak_f_str": f"{avg_peak_f:.2f} N",
                 "imp_all_str": f"{avg_imp_all:.2f}",
                 "imp_succ_str": f"{avg_imp_succ:.2f} ± {std_imp_succ:.2f}",
-                "imp_var_str": f"{var_imp_succ:.2f}"
+                "imp_var_str": f"{var_imp_succ:.2f}",
+                "latency_str": (f"{latency_mean:.3f} / {latency_p95:.3f} / "
+                                f"{latency_p99:.3f} ms" if len(latency) else "—"),
+                "deadline_str": f"{deadline_miss:.2f}%" if len(latency) else "—",
             })
 
     summary_str = f"\n======================================= 📜 最终消融实验总结表 [多模态协同验证] =======================================\n"
-    summary_str += "| 编号 | 力控策略 | 障碍物状态 | 宏观避障策略 | 末端接触保护 | 任务成功率(SR) | 碰撞率(CR) | 平均最大力矩 | 瞬时冲力峰值 | 冲量(全量) | 成功冲量(均值±标准差) | 成功冲量方差 |\n"
-    summary_str += "| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |\n"
+    summary_str += f"Obstacle source: {args.obstacle_source}\n"
+    summary_str += "Latency scope: total safety computation (APF + 50 contact-protection substeps when enabled); excludes OpenPI, rendering, perception and physics.\n"
+    summary_str += "| 编号 | 力控策略 | 障碍物状态 | 宏观避障策略 | 末端接触保护 | 任务成功率(SR) | 碰撞率(CR) | 平均最大力矩 | 瞬时冲力峰值 | 冲量(全量) | 成功冲量(均值±标准差) | 成功冲量方差 | 安全算法总延迟 mean/P95/P99 | 50ms超时率 |\n"
+    summary_str += "| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |\n"
     for res in report_summary:
-        summary_str += f"| Case {res['case_id']} | {res['mode_str']} | {res['obs_str']} | {res['apf_str']} | {res['cont_str']} | {res['sr_str']} | {res['cr_str']} | {res['tau_str']} | {res['peak_f_str']} | {res['imp_all_str']} | {res['imp_succ_str']} | {res['imp_var_str']} |\n"
+        summary_str += f"| Case {res['case_id']} | {res['mode_str']} | {res['obs_str']} | {res['apf_str']} | {res['cont_str']} | {res['sr_str']} | {res['cr_str']} | {res['tau_str']} | {res['peak_f_str']} | {res['imp_all_str']} | {res['imp_succ_str']} | {res['imp_var_str']} | {res['latency_str']} | {res['deadline_str']} |\n"
     summary_str += "======================================================================================================================\n"
 
     print(summary_str)
@@ -692,6 +818,9 @@ def main(args):
     with open(txt_path, "w", encoding="utf-8") as f:
         f.write(summary_str)
     print(f"📝 总结报告已同步保存至: {txt_path}\n")
+    renderer_rgb.close()
+    if perception_renderer is not None:
+        perception_renderer.close()
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="VLA 宏微观安全保护策略部署脚本")
@@ -700,7 +829,18 @@ if __name__ == "__main__":
     p.add_argument("--num_episodes", default=100, type=int, help="每个工况需要测试的次数（默认：100）")
     p.add_argument("--case", default=0, type=int, help="指定运行某个工况(1-8)。如果为0则按顺序运行全部8个工况。")
     p.add_argument("--fixed_eval", action="store_true", help="启用严格对照模式（每次生成的物体位置序列固定）")
+    p.add_argument("--eval_seed", type=int, default=None,
+                   help="生成可复现的多位置评测序列；两套算法使用相同 seed 可逐回合配对")
     p.add_argument("--settle_before_start", action="store_true", help="复位后等待障碍支柱稳定，再开始感知、推理和录像")
+    p.add_argument("--obstacle_source", choices=["oracle", "groundingdino"], default="oracle",
+                   help="障碍物来源；groundingdino 每回合初始化定位，要求已知尺寸直立静止柱体")
+    p.add_argument("--perception_probe", action="store_true", help="仅检查 Grounding DINO RGB-D 感知并保存结果，不连接 OpenPI")
+    p.add_argument("--groundingdino_config", help="Grounding DINO 配置文件路径")
+    p.add_argument("--groundingdino_checkpoint", help="Grounding DINO 权重文件路径")
+    p.add_argument("--obstacle_text", default="red pillar.", help="Grounding DINO 检测文字描述")
+    p.add_argument("--device", choices=["cuda", "cpu"], default="cuda")
+    p.add_argument("--box_threshold", type=float, default=0.35)
+    p.add_argument("--text_threshold", type=float, default=0.25)
     
     p.add_argument("--control_mode", type=str, default="both", choices=["admittance", "impedance", "both"], help="选择末端力控策略: admittance, impedance 或 both (自动去重执行完备的12组)")
     
