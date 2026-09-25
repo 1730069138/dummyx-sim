@@ -1,5 +1,5 @@
 """
-VLSA / AEGIS V2.14 action-space-explicit adaptation for the MuJoCo screwdriver scene.
+VLSA / AEGIS action-space-explicit adaptation for the MuJoCo screwdriver scene.
 
 What V2 adds over V1.1
 ----------------------
@@ -2893,7 +2893,7 @@ def main(args):
     qp_failures = 0
 
     print("\n" + "=" * 90)
-    print("VLSA/AEGIS V2.14 — explicit Cartesian/joint action-space adapter")
+    print("VLSA/AEGIS — explicit Cartesian/joint action-space adapter")
     print(
         f"mode={args.mode} | obstacle={use_obstacle} | "
         f"obstacle_source={args.obstacle_source} | "
@@ -3787,7 +3787,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
-            "VLSA/AEGIS V2.14: explicit Cartesian/joint action-space adapter "
+            "VLSA/AEGIS: explicit Cartesian/joint action-space adapter "
             "for screwdriver pick-and-place"
         )
     )
