@@ -1,5 +1,5 @@
 """
-VLSA / AEGIS V2.12 reproduction for the user's MuJoCo screwdriver pick-and-place scene.
+VLSA / AEGIS V2.14 action-space-explicit adaptation for the MuJoCo screwdriver scene.
 
 What V2 adds over V1.1
 ----------------------
@@ -280,12 +280,29 @@ def damped_pinv(jacobian, rho=DLS_RHO):
 
 
 class AEGISFullActionLayer:
-    def __init__(self, obstacle_center, obstacle_rotation, obstacle_axes, action_dt):
+    def __init__(
+        self,
+        obstacle_center,
+        obstacle_rotation,
+        obstacle_axes,
+        action_dt,
+        eef_axes=None,
+        max_linear_correction=None,
+        max_angular_correction=None,
+    ):
         self.p_obs = np.asarray(obstacle_center, dtype=np.float64).copy()
         self.r_obs = np.asarray(obstacle_rotation, dtype=np.float64).copy()
         self.q_obs = np.asarray(obstacle_axes, dtype=np.float64).copy()
         self.action_dt = float(action_dt)
+        self.eef_axes = (
+            Q_EEF_DIAG.copy()
+            if eef_axes is None
+            else np.asarray(eef_axes, dtype=np.float64).copy()
+        )
+        self.max_linear_correction = max_linear_correction
+        self.max_angular_correction = max_angular_correction
         self.z = None
+        self.attached_z = None
 
     def reset(self, eef_center):
         direction = self.p_obs - np.asarray(eef_center, dtype=np.float64)
@@ -304,7 +321,7 @@ class AEGISFullActionLayer:
             self.reset(eef_center)
         return compute_h_ellipsoids(
             eef_center,
-            Q_EEF_DIAG,
+            self.eef_axes,
             eef_rotation,
             self.p_obs,
             self.q_obs,
@@ -326,7 +343,7 @@ class AEGISFullActionLayer:
 
         a_v, a_omega, a_u_z, h, mu_row = compute_cbf_coeffs_world_twist(
             eef_center,
-            Q_EEF_DIAG,
+            self.eef_axes,
             eef_rotation,
             self.p_obs,
             self.q_obs,
@@ -382,6 +399,22 @@ class AEGISFullActionLayer:
             + CBF_ALPHA * h
             >= 0.0
         ]
+        if self.max_linear_correction is not None:
+            linear_delta = u[:3] - v_nominal_world
+            constraints.extend(
+                [
+                    linear_delta <= self.max_linear_correction,
+                    linear_delta >= -self.max_linear_correction,
+                ]
+            )
+        if self.max_angular_correction is not None:
+            angular_delta = u[3:6] - omega_nominal_world
+            constraints.extend(
+                [
+                    angular_delta <= self.max_angular_correction,
+                    angular_delta >= -self.max_angular_correction,
+                ]
+            )
         problem = cp.Problem(objective, constraints)
 
         t0 = time.perf_counter()
@@ -481,6 +514,128 @@ class AEGISFullActionLayer:
             ),
         }
 
+    def filter_joint_target(
+        self,
+        eef_center,
+        eef_rotation,
+        j_pos,
+        j_rot,
+        qdot_nom,
+        qdot_actual,
+        servo_response,
+        attached_geometry=None,
+    ):
+        """Solve the CBF QP directly in the executable six-joint action space."""
+        if self.z is None:
+            self.reset(eef_center)
+
+        geometries = [
+            (eef_center, self.eef_axes, eef_rotation, j_pos, j_rot, self.z, "eef")
+        ]
+        if attached_geometry is not None:
+            attached_center, attached_axes, attached_rotation = attached_geometry
+            if self.attached_z is None:
+                direction = self.p_obs - attached_center
+                norm = np.linalg.norm(direction)
+                self.attached_z = direction / norm if norm > 1e-9 else np.array([1.0, 0.0, 0.0])
+            offset = attached_center - eef_center
+            attached_j_pos = j_pos - vector_hat(offset) @ j_rot
+            geometries.append(
+                (attached_center, attached_axes, attached_rotation, attached_j_pos, j_rot, self.attached_z, "attached")
+            )
+
+        qdot_nom = np.asarray(qdot_nom, dtype=np.float64)
+        qdot_actual = np.asarray(qdot_actual, dtype=np.float64)
+        qdot_cmd = cp.Variable(6)
+        auxiliary = cp.Variable(3 * len(geometries))
+        cbf_slack = cp.Variable(len(geometries), nonneg=True)
+        qdot_pred = qdot_actual + float(servo_response) * (qdot_cmd - qdot_actual)
+        objective = cp.Minimize(
+            cp.sum_squares(qdot_cmd - qdot_nom)
+            + QP_W_Z * cp.sum_squares(auxiliary)
+            + 1e4 * cp.sum_squares(cbf_slack)
+        )
+        constraints = []
+        geometry_debug = []
+        for index, (center, axes, rotation, jp, jr, z_state, name) in enumerate(geometries):
+            a_v, a_omega, a_u_z, h, mu_row = compute_cbf_coeffs_world_twist(
+                center, axes, rotation, self.p_obs, self.q_obs, self.r_obs, z_state
+            )
+            u_z = auxiliary[3 * index : 3 * index + 3]
+            constraints.append(
+                a_v @ (jp @ qdot_pred)
+                + a_omega @ (jr @ qdot_pred)
+                + a_u_z @ u_z
+                + CBF_ALPHA * h
+                + cbf_slack[index]
+                >= 0.0
+            )
+            geometry_debug.append((name, h, mu_row, a_v, a_omega, a_u_z))
+
+        delta_qdot = qdot_cmd - qdot_nom
+        if self.max_linear_correction is not None:
+            constraints.extend([
+                j_pos @ delta_qdot <= self.max_linear_correction,
+                j_pos @ delta_qdot >= -self.max_linear_correction,
+            ])
+        if self.max_angular_correction is not None:
+            constraints.extend([
+                j_rot @ delta_qdot <= self.max_angular_correction,
+                j_rot @ delta_qdot >= -self.max_angular_correction,
+            ])
+
+        problem = cp.Problem(objective, constraints)
+        t0 = time.perf_counter()
+        try:
+            problem.solve(solver=cp.OSQP, warm_start=True, verbose=False)
+            qp_ok = qdot_cmd.value is not None and problem.status in (
+                cp.OPTIMAL, cp.OPTIMAL_INACCURATE
+            )
+        except Exception:
+            qp_ok = False
+        qp_ms = (time.perf_counter() - t0) * 1000.0
+        qdot_safe = qdot_nom.copy() if not qp_ok else np.asarray(qdot_cmd.value).ravel()
+        auxiliary_value = (
+            np.zeros(3 * len(geometries))
+            if not qp_ok
+            else np.asarray(auxiliary.value).ravel()
+        )
+        slack_value = (
+            np.full(len(geometries), np.nan)
+            if not qp_ok
+            else np.asarray(cbf_slack.value).ravel()
+        )
+        for index, (name, _h, _mu, *_rest) in enumerate(geometry_debug):
+            z_old = self.z if name == "eef" else self.attached_z
+            u_z = auxiliary_value[3 * index : 3 * index + 3]
+            z_new = z_old + self.action_dt * project_tangent(z_old) @ u_z
+            z_new /= np.linalg.norm(z_new) + 1e-12
+            if name == "eef":
+                self.z = z_new
+            else:
+                self.attached_z = z_new
+
+        v_nom = j_pos @ qdot_nom
+        omega_nom = j_rot @ qdot_nom
+        v_safe = j_pos @ qdot_safe
+        omega_safe = j_rot @ qdot_safe
+        active = min(geometry_debug, key=lambda item: item[1])
+        return qdot_safe, {
+            "h": float(active[1]),
+            "qp_ok": qp_ok,
+            "qp_status": str(problem.status),
+            "qp_ms": qp_ms,
+            "intervention": float(np.linalg.norm(np.hstack([v_safe - v_nom, omega_safe - omega_nom]))),
+            "z": self.z.copy(),
+            "u_z": auxiliary_value[:3].copy(),
+            "v_nom": v_nom,
+            "v_safe": v_safe,
+            "omega_nom": omega_nom,
+            "omega_safe": omega_safe,
+            "attached_h": next((float(item[1]) for item in geometry_debug if item[0] == "attached"), np.nan),
+            "cbf_slack_max": float(np.nanmax(slack_value)),
+        }
+
 
 # =============================================================================
 # MuJoCo kinematics / geometry
@@ -507,6 +662,40 @@ def build_oracle_obstacle_ellipsoid(data, pillar_body_id):
     p = data.xpos[pillar_body_id].copy()
     r = get_body_rotation(data, pillar_body_id)
     return p, r, Q_PILLAR_ORACLE_DIAG.copy()
+
+
+def build_body_mesh_ellipsoid(model, body_id):
+    """Return a conservative PCA-oriented ellipsoid over collision-mesh vertices."""
+    point_sets = []
+    for geom_id in range(model.ngeom):
+        if model.geom_bodyid[geom_id] != body_id or model.geom_group[geom_id] != 3:
+            continue
+        mesh_id = model.geom_dataid[geom_id]
+        if mesh_id < 0:
+            continue
+        vertex_start = model.mesh_vertadr[mesh_id]
+        vertex_count = model.mesh_vertnum[mesh_id]
+        vertices = model.mesh_vert[vertex_start : vertex_start + vertex_count]
+        rotation_flat = np.empty(9, dtype=np.float64)
+        mujoco.mju_quat2Mat(rotation_flat, model.geom_quat[geom_id])
+        rotation = rotation_flat.reshape(3, 3)
+        point_sets.append(vertices @ rotation.T + model.geom_pos[geom_id])
+    if not point_sets:
+        raise ValueError("Body has no collision mesh geometry.")
+    points = np.vstack(point_sets)
+    mean = points.mean(axis=0)
+    covariance = np.cov(points - mean, rowvar=False)
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance)
+    rotation = eigenvectors[:, np.argsort(eigenvalues)[::-1]]
+    if np.linalg.det(rotation) < 0.0:
+        rotation[:, -1] *= -1.0
+    projected = (points - mean) @ rotation
+    lower = projected.min(axis=0)
+    upper = projected.max(axis=0)
+    center = mean + rotation @ (0.5 * (lower + upper))
+    # sqrt(3) times an oriented box's half extents encloses every box corner.
+    axes = np.sqrt(3.0) * 0.5 * (upper - lower)
+    return center, rotation, axes
 
 
 # =============================================================================
@@ -553,7 +742,7 @@ def update_debug_ellipsoids(
         viewer.user_scn,
         eef_center,
         eef_rotation,
-        Q_EEF_DIAG,
+        safety_layer.eef_axes if safety_layer is not None else Q_EEF_DIAG,
         [0.05, 0.35, 1.0, 0.28],
     )
 
@@ -2077,6 +2266,9 @@ def adapt_joint_target_through_vlsa(
     safety_layer,
     link7_id,
     action_dt,
+    servo_response=0.4,
+    attached_geometry=None,
+    action_space="cartesian",
 ):
     safety_t0 = time.perf_counter_ns()
     q = data.qpos[:6].copy()
@@ -2096,8 +2288,6 @@ def adapt_joint_target_through_vlsa(
     )
     j_pos = jacp_full[:, :6]
     j_rot = jacr_full[:, :6]
-    j_twist = np.vstack([j_pos, j_rot])
-
     v_nom = j_pos @ qdot_nom
     omega_nom = j_rot @ qdot_nom
 
@@ -2107,21 +2297,36 @@ def adapt_joint_target_through_vlsa(
     v_actual = j_pos @ qdot_actual
     omega_actual = j_rot @ qdot_actual
 
-    v_safe, omega_safe, debug = safety_layer.filter(
-        eef_center,
-        eef_rotation,
-        v_nom,
-        omega_nom,
-        v_actual,
-        omega_actual,
-    )
-
-    delta_twist = np.hstack(
-        [v_safe - v_nom, omega_safe - omega_nom]
-    )
-    delta_qdot = damped_pinv(j_twist, DLS_RHO) @ delta_twist
-
-    q_delta_safe = (qdot_nom + delta_qdot) * action_dt
+    if action_space == "cartesian":
+        v_safe, omega_safe, debug = safety_layer.filter(
+            eef_center,
+            eef_rotation,
+            v_nom,
+            omega_nom,
+            v_actual,
+            omega_actual,
+        )
+        delta_twist = np.hstack([v_safe - v_nom, omega_safe - omega_nom])
+        delta_qdot = damped_pinv(np.vstack([j_pos, j_rot]), DLS_RHO) @ delta_twist
+        qdot_safe = qdot_nom + delta_qdot
+        debug["attached_h"] = np.nan
+        debug["cbf_slack_max"] = 0.0
+    elif action_space == "joint":
+        qdot_safe, debug = safety_layer.filter_joint_target(
+            eef_center,
+            eef_rotation,
+            j_pos,
+            j_rot,
+            qdot_nom,
+            qdot_actual,
+            servo_response,
+            attached_geometry=attached_geometry,
+        )
+        v_safe = debug["v_safe"]
+        omega_safe = debug["omega_safe"]
+    else:
+        raise ValueError(f"Unknown VLSA action space: {action_space}")
+    q_delta_safe = qdot_safe * action_dt
     q_delta_safe = np.clip(
         q_delta_safe,
         -MAX_JOINT_DELTA,
@@ -2147,6 +2352,42 @@ def adapt_joint_target_through_vlsa(
             "omega_actual_start": omega_actual.copy(),
             "q_delta_nom": q_delta_nom.copy(),
             "q_delta_safe": q_delta_safe.copy(),
+        }
+    )
+    a_v, a_omega, a_u_z, h, _ = compute_cbf_coeffs_world_twist(
+        eef_center,
+        safety_layer.eef_axes,
+        eef_rotation,
+        safety_layer.p_obs,
+        safety_layer.q_obs,
+        safety_layer.r_obs,
+        safety_layer.z,
+    )
+    response = servo_response if action_space == "joint" else 1.0
+    qdot_effective = qdot_actual + response * (qdot_safe - qdot_actual)
+    v_effective_safe = j_pos @ qdot_effective
+    omega_effective_safe = j_rot @ qdot_effective
+    hdot_safe = float(
+        a_v @ v_effective_safe
+        + a_omega @ omega_effective_safe
+        + a_u_z @ debug["u_z"]
+    )
+    hdot_actual_nom = float(
+        a_v @ v_actual + a_omega @ omega_actual + a_u_z @ debug["u_z"]
+    )
+    debug.update(
+        {
+            "h": min(float(h), float(debug["h"])),
+            "h_euler_pred": float(h + action_dt * hdot_safe),
+            "hdot_safe": hdot_safe,
+            "hdot_actual_nom": hdot_actual_nom,
+            "cbf_lhs_safe": float(hdot_safe + CBF_ALPHA * h),
+            "cbf_lhs_actual_nom": float(hdot_actual_nom + CBF_ALPHA * h),
+            "v_effective_safe": v_effective_safe,
+            "omega_effective_safe": omega_effective_safe,
+            "servo_twist_gap": float(
+                np.linalg.norm(np.hstack([v_actual - v_nom, omega_actual - omega_nom]))
+            ),
         }
     )
     # Same boundary used by the APF benchmark: safety-layer input to safe action.
@@ -2509,6 +2750,15 @@ def main(args):
     renderer = mujoco.Renderer(model, height=256, width=256)
 
     action_dt = SERVO_SUBSTEPS * model.opt.timestep
+    if not 0.0 < args.eef_ellipsoid_scale <= 1.0:
+        raise ValueError("--eef_ellipsoid_scale must be in (0, 1].")
+    if args.max_linear_correction <= 0.0:
+        raise ValueError("--max_linear_correction must be positive.")
+    if args.max_angular_correction <= 0.0:
+        raise ValueError("--max_angular_correction must be positive.")
+    if not 0.0 < args.servo_response <= 1.0:
+        raise ValueError("--servo_response must be in (0, 1].")
+    eef_axes = Q_EEF_DIAG * args.eef_ellipsoid_scale
 
     target_body_id = mujoco.mj_name2id(
         model, mujoco.mjtObj.mjOBJ_BODY, "real_screwdriver"
@@ -2531,6 +2781,9 @@ def main(args):
 
     if min(target_body_id, pillar_body_id, tcp_id, link7_id) < 0:
         raise RuntimeError("Required MuJoCo body/site names are missing.")
+    screwdriver_local_center, screwdriver_local_rotation, screwdriver_axes = (
+        build_body_mesh_ellipsoid(model, target_body_id)
+    )
 
     valid_collision_bodies = [target_body_id, link7_id]
     if link8_id != -1:
@@ -2621,6 +2874,10 @@ def main(args):
     )
 
     success_count = 0
+    placement_success_count = 0
+    retained_placement_success_count = 0
+    safe_placement_success_count = 0
+    safe_retained_placement_success_count = 0
     collision_count = 0
     perception_failures = 0
     episode_peak_forces = []
@@ -2631,16 +2888,28 @@ def main(args):
     all_qp_times = []
     all_safety_layer_times = []
     all_h_values = []
+    all_cbf_slack = []
+    all_attached_h = []
     qp_failures = 0
 
     print("\n" + "=" * 90)
-    print("VLSA/AEGIS V2.12 — servo-aware qvel CBF adapter + stabilized perception")
+    print("VLSA/AEGIS V2.14 — explicit Cartesian/joint action-space adapter")
     print(
         f"mode={args.mode} | obstacle={use_obstacle} | "
         f"obstacle_source={args.obstacle_source} | "
         f"episodes={args.num_episodes}"
     )
-    print(f"EEF ellipsoid semi-axes: {Q_EEF_DIAG} m")
+    print(f"EEF ellipsoid semi-axes: {eef_axes} m")
+    print(
+        "Intervention limits: "
+        f"linear=±{args.max_linear_correction:.3f} m/s per axis | "
+        f"angular=±{args.max_angular_correction:.3f} rad/s per axis"
+    )
+    print(
+        f"VLSA action space: {args.vlsa_action_space} | "
+        f"joint-mode servo response: {args.servo_response:.3f} | "
+        f"attached screwdriver axes: {screwdriver_axes} m"
+    )
     print(f"EEF center in link7:     {EEF_CENTER_IN_LINK7} m")
     if args.show_ellipsoids:
         print(
@@ -2751,6 +3020,9 @@ def main(args):
                         r_obs,
                         q_obs,
                         action_dt,
+                        eef_axes=eef_axes,
+                        max_linear_correction=args.max_linear_correction,
+                        max_angular_correction=args.max_angular_correction,
                     )
                     safety_layer.reset(eef_center0)
 
@@ -2765,9 +3037,12 @@ def main(args):
 
             step_counter = 0
             in_box_counter = 0
+            placement_counter = 0
             is_success = False
+            is_placement_success = False
             episode_collision = False
             action_chunk_cache = None
+            screwdriver_attached = False
             video_frames = []
 
             ep_peak_force = 0.0
@@ -2790,6 +3065,9 @@ def main(args):
             ep_omega_achieved = []
             ep_interventions = []
             ep_qp_ok = []
+            ep_cbf_slack = []
+            ep_attached_h = []
+            ep_screwdriver_attached = []
             ep_v_nom = []
             ep_v_safe = []
             ep_omega_nom = []
@@ -2834,7 +3112,7 @@ def main(args):
                             "observation/image": img_external,
                             "observation/wrist_image": img_wrist,
                             "observation/state": data.qpos[:8].copy(),
-                            "prompt": TASK_PROMPT,
+                            "prompt": args.task_prompt,
                         }
                     )
                     action_chunk_cache = result["actions"]
@@ -2855,6 +3133,18 @@ def main(args):
                 screw_z_before = float(data.xpos[target_body_id][2])
                 if pickup_step is None and screw_z_before > args.pickup_z:
                     pickup_step = int(step_counter)
+                tcp_screw_distance = float(
+                    np.linalg.norm(data.site_xpos[tcp_id] - data.xpos[target_body_id])
+                )
+                if (
+                    not screwdriver_attached
+                    and screw_z_before > args.pickup_z
+                    and tcp_screw_distance < 0.08
+                    and current_action[6] <= 0.02
+                ):
+                    screwdriver_attached = True
+                elif screwdriver_attached and current_action[6] > 0.02:
+                    screwdriver_attached = False
 
                 gate_blocks_cbf = (
                     args.mode == "vlsa"
@@ -2863,6 +3153,15 @@ def main(args):
                 )
 
                 if safety_layer is not None and not gate_blocks_cbf:
+                    attached_geometry = None
+                    if screwdriver_attached and args.vlsa_action_space == "joint":
+                        screwdriver_rotation = get_body_rotation(data, target_body_id)
+                        attached_geometry = (
+                            data.xpos[target_body_id]
+                            + screwdriver_rotation @ screwdriver_local_center,
+                            screwdriver_axes,
+                            screwdriver_rotation @ screwdriver_local_rotation,
+                        )
                     # When the diagnostic gate opens, initialize the CBF auxiliary
                     # state from the CURRENT EEF pose. This prevents stale z-state
                     # evolution during the gated reach phase.
@@ -2896,6 +3195,9 @@ def main(args):
                         safety_layer,
                         link7_id,
                         action_dt,
+                        servo_response=args.servo_response,
+                        attached_geometry=attached_geometry,
+                        action_space=args.vlsa_action_space,
                     )
 
                     if args.mode == "shadow":
@@ -2914,6 +3216,9 @@ def main(args):
                     ep_intervention_step.append(step_counter)
                     ep_h_step.append(step_counter)
                     ep_qp_ok.append(debug["qp_ok"])
+                    ep_cbf_slack.append(debug["cbf_slack_max"])
+                    ep_attached_h.append(debug["attached_h"])
+                    ep_screwdriver_attached.append(screwdriver_attached)
                     ep_v_nom.append(debug["v_nom"])
                     ep_v_safe.append(debug["v_safe"])
                     ep_omega_nom.append(debug["omega_nom"])
@@ -3112,6 +3417,9 @@ def main(args):
                     if in_box and is_released
                     else 0
                 )
+                placement_counter = placement_counter + 1 if in_box else 0
+                if placement_counter >= 5:
+                    is_placement_success = True
 
                 update_debug_ellipsoids(
                     viewer,
@@ -3132,6 +3440,15 @@ def main(args):
 
             if is_success:
                 success_count += 1
+            if is_placement_success:
+                placement_success_count += 1
+                if not episode_collision:
+                    safe_placement_success_count += 1
+            is_retained_placement_success = placement_counter >= 5
+            if is_retained_placement_success:
+                retained_placement_success_count += 1
+                if not episode_collision:
+                    safe_retained_placement_success_count += 1
             if episode_collision:
                 collision_count += 1
 
@@ -3152,6 +3469,8 @@ def main(args):
                 all_qp_times.extend(ep_qp_times)
                 all_safety_layer_times.extend(ep_safety_layer_times)
                 all_h_values.extend(ep_h)
+                all_cbf_slack.extend(ep_cbf_slack)
+                all_attached_h.extend(ep_attached_h)
 
             save_folder = os.path.join(
                 record_root,
@@ -3170,6 +3489,10 @@ def main(args):
                     f"data_ep_{episode + 1:03d}.npz",
                 ),
                 episode_success=np.array(is_success),
+                episode_placement_success=np.array(is_placement_success),
+                episode_retained_placement_success=np.array(
+                    is_retained_placement_success
+                ),
                 episode_knockdown=np.array(episode_collision),
                 episode_peak_contact_force=np.array(ep_peak_force),
                 episode_contact_impulse=np.array(ep_impulse),
@@ -3209,9 +3532,18 @@ def main(args):
                 safety_layer_time_ms=np.asarray(ep_safety_layer_times),
                 control_period_s=np.array(action_dt),
                 qp_ok=np.asarray(ep_qp_ok, dtype=bool),
+                cbf_slack_max=np.asarray(ep_cbf_slack),
+                attached_h=np.asarray(ep_attached_h),
+                screwdriver_attached=np.asarray(ep_screwdriver_attached, dtype=bool),
                 intervention_norm=np.asarray(ep_interventions),
                 z_state=np.asarray(ep_z),
-                eef_axes=Q_EEF_DIAG,
+                eef_axes=eef_axes,
+                eef_ellipsoid_scale=np.array(args.eef_ellipsoid_scale),
+                max_linear_correction=np.array(args.max_linear_correction),
+                max_angular_correction=np.array(args.max_angular_correction),
+                servo_response=np.array(args.servo_response),
+                vlsa_action_space=np.array(args.vlsa_action_space),
+                task_prompt=np.array(args.task_prompt),
                 eef_center_in_link7=EEF_CENTER_IN_LINK7,
                 obstacle_center=np.asarray(p_obs),
                 obstacle_rotation=np.asarray(r_obs),
@@ -3307,6 +3639,14 @@ def main(args):
 
     episodes_done = max(len(episode_peak_forces), 1)
     sr = 100.0 * success_count / episodes_done
+    placement_sr = 100.0 * placement_success_count / episodes_done
+    retained_placement_sr = (
+        100.0 * retained_placement_success_count / episodes_done
+    )
+    safe_placement_sr = 100.0 * safe_placement_success_count / episodes_done
+    safe_retained_placement_sr = (
+        100.0 * safe_retained_placement_success_count / episodes_done
+    )
     cr = (
         100.0 * collision_count / episodes_done
         if use_obstacle
@@ -3372,6 +3712,10 @@ def main(args):
         f"episodes: {episodes_done}",
         f"perception_failures: {perception_failures}",
         f"SR: {sr:.1f}%",
+        f"placement_ever_SR: {placement_sr:.1f}%",
+        f"retained_placement_SR: {retained_placement_sr:.1f}%",
+        f"safe_placement_ever_SR: {safe_placement_sr:.1f}%",
+        f"safe_retained_placement_SR: {safe_retained_placement_sr:.1f}%",
         f"CR: {cr:.1f}%" if cr is not None else "CR: —",
         (
             f"f_hat_success: {avg_peak_f_succ:.2f} N"
@@ -3413,6 +3757,22 @@ def main(args):
             else "h_min: —"
         ),
         f"QP_failures: {qp_failures}",
+        (
+            f"cbf_slack_max: {np.nanmax(all_cbf_slack):.6f}"
+            if all_cbf_slack
+            else "cbf_slack_max: —"
+        ),
+        (
+            f"attached_h_min: {np.nanmin(all_attached_h):.6f}"
+            if np.isfinite(np.asarray(all_attached_h, dtype=float)).any()
+            else "attached_h_min: —"
+        ),
+        f"eef_ellipsoid_scale: {args.eef_ellipsoid_scale:.3f}",
+        f"max_linear_correction: {args.max_linear_correction:.3f} m/s per axis",
+        f"max_angular_correction: {args.max_angular_correction:.3f} rad/s per axis",
+        f"servo_response: {args.servo_response:.3f}",
+        f"vlsa_action_space: {args.vlsa_action_space}",
+        f"task_prompt: {args.task_prompt}",
         "=======================================================",
     ]
     summary = "\n".join(lines)
@@ -3427,7 +3787,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
-            "VLSA/AEGIS V2.12: servo-aware qvel CBF adapter + execution diagnostics + stabilized perception "
+            "VLSA/AEGIS V2.14: explicit Cartesian/joint action-space adapter "
             "for screwdriver pick-and-place"
         )
     )
@@ -3453,6 +3813,57 @@ if __name__ == "__main__":
         default=600,
         type=int,
         help="Maximum policy steps per episode",
+    )
+    parser.add_argument(
+        "--eef_ellipsoid_scale",
+        default=0.8,
+        type=float,
+        help=(
+            "Scale the DummyX EEF safety ellipsoid to shorten the intervention "
+            "distance. Must be in (0, 1]. Default: 0.8."
+        ),
+    )
+    parser.add_argument(
+        "--max_linear_correction",
+        default=0.08,
+        type=float,
+        help=(
+            "Maximum per-axis translational velocity correction imposed inside "
+            "the QP, in m/s. Default: 0.08."
+        ),
+    )
+    parser.add_argument(
+        "--max_angular_correction",
+        default=0.08,
+        type=float,
+        help=(
+            "Maximum per-axis angular velocity correction imposed inside the QP, "
+            "in rad/s. Default: 0.08."
+        ),
+    )
+    parser.add_argument(
+        "--servo_response",
+        default=0.4,
+        type=float,
+        help=(
+            "Fraction of a commanded joint-velocity change predicted to be "
+            "realized by the position servo in one action interval. Default: 0.4."
+        ),
+    )
+    parser.add_argument(
+        "--vlsa_action_space",
+        choices=["cartesian", "joint"],
+        default="cartesian",
+        help=(
+            "cartesian: VLSA optimizes only the 6D EEF twist, then the executor "
+            "maps it to joint targets; joint: diagnostic direct joint-space QP. "
+            "Default: cartesian."
+        ),
+    )
+    parser.add_argument(
+        "--task_prompt",
+        default=TASK_PROMPT,
+        help="Language instruction sent to OpenPI for every policy inference.",
     )
     parser.add_argument(
         "--settle_before_start",
