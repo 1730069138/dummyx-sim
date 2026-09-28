@@ -1,0 +1,100 @@
+{
+  "scope": "fixed AGV base with replacement arm, factory preview and contact-based scripted pick-and-place demo",
+  "source_base_xml": "/home/jun/xunjian_vla_workspace/models/xunjian_arm.xml",
+  "source_mount_urdf": "/home/jun/xunjian_vla_workspace/models/xunjian_arm.urdf",
+  "source_mesh": "/home/jun/xunjian_vla_workspace/assets/meshes/base_link.STL",
+  "copied_mesh_sha256": "147c6fded3a50945934e5dc5933cadedfe076f37e4665272d438d806011d6fb3",
+  "historical_arm_source_mjcf": "models/hardstop_arm/robot.xml (removed after AGV mesh migration)",
+  "arm_source_sha256": "0c6f3dd868649fa67bf7f6e210a88df98b991b149985244f566c22033259e166",
+  "mount_xyz_m": [
+    0.12866757754516,
+    -0.00100000000000002,
+    0.732
+  ],
+  "mount_rpy_rad": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "agv_ground_lift_m": 0.06991460919380188,
+  "agv_mesh_bounds_m": [
+    [
+      -0.3459605872631073,
+      -0.30300000309944153,
+      -0.06991460919380188
+    ],
+    [
+      0.3459761142730713,
+      0.30300000309944153,
+      0.7320000529289246
+    ]
+  ],
+  "assembly_note": "Reused original joint0 mounting frame without an extra arm yaw or adapter plate; bolt alignment not verified.",
+  "default_pose": "models/agv_dummyx/z_pose.json",
+  "model_name": "agv_dummyx",
+  "factory_layout": {
+    "front_axis": "+X",
+    "workbench_top_height_m": 0.8,
+    "workbench_size_xy_m": [
+      0.7,
+      1.2
+    ],
+    "workbench_center_x_m": 0.7109761142730713,
+    "agv_to_table_gap_m": 0.015,
+    "lights_cast_shadow": false
+  },
+  "task_props": {
+    "screwdriver": "procedural 0.19 m flat screwdriver, mass 0.10 kg assumed",
+    "screwdriver_initial_xyz_m": [
+      0.415,
+      -0.16,
+      0.8135
+    ],
+    "bin_base_xyz_m": [
+      0.471,
+      0.253,
+      0.8
+    ],
+    "side_convention": "Looking from vehicle rear toward +X: bin left (+Y), screwdriver right (-Y)",
+    "bin_body_size_xyz_m": [
+      0.22,
+      0.23,
+      0.053
+    ],
+    "screwdriver_yaw_deg": 90,
+    "screwdriver_tip_direction": "+X (vehicle front)",
+    "bin_alignment": "Bin center is 0.05 m inward from the AGV left side mesh boundary (+0.303 m), at Y=+0.253 m"
+  },
+  "d415_camera": {
+    "source_visual_mesh": "/home/jun/xunjian_vla_workspace/assets/meshes/camera_link.STL",
+    "copied_visual_mesh": "models/agv_dummyx/d415_camera.STL",
+    "copied_visual_mesh_sha256": "041ceb9c58d5c71f95b259da5fe6c8e0c0fcd11a44a8206d3bebe83da532685b",
+    "deck_hole_center_xy_m": [-0.099992, -0.2],
+    "deck_hole_radius_m": 0.03,
+    "pole_top_world_z_m": 1.64,
+    "upright_arm_visual_top_bound_m": 1.5389683441154716,
+    "rgb_fov_deg": [69.4, 42.5],
+    "rgb_observation_pixels": [640, 360],
+    "camera_names": ["overview", "d415_rgb"],
+    "note": "Fixed visual/collision mount; RGB is ideal pinhole MuJoCo rendering, not a simulated RealSense depth pipeline."
+  },
+  "optional_obstacle": {
+    "default_present": false,
+    "scene": "models/agv_dummyx/scene_obstacle.xml",
+    "geometry": "models/agv_dummyx/obstacle.xml",
+    "center_xyz_m": [
+      0.46,
+      -0.001,
+      0.88
+    ],
+    "size_xyz_m": [
+      0.04,
+      0.04,
+      0.16
+    ],
+    "free_body": true,
+    "mass_kg": 0.2,
+    "new_pace_inference_script": "deferred by user request",
+    "alignment": "Same Y as arm mounting frame, directly ahead along +X"
+  }
+}

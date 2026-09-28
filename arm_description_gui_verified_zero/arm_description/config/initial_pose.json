@@ -1,0 +1,45 @@
+{
+  "confirmed_by_user": false,
+  "description": "All-zero contact inspection pose",
+  "units": "radian; passive jaw joints metre",
+  "joint_positions": {
+    "joint1": 0.0,
+    "joint2": 0.0,
+    "joint3": 0.0,
+    "joint4": 0.0,
+    "joint5": 0.0,
+    "joint6": 0.0,
+    "joint7": 0.0,
+    "joint10": 0.0,
+    "joint12": 0.0,
+    "joint11": 0.0,
+    "joint13": 0.0
+  },
+  "hardware_mapping_verified": true,
+  "hardstop_zero_preserved": true,
+  "source_cad_angles_deg": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "urdf_angles_deg": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "coordinate_revision": "J3 negative convention retained; J6 re-zeroed at new installed hardstop; accepted physical pose retained.",
+  "hardware_mapping_confirmation": {
+    "basis": "Explicit user confirmation in conversation",
+    "relation": "Motor positions use the discussed URDF conventions directly; no additional offset or sign correction",
+    "independent_measurement_by_agent": false
+  },
+  "j6_reinstallation_note": "Initial angle updated to measured distance from relocated hardstop. Previous 0.9256 deg corresponds to the old stop installation."
+}

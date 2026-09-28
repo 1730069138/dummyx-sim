@@ -1,0 +1,247 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="agv_dummyx">
+  <compiler angle="radian" autolimits="true" inertiafromgeom="false" fusestatic="false" />
+  <include file="factory.xml" />
+  <include file="task_props.xml" />
+  <option timestep="0.002" integrator="implicitfast" solver="Newton" iterations="80" cone="elliptic" gravity="0 0 -9.81" />
+  <visual>
+    <global offwidth="1280" offheight="960" />
+    <map znear="0.005" />
+    <headlight ambient=".12 .12 .12" diffuse=".22 .22 .22" specular=".08 .08 .08" />
+  </visual>
+  <default>
+    <joint damping="0.15" armature="0.005" />
+    <geom friction="1 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.001" condim="4" />
+  </default>
+  <asset>
+    <material name="silver" rgba="0.60 0.62 0.64 1" />
+    <material name="light_silver" rgba="0.80 0.82 0.83 1" />
+    <material name="motor_gray" rgba="0.23 0.25 0.27 1" />
+    <material name="black" rgba="0.055 0.060 0.065 1" />
+    <material name="blue" rgba="0.035 0.36 0.69 1" />
+    <material name="steel" rgba="0.40 0.43 0.46 1" />
+    <mesh name="part_00" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_00.stl" />
+    <mesh name="part_01" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_01.stl" />
+    <mesh name="part_02" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_02.stl" />
+    <mesh name="part_03" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_03.stl" />
+    <mesh name="part_04" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_04.stl" />
+    <mesh name="part_05" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_05.stl" />
+    <mesh name="part_06" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_06.stl" />
+    <mesh name="part_07" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_07.stl" />
+    <mesh name="part_08" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_08.stl" />
+    <mesh name="part_09" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_09.stl" />
+    <mesh name="part_10" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_10.stl" />
+    <mesh name="part_11" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_11.stl" />
+    <mesh name="part_12" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_12.stl" />
+    <mesh name="part_13" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_13.stl" />
+    <mesh name="part_15" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_15.stl" />
+    <mesh name="part_16" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_16.stl" />
+    <mesh name="part_17" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_17.stl" />
+    <mesh name="part_18" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_18.stl" />
+    <mesh name="part_19" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_19.stl" />
+    <mesh name="part_20" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_20.stl" />
+    <mesh name="part_21" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_21.stl" />
+    <mesh name="part_22" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_22.stl" />
+    <mesh name="part_23" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_23.stl" />
+    <mesh name="part_24" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_24.stl" />
+    <mesh name="part_25" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_25.stl" />
+    <mesh name="part_26" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_26.stl" />
+    <mesh name="part_27" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_27.stl" />
+    <mesh name="part_28" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_28.stl" />
+    <mesh name="part_29" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_29.stl" />
+    <mesh name="part_30" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_30.stl" />
+    <mesh name="part_31" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_31.stl" />
+    <mesh name="part_33" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_33.stl" />
+    <mesh name="part_34" file="part_34.msh" />
+    <mesh name="part_35" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_35.stl" />
+    <mesh name="part_36" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_36.stl" />
+    <mesh name="agv_base_mesh" file="base_link.STL" />
+  </asset>
+  <worldbody>
+    <body name="base_link" pos="0 0 0.06991460919380188" euler="0 0 0">
+      <inertial pos="0.00916368 -0.000338799 0.199332" mass="21.4109" fullinertia="0.385018 0.48532 0.78823 -0.00035859 0.000689894 -0.000145879" />
+      <geom type="mesh" mesh="agv_base_mesh" rgba="0 0.12 0.5 1" name="agv_base_visual" group="1" contype="0" conaffinity="0" />
+      <geom type="mesh" mesh="agv_base_mesh" rgba="0.1 0.3 0.8 0.25" name="agv_base_collision" group="3" contype="512" conaffinity="505" />
+      <body name="link0" pos="0.12866757754516 -0.00100000000000002 0.732" quat="1 0 0 0">
+        <geom name="visual_link0" type="mesh" mesh="part_08" material="black" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+        <geom name="collision_link0" type="mesh" mesh="part_08" contype="2" conaffinity="505" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+        <body name="link1" pos="0 0 0.08550000000000001" quat="1 0 0 0" gravcomp="1">
+          <joint name="joint1" type="hinge" axis="0 0 1" range="0 6.1086527231977" />
+          <geom name="visual_link1" type="mesh" mesh="part_06" material="silver" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+          <geom name="collision_link1" type="mesh" mesh="part_06" contype="4" conaffinity="497" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+          <body name="link2" pos="-0.036479195674043 0.015379150918529 0.031" quat="0.7010538493350073 0.7064325904311521 -0.03087061996031036 0.09232280505144543" gravcomp="1">
+            <joint name="joint2" type="hinge" axis="0 0 1" range="0 4.6000593589634" />
+            <geom name="visual_link2" type="mesh" mesh="part_00" material="motor_gray" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+            <geom name="collision_link2" type="mesh" mesh="part_00" contype="8" conaffinity="483" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+            <body name="link3" pos="0.20099457496112 -1.0850077797026e-05 0.0044734858189469" quat="3.759376086757925e-16 -0.004623527664085431 0.999989311438847 -5.949481793768482e-17" gravcomp="1">
+              <joint name="joint3" type="hinge" axis="0 0 1" range="-4.9294030284293 -0.0" />
+              <geom name="visual_link3" type="mesh" mesh="part_04" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="-8.647719032955171e-17 -0.5877253487857844 0.8090605134318619 1.28636893484899e-17" />
+              <geom name="collision_link3" type="mesh" mesh="part_04" contype="16" conaffinity="455" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="-8.647719032955171e-17 -0.5877253487857844 0.8090605134318619 1.28636893484899e-17" />
+              <body name="link4" pos="-0.01950500541345574 -0.0599999999999997 -0.01051773750275" quat="0.4677571000628724 -0.5302860504866891 -0.4677571000628711 0.5302860504866913" gravcomp="1">
+                <joint name="joint4" type="hinge" axis="0 0 1" range="-3.8479692847406 0" />
+                <geom name="visual_link4" type="mesh" mesh="part_15" material="motor_gray" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="-0.1228770939166139 3.958033777948482e-16 -2.353595113853535e-17 0.9924218960656841" />
+                <geom name="collision_link4" type="mesh" mesh="part_15" contype="32" conaffinity="399" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="-0.1228770939166139 3.958033777948482e-16 -2.353595113853535e-17 0.9924218960656841" />
+                <body name="link5" pos="-0.02191753513453548 -0.005511955517454967 0.10852586152854" quat="0.3417490135597615 -0.516994428130707 -0.4824072566637077 0.6190376496877463" gravcomp="1">
+                  <joint name="joint5" type="hinge" axis="0 0 1" range="0 4.7551371641917" />
+                  <geom name="visual_link5" type="mesh" mesh="part_10" material="silver" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="0.3295305455037594 -1.107250841761951e-14 -3.8595355800343e-15 0.944144914502003" />
+                  <geom name="collision_link5" type="mesh" mesh="part_10" contype="64" conaffinity="287" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="0.3295305455037594 -1.107250841761951e-14 -3.8595355800343e-15 0.944144914502003" />
+                  <body name="link6" pos="-0.06771386418731709 0.05382455384688969 -0.02362413784225659" quat="0.7070973625987315 -0.4371337509275349 -0.5558003992442199 -0.003649630927623005" gravcomp="1">
+                    <joint name="joint6" type="hinge" axis="0 0 1" range="0 4.807814540487757" />
+                    <geom name="visual_link6" type="mesh" mesh="part_01" material="motor_gray" contype="0" conaffinity="0" group="1" pos="8.190670364172092e-14 -2.281508315604697e-14 2.775557561562891e-17" quat="0.9999999999999963 2.073925206858264e-14 -5.033360196881557e-15 8.556461151884559e-08" />
+                    <geom name="collision_link6" type="mesh" mesh="part_01" contype="128" conaffinity="63" rgba="0.9 0.2 0.1 0.25" group="3" pos="8.190670364172092e-14 -2.281508315604697e-14 2.775557561562891e-17" quat="0.9999999999999963 2.073925206858264e-14 -5.033360196881557e-15 8.556461151884559e-08" />
+                    <body name="link8" pos="-5.227197848398086e-16 9.821618426481072e-17 0.08800000000000002" quat="0.6679279363775111 -2.364209157030962e-15 1.146974916420328e-15 0.7442259548057161">
+                      <body name="link9" pos="5.4456439357864e-14 1.8388068845354e-14 0.007999999999957" quat="0.4999999999999241 0.4999999999999242 0.5000000000000777 0.5000000000000741">
+                        <geom name="visual_link9" type="mesh" mesh="part_18" material="blue" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                        <geom name="collision_link9" type="mesh" mesh="part_18" contype="128" conaffinity="63" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                        <body name="link7" pos="-2.0816681711722e-17 0.0059999999999999 0" quat="0.2101880340114215 -0.2101880340114254 0.6751451624342822 0.6751451624342812" gravcomp="1">
+                          <joint name="joint7" type="hinge" axis="0 0 1" range="-1.9993077179813 0" />
+                          <geom name="visual_link7" type="mesh" mesh="part_19" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                          <body name="link35" pos="0 0 0" quat="1 0 0 0">
+                            <geom name="visual_link35" type="mesh" mesh="part_21" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                          </body>
+                          <body name="link36" pos="0 0 0" quat="1 0 0 0">
+                            <geom name="visual_link36" type="mesh" mesh="part_24" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                          </body>
+                          <inertial pos="0 0 -0.002499999711290002" mass="0.02" diaginertia="2.318055723542807e-06 8.448333394316336e-06 1.020305580163731e-05" />
+                        </body>
+                        <body name="link10" pos="0.01525 0.013 0" quat="-0.4999999999999982 0.5 0.5 0.5000000000000018" gravcomp="1">
+                          <joint name="joint10" type="slide" axis="0 -1 0" range="-0.0505 0" />
+                          <geom name="visual_link10" type="mesh" mesh="part_27" material="black" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                          <geom name="collision_link10" type="mesh" mesh="part_27" contype="256" conaffinity="127" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                          <body name="link11" pos="-0.015 6.9388939039072e-18 -0.003" quat="0.5125237297435246 0.5125237297435263 0.4871544174589679 0.4871544174589662" gravcomp="1">
+                            <joint name="joint11" type="hinge" axis="0 1 0" range="-6.2831853071796 6.2831853071796" />
+                            <geom name="visual_link11" type="mesh" mesh="part_22" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                            <body name="link37" pos="0 0 0" quat="1 0 0 0">
+                              <geom name="visual_link37" type="mesh" mesh="part_29" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                            </body>
+                            <inertial pos="-0.02000000420957804 0.001000000047497451 -0.001051821978762746" mass="0.01" diaginertia="1.429151596998271e-07 2.205415377008434e-06 2.104166883975273e-06" />
+                          </body>
+                          <body name="link16" pos="0 0 0" quat="1 0 0 0">
+                            <geom name="visual_link16" type="mesh" mesh="part_25" material="blue" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                            <geom name="collision_link16" type="mesh" mesh="part_25" contype="256" conaffinity="127" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                          </body>
+                          <body name="link17" pos="0 0 0" quat="1 0 0 0">
+                            <geom name="visual_link17" type="mesh" mesh="part_31" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                            <geom name="collision_link17" type="mesh" mesh="part_31" contype="256" conaffinity="127" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                          </body>
+                          <inertial pos="0 -0.001999999862164259 0.03449999843724072" mass="0.06" diaginertia="3.16362478588522e-05 4.380499866295613e-05 1.919125113185497e-05" />
+                        </body>
+                        <body name="link12" pos="-0.01525 0.013 0" quat="-0.4999999999999982 0.5 0.5 0.5000000000000018" gravcomp="1">
+                          <joint name="joint12" type="slide" axis="0 1 0" range="-0.0505 0" />
+                          <geom name="visual_link12" type="mesh" mesh="part_20" material="black" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                          <geom name="collision_link12" type="mesh" mesh="part_20" contype="256" conaffinity="127" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                          <body name="link13" pos="0.015 1.3877787807814e-17 -0.003" quat="-0.4871544174589645 -0.4871544174589663 0.512523729743528 0.5125237297435262" gravcomp="1">
+                            <joint name="joint13" type="hinge" axis="0 1 0" range="-6.2831853071796 6.2831853071796" />
+                            <geom name="visual_link13" type="mesh" mesh="part_30" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                            <inertial pos="-0.02000000420957804 0.001000000047497451 0" mass="0.01" diaginertia="1.041666629413763e-07 2.166666880249983e-06 2.104166883975273e-06" />
+                          </body>
+                          <body name="link18" pos="0 0 0" quat="1 0 0 0">
+                            <geom name="visual_link18" type="mesh" mesh="part_26" material="blue" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                            <geom name="collision_link18" type="mesh" mesh="part_26" contype="256" conaffinity="127" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                          </body>
+                          <body name="link19" pos="0 0 0" quat="1 0 0 0">
+                            <geom name="visual_link19" type="mesh" mesh="part_28" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                            <geom name="collision_link19" type="mesh" mesh="part_28" contype="256" conaffinity="127" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                          </body>
+                          <inertial pos="0 0.001999999862164259 0.03449999843724072" mass="0.06" diaginertia="3.16362478588522e-05 4.380499866295613e-05 1.919125113185497e-05" />
+                        </body>
+                        <body name="link14" pos="-4.1633363423443e-17 0.08 -5.5511151231258e-17" quat="-0.4999999999999982 0.5 0.5 0.5000000000000018">
+                          <site name="tcp_site" size="0.004" rgba="1 0 0 0" />
+                        </body>
+                        <body name="link34" pos="0 0 0" quat="1 0 0 0">
+                          <geom name="visual_link34" type="mesh" mesh="part_23" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                          <geom name="collision_link34" type="mesh" mesh="part_23" contype="128" conaffinity="63" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                        </body>
+                        <camera name="wrist_cam" pos="0 0.01 -0.055" xyaxes="-1 0 0 0 0.521450009453975 -0.853281833651959" fovy="75" />
+                      </body>
+                    </body>
+                    <body name="link15" pos="0.005765818875877952 -0.05320226544251632 0.06340714471179303" quat="-0.05374554696375154 -0.004702126074330202 0.08702880847325835 0.9947438326964754">
+                      <geom name="visual_link15" type="mesh" mesh="part_33" material="light_silver" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                      <geom name="collision_link15" type="mesh" mesh="part_33" contype="128" conaffinity="63" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                    </body>
+                    <body name="link30" pos="0 0 0" quat="1 0 0 0">
+                      <geom name="visual_link30" type="mesh" mesh="part_03" material="steel" contype="0" conaffinity="0" group="1" pos="8.190670364172092e-14 -2.253752739989068e-14 5.551115123125783e-17" quat="0.9999999999999963 2.077741598624157e-14 -5.047237981423895e-15 8.556461136139074e-08" />
+                      <geom name="collision_link30" type="mesh" mesh="part_03" contype="128" conaffinity="63" rgba="0.9 0.2 0.1 0.25" group="3" pos="8.190670364172092e-14 -2.253752739989068e-14 5.551115123125783e-17" quat="0.9999999999999963 2.077741598624157e-14 -5.047237981423895e-15 8.556461136139074e-08" />
+                    </body>
+                    <body name="link31" pos="0 0 0" quat="1 0 0 0">
+                      <geom name="visual_link31" type="mesh" mesh="part_34" material="black" contype="0" conaffinity="0" group="1" pos="2.081668171172169e-17 -5.551115123125783e-17 5.551115123125783e-17" quat="-0.3826835114163351 -3.737790210275174e-18 5.870046393105751e-19 0.9238794997671849" />
+                      <geom name="collision_link31" type="mesh" mesh="part_34" contype="128" conaffinity="63" rgba="0.9 0.2 0.1 0.25" group="3" pos="2.081668171172169e-17 -5.551115123125783e-17 5.551115123125783e-17" quat="-0.3826835114163351 -3.737790210275174e-18 5.870046393105751e-19 0.9238794997671849" />
+                    </body>
+                    <body name="link32" pos="0 0 0" quat="1 0 0 0">
+                      <geom name="visual_link32" type="mesh" mesh="part_35" material="black" contype="0" conaffinity="0" group="1" pos="1.387778780781446e-17 0 0" quat="-0.3826835114163351 -3.737790210275174e-18 5.870046393105751e-19 0.9238794997671849" />
+                      <geom name="collision_link32" type="mesh" mesh="part_35" contype="128" conaffinity="63" rgba="0.9 0.2 0.1 0.25" group="3" pos="1.387778780781446e-17 0 0" quat="-0.3826835114163351 -3.737790210275174e-18 5.870046393105751e-19 0.9238794997671849" />
+                    </body>
+                    <body name="link33" pos="0 0 0" quat="1 0 0 0">
+                      <geom name="visual_link33" type="mesh" mesh="part_36" material="motor_gray" contype="0" conaffinity="0" group="1" pos="-4.076352547536991e-14 9.812380285023366e-17 -4.996003610813206e-16" quat="0.3826833533138415 1.516036295125763e-14 -1.074354349311056e-14 0.923879565255382" />
+                      <geom name="collision_link33" type="mesh" mesh="part_36" contype="128" conaffinity="63" rgba="0.9 0.2 0.1 0.25" group="3" pos="-4.076352547536991e-14 9.812380285023366e-17 -4.996003610813206e-16" quat="0.3826833533138415 1.516036295125763e-14 -1.074354349311056e-14 0.923879565255382" />
+                    </body>
+                    <inertial pos="-2.470246229790973e-14 -0.01532714608254688 0.04849999961627399" mass="0.35" diaginertia="0.0007524867887809461 0.001229498483191301 0.001127926920233479" />
+                  </body>
+                  <inertial pos="-0.03215657386810941 0.02796055965755571 -0.02054913761094267" mass="0.3" diaginertia="0.0003091256105720791 0.0003494562463501118 0.0004528207499028358" />
+                </body>
+                <body name="link28" pos="0 0 0" quat="-0.1228770939166139 3.958033777948482e-16 -2.353595113853535e-17 0.9924218960656841">
+                  <geom name="visual_link28" type="mesh" mesh="part_16" material="silver" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                  <geom name="collision_link28" type="mesh" mesh="part_16" contype="32" conaffinity="399" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                </body>
+                <body name="link29" pos="0 0 0" quat="-0.1228770939166139 3.958033777948482e-16 -2.353595113853535e-17 0.9924218960656841">
+                  <geom name="visual_link29" type="mesh" mesh="part_17" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+                  <geom name="collision_link29" type="mesh" mesh="part_17" contype="32" conaffinity="399" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+                </body>
+                <inertial pos="0.001646015311980364 0.0005783527546301855 0.06876292732989515" mass="0.4" diaginertia="0.0007865879257455498 0.0007667138447540264 0.0002924109898723847" />
+              </body>
+              <body name="link27" pos="0 0 0" quat="-0.5877253487857844 1.582611905849522e-16 -1.116812751865231e-16 0.8090605134318619">
+                <geom name="visual_link27" type="mesh" mesh="part_13" material="silver" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="-6.123233995736766e-17 1 0 0" />
+                <geom name="collision_link27" type="mesh" mesh="part_13" contype="16" conaffinity="455" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="-6.123233995736766e-17 1 0 0" />
+              </body>
+              <inertial pos="0.003929276541933141 -0.04000033975953901 -0.01051777135580777" mass="0.45" diaginertia="0.0006749936942101951 0.0002832167997461085 0.0006882111262867086" />
+            </body>
+            <body name="link23" pos="0 0 0" quat="1 0 0 0">
+              <geom name="visual_link23" type="mesh" mesh="part_02" material="silver" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+              <geom name="collision_link23" type="mesh" mesh="part_02" contype="8" conaffinity="483" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+            </body>
+            <body name="link24" pos="0 0 0" quat="1 0 0 0">
+              <geom name="visual_link24" type="mesh" mesh="part_05" material="motor_gray" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+              <geom name="collision_link24" type="mesh" mesh="part_05" contype="8" conaffinity="483" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+            </body>
+            <body name="link25" pos="0 0 0" quat="1 0 0 0">
+              <geom name="visual_link25" type="mesh" mesh="part_11" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+              <geom name="collision_link25" type="mesh" mesh="part_11" contype="8" conaffinity="483" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+            </body>
+            <inertial pos="0.1004945728927851 -5.425885319709778e-06 0.02938427892513573" mass="0.8" diaginertia="0.0005473409499180968 0.004821941033233469 0.004738733363664151" />
+          </body>
+          <body name="link20" pos="0 0 0" quat="1 0 0 0">
+            <geom name="visual_link20" type="mesh" mesh="part_07" material="steel" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+            <geom name="collision_link20" type="mesh" mesh="part_07" contype="4" conaffinity="497" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+          </body>
+          <body name="link21" pos="0 0 0" quat="1 0 0 0">
+            <geom name="visual_link21" type="mesh" mesh="part_09" material="silver" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+            <geom name="collision_link21" type="mesh" mesh="part_09" contype="4" conaffinity="497" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+          </body>
+          <body name="link22" pos="0 0 0" quat="1 0 0 0">
+            <geom name="visual_link22" type="mesh" mesh="part_12" material="silver" contype="0" conaffinity="0" group="1" pos="0 0 0" quat="1 0 0 0" />
+            <geom name="collision_link22" type="mesh" mesh="part_12" contype="4" conaffinity="497" rgba="0.9 0.2 0.1 0.25" group="3" pos="0 0 0" quat="1 0 0 0" />
+          </body>
+          <inertial pos="-0.0125576239079237 -2.613291144371033e-06 0.02049947064369917" mass="0.35" diaginertia="0.0002317310931412464 0.0003453057756872514 0.0003599860200934236" />
+        </body>
+      </body>
+    </body>
+    <camera name="overview" pos="1.9 -2.2 1.6" xyaxes="0.756823 0.653626 0 -0.215357 0.249361 0.944155" fovy="40" />
+  </worldbody>
+  <equality>
+    <joint name="jaw_symmetry" joint1="joint12" joint2="joint10" polycoef="0 1 0 0 0" solref="0.004 1" />
+  </equality>
+  <actuator>
+    <position name="servo_joint1" joint="joint1" kp="300" kv="30" ctrlrange="0 6.1086527231977" forcerange="-35 35" />
+    <position name="servo_joint2" joint="joint2" kp="300" kv="30" ctrlrange="0 4.6000593589634" forcerange="-35 35" />
+    <position name="servo_joint3" joint="joint3" kp="300" kv="30" ctrlrange="-4.9294030284293 -0.0" forcerange="-35 35" />
+    <position name="servo_joint4" joint="joint4" kp="300" kv="30" ctrlrange="-3.8479692847406 0" forcerange="-35 35" />
+    <position name="servo_joint5" joint="joint5" kp="300" kv="30" ctrlrange="0 4.7551371641917" forcerange="-35 35" />
+    <position name="servo_joint6" joint="joint6" kp="300" kv="30" ctrlrange="0 4.807814540487757" forcerange="-35 35" />
+    <position name="servo_joint7" joint="joint7" kp="2" kv="0.1" ctrlrange="-1.9993077179813 0" forcerange="-0.2 0.2" />
+    <position name="servo_joint10" joint="joint10" kp="1500" kv="10" ctrlrange="-0.0505 0" forcerange="-12 12" />
+    <position name="servo_joint11" joint="joint11" kp="2" kv="0.1" ctrlrange="-6.2831853071796 6.2831853071796" forcerange="-0.2 0.2" />
+    <position name="servo_joint12" joint="joint12" kp="1500" kv="10" ctrlrange="-0.0505 0" forcerange="-12 12" />
+    <position name="servo_joint13" joint="joint13" kp="2" kv="0.1" ctrlrange="-6.2831853071796 6.2831853071796" forcerange="-0.2 0.2" />
+  </actuator>
+  <statistic center=".5 0 .8" extent="2.5" />
+</mujoco>

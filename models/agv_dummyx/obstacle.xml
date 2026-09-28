@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+  <worldbody>
+    <!-- A free-standing 4 x 4 x 16 cm pillar; only the test wrapper loads it.
+         Bottom z=0.80 m. It can move or topple when hit, as in the older scene. -->
+    <body name="dynamic_pillar" pos="0.46 -0.001 0.88">
+      <freejoint name="pillar_joint" />
+      <inertial pos="0 0 0" mass="0.2" diaginertia="0.000453333333 0.000453333333 0.000053333333" />
+      <geom name="pillar_geom" type="box" size="0.02 0.02 0.08"
+            rgba="0.85 0.025 0.025 1" contype="1" conaffinity="1023"
+            friction="1 0.05 0.0001" />
+    </body>
+  </worldbody>
+</mujoco>
