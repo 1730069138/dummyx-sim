@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco model="agv_dummyx_obstacle_test">
+  <!-- The default scene never includes this wrapper or its obstacle. -->
+  <include file="scene.xml" />
+  <include file="obstacle.xml" />
+</mujoco>

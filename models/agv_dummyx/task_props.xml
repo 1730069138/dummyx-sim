@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco>
+  <asset>
+    <material name="bin_plastic" rgba=".10 .32 .39 1" specular=".25" shininess=".3" />
+    <material name="bin_rim" rgba=".17 .47 .51 1" specular=".25" shininess=".3" />
+    <material name="tool_orange" rgba=".94 .28 .045 1" specular=".45" shininess=".4" />
+    <material name="tool_rubber" rgba=".055 .065 .07 1" specular=".45" shininess=".4" />
+    <material name="tool_metal" rgba=".65 .70 .73 1" specular=".45" shininess=".4" />
+    <mesh name="demo_handle_mesh" vertex="-0.012 -0.045 -0.013 0.012 -0.045 -0.013 0.015 -0.045 -0.01 0.015 -0.045 0.01 0.012 -0.045 0.013 -0.012 -0.045 0.013 -0.015 -0.045 0.01 -0.015 -0.045 -0.01 -0.012 0.045 -0.013 0.012 0.045 -0.013 0.015 0.045 -0.01 0.015 0.045 0.01 0.012 0.045 0.013 -0.012 0.045 0.013 -0.015 0.045 0.01 -0.015 0.045 -0.01" />
+    <mesh name="demo_shaft_mesh" vertex="0.003 -0.128 0.0 0.0025980762113533163 -0.128 0.0014999999999999998 0.0015000000000000005 -0.128 0.002598076211353316 1.8369701987210298e-19 -0.128 0.003 -0.0014999999999999994 -0.128 0.0025980762113533163 -0.0025980762113533163 -0.128 0.0014999999999999998 -0.003 -0.128 3.6739403974420597e-19 -0.0025980762113533163 -0.128 -0.0014999999999999992 -0.0015000000000000013 -0.128 -0.002598076211353315 -5.510910596163089e-19 -0.128 -0.003 0.0015000000000000005 -0.128 -0.002598076211353316 0.002598076211353315 -0.128 -0.0015000000000000013 0.003 -0.045 0.0 0.0025980762113533163 -0.045 0.0014999999999999998 0.0015000000000000005 -0.045 0.002598076211353316 1.8369701987210298e-19 -0.045 0.003 -0.0014999999999999994 -0.045 0.0025980762113533163 -0.0025980762113533163 -0.045 0.0014999999999999998 -0.003 -0.045 3.6739403974420597e-19 -0.0025980762113533163 -0.045 -0.0014999999999999992 -0.0015000000000000013 -0.045 -0.002598076211353315 -5.510910596163089e-19 -0.045 -0.003 0.0015000000000000005 -0.045 -0.002598076211353316 0.002598076211353315 -0.045 -0.0015000000000000013" />
+    <mesh name="demo_tip_mesh" vertex="-0.004 -0.145 -0.001 0.004 -0.145 -0.001 0.004 -0.145 0.001 -0.004 -0.145 0.001 -0.004 -0.128 -0.001 0.004 -0.128 -0.001 0.004 -0.128 0.001 -0.004 -0.128 0.001" />
+  </asset>
+  <worldbody>
+    <body name="real_screwdriver" pos=".415 -.16 .8135" quat="0.7071067811865476 0 0 0.7071067811865476">
+      <freejoint name="fj_screwdriver" />
+      <inertial pos="0 0 0" mass="0.1" diaginertia=".0002 .00002 .0002" />
+      <geom name="screwdriver_handle" type="mesh" mesh="demo_handle_mesh" material="tool_orange" contype="1" conaffinity="1023" condim="4" friction="2 .03 .001" />
+      <geom name="screwdriver_shaft" type="mesh" mesh="demo_shaft_mesh" material="tool_metal" contype="1" conaffinity="1023" condim="4" friction="2 .03 .001" />
+      <geom name="screwdriver_tip" type="mesh" mesh="demo_tip_mesh" material="tool_metal" contype="1" conaffinity="1023" condim="4" friction="2 .03 .001" />
+      <geom name="handle_grip_-1" type="box" pos="0 0 -0.0131" size=".009 .028 .0002" material="tool_rubber" contype="0" conaffinity="0" />
+      <geom name="handle_rib_-1_0" type="box" pos="-0.0151 -0.025 0" size=".0002 .0015 .008" material="tool_rubber" contype="0" conaffinity="0" />
+      <geom name="handle_rib_-1_1" type="box" pos="-0.0151 -0.008 0" size=".0002 .0015 .008" material="tool_rubber" contype="0" conaffinity="0" />
+      <geom name="handle_rib_-1_2" type="box" pos="-0.0151 0.009000000000000001 0" size=".0002 .0015 .008" material="tool_rubber" contype="0" conaffinity="0" />
+      <geom name="handle_rib_-1_3" type="box" pos="-0.0151 0.026000000000000002 0" size=".0002 .0015 .008" material="tool_rubber" contype="0" conaffinity="0" />
+      <geom name="handle_grip_1" type="box" pos="0 0 0.0131" size=".009 .028 .0002" material="tool_rubber" contype="0" conaffinity="0" />
+      <geom name="handle_rib_1_0" type="box" pos="0.0151 -0.025 0" size=".0002 .0015 .008" material="tool_rubber" contype="0" conaffinity="0" />
+      <geom name="handle_rib_1_1" type="box" pos="0.0151 -0.008 0" size=".0002 .0015 .008" material="tool_rubber" contype="0" conaffinity="0" />
+      <geom name="handle_rib_1_2" type="box" pos="0.0151 0.009000000000000001 0" size=".0002 .0015 .008" material="tool_rubber" contype="0" conaffinity="0" />
+      <geom name="handle_rib_1_3" type="box" pos="0.0151 0.026000000000000002 0" size=".0002 .0015 .008" material="tool_rubber" contype="0" conaffinity="0" />
+    </body>
+    <body name="drop_box" pos=".471 .253 .8">
+      <geom name="bin_bottom" type="box" pos="0 0 0.004" size="0.11 0.115 0.004" material="bin_plastic" contype="1" conaffinity="1023" />
+      <geom name="bin_wall_x-1" type="box" pos="-0.105 0 0.029" size="0.005 0.115 0.021" material="bin_plastic" contype="1" conaffinity="1023" />
+      <geom name="bin_wall_y-1" type="box" pos="0 -0.11 0.029" size="0.1 0.005 0.021" material="bin_plastic" contype="1" conaffinity="1023" />
+      <geom name="bin_rim_x-1" type="box" pos="-0.105 0 0.05" size="0.007 0.117 0.003" material="bin_rim" contype="1" conaffinity="1023" />
+      <geom name="bin_rim_y-1" type="box" pos="0 -0.11 0.05" size="0.11 0.007 0.003" material="bin_rim" contype="1" conaffinity="1023" />
+      <geom name="bin_rib_-1_0" type="box" pos="-0.111 -0.084 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+      <geom name="bin_rib_-1_1" type="box" pos="-0.111 -0.042 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+      <geom name="bin_rib_-1_2" type="box" pos="-0.111 0 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+      <geom name="bin_rib_-1_3" type="box" pos="-0.111 0.042 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+      <geom name="bin_rib_-1_4" type="box" pos="-0.111 0.084 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+      <geom name="bin_wall_x1" type="box" pos="0.105 0 0.029" size="0.005 0.115 0.021" material="bin_plastic" contype="1" conaffinity="1023" />
+      <geom name="bin_wall_y1" type="box" pos="0 0.11 0.029" size="0.1 0.005 0.021" material="bin_plastic" contype="1" conaffinity="1023" />
+      <geom name="bin_rim_x1" type="box" pos="0.105 0 0.05" size="0.007 0.117 0.003" material="bin_rim" contype="1" conaffinity="1023" />
+      <geom name="bin_rim_y1" type="box" pos="0 0.11 0.05" size="0.11 0.007 0.003" material="bin_rim" contype="1" conaffinity="1023" />
+      <geom name="bin_rib_1_0" type="box" pos="0.111 -0.084 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+      <geom name="bin_rib_1_1" type="box" pos="0.111 -0.042 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+      <geom name="bin_rib_1_2" type="box" pos="0.111 0 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+      <geom name="bin_rib_1_3" type="box" pos="0.111 0.042 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+      <geom name="bin_rib_1_4" type="box" pos="0.111 0.084 0.028" size="0.002 0.006 0.016" material="bin_rim" contype="0" conaffinity="0" />
+    </body>
+  </worldbody>
+</mujoco>

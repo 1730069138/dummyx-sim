@@ -1,0 +1,12 @@
+{
+  "description": "Debug-only rectangle for screwdriver handle-center XY. The collector samples handle-center XY here and planar yaw within 90 +/- 30 degrees.",
+  "x_range_m": [
+    0.415,
+    0.515
+  ],
+  "y_range_m": [
+    -0.28,
+    -0.08
+  ],
+  "obstacle_clearance_m": 0.03
+}

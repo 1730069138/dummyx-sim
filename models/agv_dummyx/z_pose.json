@@ -1,0 +1,17 @@
+{
+  "description": "Neutral Z home: joint1=175 deg aligns the distal forward axis with vehicle +X, accounting for the source joint2 fixed yaw of 5 deg. Joint2 is zero; joint3 compensates the shoulder change. Remaining joints retain straight7 values.",
+  "units": "radian; prismatic joints metre",
+  "joint_positions": {
+    "joint1": 3.0543261909900767,
+    "joint2": 0,
+    "joint3": -2.9577360430258857,
+    "joint4": -1.942312724011374,
+    "joint5": 1.9268439348716764,
+    "joint6": 2.3723486989743314,
+    "joint7": -1.999307717981279,
+    "joint10": -0.05050000000000002,
+    "joint12": -0.05050000000000002,
+    "joint11": 0.04100363390596984,
+    "joint13": 0.04100363390596984
+  }
+}
