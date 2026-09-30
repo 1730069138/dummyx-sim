@@ -70,7 +70,7 @@ python scripts/tools/img2video.py datasets/example/cam_wrist outputs/preview.mp4
 
 ## 仿真数据采集
 
-AGV 底盘与新模型 `arm_description_gui_verified_zero` 的无障碍 MuJoCo 螺丝刀采集使用入口
+AGV 底盘与新模型 `models/arm_description` 的无障碍 MuJoCo 螺丝刀采集使用入口
 `scripts/collect/collect_hardstop_screwdriver.py`，启动命令、7 维数据约定及仿真假设见
 [新机械臂采集说明](docs/hardstop_arm_collection.md)。下面的命令仍使用原 DummyX 模型。
 

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+  <asset>
+    <mesh name="cleanup_cable_tie" file="meshes/essentra_461182_cable_tie_150mm.stl" scale="0.001 0.001 0.001" />
+    <material name="cleanup_foam" rgba="0.92 0.83 0.28 1" />
+    <material name="cleanup_backing" rgba="0.16 0.36 0.58 1" />
+    <material name="cleanup_handle" rgba="0.11 0.24 0.38 1" />
+    <material name="cleanup_tie_material" rgba="0.04 0.04 0.04 1" />
+    <material name="cleanup_tray_material" rgba="0.17 0.43 0.42 1" />
+    <material name="cleanup_parking_mark" rgba="0.95 0.58 0.08 1" />
+    <material name="cleanup_tie_region_mark" rgba="0.12 0.62 0.30 1" />
+  </asset>
+  <worldbody>
+    <!-- The table top is z=0.800. The soft contact response approximates a sponge pad,
+         but does not model its internal deformation. The rigid handle is initially rotated 90 degrees for a direct grasp. -->
+    <site name="cleanup_sponge_parking" type="box" pos="0.435 -0.170 0.8005" size="0.070 0.055 0.0005" rgba="0 0 0 0" />
+    <geom name="cleanup_parking_edge_near" type="box" pos="0.365 -0.170 0.8003" size="0.001 0.055 0.0003" material="cleanup_parking_mark" contype="0" conaffinity="0" />
+    <geom name="cleanup_parking_edge_far" type="box" pos="0.505 -0.170 0.8003" size="0.001 0.055 0.0003" material="cleanup_parking_mark" contype="0" conaffinity="0" />
+    <geom name="cleanup_parking_edge_right" type="box" pos="0.435 -0.225 0.8003" size="0.070 0.001 0.0003" material="cleanup_parking_mark" contype="0" conaffinity="0" />
+    <geom name="cleanup_parking_edge_left" type="box" pos="0.435 -0.115 0.8003" size="0.070 0.001 0.0003" material="cleanup_parking_mark" contype="0" conaffinity="0" />
+    <site name="cleanup_tie_spawn_region" type="box" pos="0.470 0.110 0.8005" size="0.080 0.105 0.0005" rgba="0 0 0 0" />
+    <geom name="cleanup_tie_region_edge_near" type="box" pos="0.390 0.110 0.8003" size="0.001 0.105 0.0003" material="cleanup_tie_region_mark" contype="0" conaffinity="0" />
+    <geom name="cleanup_tie_region_edge_far" type="box" pos="0.550 0.110 0.8003" size="0.001 0.105 0.0003" material="cleanup_tie_region_mark" contype="0" conaffinity="0" />
+    <geom name="cleanup_tie_region_edge_right" type="box" pos="0.470 0.005 0.8003" size="0.080 0.001 0.0003" material="cleanup_tie_region_mark" contype="0" conaffinity="0" />
+    <geom name="cleanup_tie_region_edge_left" type="box" pos="0.470 0.215 0.8003" size="0.080 0.001 0.0003" material="cleanup_tie_region_mark" contype="0" conaffinity="0" />
+    <body name="cleanup_sponge" pos="0.430 -0.175 0.806" quat="0.7071067811865476 0 0 0.7071067811865475">
+      <freejoint name="fj_sponge" />
+      <inertial pos="0 0 0.014" mass="0.090" diaginertia="0.00007 0.00010 0.00012" />
+      <geom name="cleanup_sponge_pad" type="box" size="0.045 0.060 0.006" material="cleanup_foam" friction="1.3 0.03 0.001" solref="0.025 1" solimp="0.85 0.97 0.001" contype="1" conaffinity="1023" />
+      <geom name="cleanup_sponge_backing" type="box" pos="0 0 0.009" size="0.043 0.057 0.003" material="cleanup_backing" contype="1" conaffinity="1023" />
+      <geom name="cleanup_sponge_stem" type="box" pos="0 0 0.032" size="0.008 0.014 0.020" material="cleanup_handle" contype="1" conaffinity="1023" />
+      <geom name="cleanup_sponge_handle" type="box" pos="0 0 0.048" size="0.011 0.030 0.010" material="cleanup_handle" friction="1.8 0.03 0.001" contype="1" conaffinity="1023" />
+      <site name="sponge_grasp" pos="0 0 0.048" size="0.003" rgba="0 0 0 0" />
+      <site name="sponge_contact" pos="0 0 -0.006" size="0.003" rgba="0 0 0 0" />
+    </body>
+
+    <!-- Two rigid 150 mm Essentra 461182 cable ties. -->
+    <body name="cleanup_tie_0" pos="0.550000 0.040 0.807">
+      <freejoint name="fj_tie_0" />
+      <inertial pos="-0.075 0 0" mass="0.003" diaginertia="0.0000001 0.000006 0.000006" />
+      <geom name="cleanup_tie_0_geom" type="mesh" mesh="cleanup_cable_tie" material="cleanup_tie_material" friction="0.65 0.005 0.0001" contype="1" conaffinity="1023" />
+    </body>
+    <body name="cleanup_tie_1" pos="0.550000 0.120 0.807">
+      <freejoint name="fj_tie_1" />
+      <inertial pos="-0.075 0 0" mass="0.003" diaginertia="0.0000001 0.000006 0.000006" />
+      <geom name="cleanup_tie_1_geom" type="mesh" mesh="cleanup_cable_tie" material="cleanup_tie_material" friction="0.65 0.005 0.0001" contype="1" conaffinity="1023" />
+    </body>
+    <!-- Fully beyond the +Y short edge (Y=0.230), open toward the tabletop. -->
+    <body name="cleanup_tray" pos="0.510 0.3155 0.753">
+      <geom name="cleanup_tray_bottom" type="box" pos="0 0 0.001" size="0.160 0.085 0.001" material="cleanup_tray_material" friction="0.7 0.01 0.001" contype="1" conaffinity="1023" />
+      <geom name="cleanup_tray_side_left" type="box" pos="-0.157 0 0.020" size="0.003 0.085 0.018" material="cleanup_tray_material" contype="1" conaffinity="1023" />
+      <geom name="cleanup_tray_side_right" type="box" pos="0.157 0 0.020" size="0.003 0.085 0.018" material="cleanup_tray_material" contype="1" conaffinity="1023" />
+      <geom name="cleanup_tray_back" type="box" pos="0 0.082 0.020" size="0.160 0.003 0.018" material="cleanup_tray_material" contype="1" conaffinity="1023" />
+    </body>
+  </worldbody>
+</mujoco>

@@ -1,0 +1,299 @@
+[
+  {
+    "joint": "J1",
+    "stationary": "BASE_LINK-1",
+    "moving": "J1-P1-100-1",
+    "samples": [
+      {
+        "angle_deg": -0.001,
+        "volume_mm3": 0.0022909667491348836,
+        "faces": 3,
+        "distance_mm": 4.644743263433138e-09,
+        "surface_pairs": 1,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": -0.0001,
+        "volume_mm3": 0.0002256970343153505,
+        "faces": 3,
+        "distance_mm": 4.641386652746476e-11,
+        "surface_pairs": 1,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 5.719703191826807e-13,
+        "surface_pairs": 1,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.0001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 4.973422641998295e-05,
+        "surface_pairs": 1,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 0.000497342204260648,
+        "surface_pairs": 1,
+        "intersection_edges": 0
+      }
+    ]
+  },
+  {
+    "joint": "J2",
+    "stationary": "XW1-M2_5X5-CT-1",
+    "moving": "J23-105-1",
+    "samples": [
+      {
+        "angle_deg": -0.001,
+        "volume_mm3": 0.00033136913865069095,
+        "faces": 6,
+        "distance_mm": 8.326707420817005e-07,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": -0.0001,
+        "volume_mm3": 1.2510794974692804e-05,
+        "faces": 6,
+        "distance_mm": 1.3067421470900539e-07,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0,
+        "volume_mm3": 2.9098644434139024e-06,
+        "faces": 4,
+        "distance_mm": 7.878033915051455e-08,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.0001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 6.064519089307305e-12,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 0.0001309681445232391,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      }
+    ]
+  },
+  {
+    "joint": "J3",
+    "stationary": "XW3-M2X8-1",
+    "moving": "LINK3-1",
+    "samples": [
+      {
+        "angle_deg": -0.001,
+        "volume_mm3": 6.320601386537531e-05,
+        "faces": 2,
+        "distance_mm": 2.430693508628422e-07,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": -0.0001,
+        "volume_mm3": 2.888623113100158e-06,
+        "faces": 2,
+        "distance_mm": 2.639809856102405e-06,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 7.88106850030428e-14,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.0001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 2.189444262775124e-05,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 0.000311263537905283,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      }
+    ]
+  },
+  {
+    "joint": "J4",
+    "stationary": "XW4-M2X8-1",
+    "moving": "LINK4-1",
+    "samples": [
+      {
+        "angle_deg": -0.001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 0.00019853315999469697,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": -0.0001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 1.0237188461595058e-05,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 0,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.0001,
+        "volume_mm3": 2.6803114210925835e-06,
+        "faces": 2,
+        "distance_mm": 0,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.001,
+        "volume_mm3": 4.918912657709609e-05,
+        "faces": 2,
+        "distance_mm": 0,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      }
+    ]
+  },
+  {
+    "joint": "J5",
+    "stationary": "XW5-M2X10X2-1",
+    "moving": "LINK5-1",
+    "samples": [
+      {
+        "angle_deg": -0.001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 12
+      },
+      {
+        "angle_deg": -0.0001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 10
+      },
+      {
+        "angle_deg": 0,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.0001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 0
+      }
+    ]
+  },
+  {
+    "joint": "J6",
+    "stationary": "LINK5-1",
+    "moving": "XW7-M2_5X8-2-2",
+    "samples": [
+      {
+        "angle_deg": -0.001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 6
+      },
+      {
+        "angle_deg": -0.0001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 6
+      },
+      {
+        "angle_deg": 0,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.0001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 0
+      },
+      {
+        "angle_deg": 0.001,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": null,
+        "surface_pairs": 2,
+        "intersection_edges": 0
+      }
+    ]
+  },
+  {
+    "joint": "GRIPPER",
+    "stationary": "ZHUA-1",
+    "moving": "ZHUA-2",
+    "samples": [
+      {
+        "angle_deg": 0,
+        "volume_mm3": 0,
+        "faces": 0,
+        "distance_mm": 8.15036227844056e-12,
+        "surface_pairs": 0,
+        "intersection_edges": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="arm_gui_controls_only">
+  <link name="link0" />
+  <link name="link1" />
+  <joint name="joint1" type="revolute">
+    <parent link="link0" />
+    <child link="link1" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="6.1086527231977" effort="0" velocity="0" />
+  </joint>
+  <link name="link2" />
+  <joint name="joint2" type="revolute">
+    <parent link="link0" />
+    <child link="link2" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="4.6000593589634" effort="0" velocity="0" />
+  </joint>
+  <link name="link3" />
+  <joint name="joint3" type="revolute">
+    <parent link="link0" />
+    <child link="link3" />
+    <axis xyz="0 0 1" />
+    <limit lower="-4.9294030284293" upper="-0.0" effort="0" velocity="0" />
+  </joint>
+  <link name="link4" />
+  <joint name="joint4" type="revolute">
+    <parent link="link0" />
+    <child link="link4" />
+    <axis xyz="0 0 1" />
+    <limit lower="-3.8479692847406" upper="0" effort="0" velocity="0" />
+  </joint>
+  <link name="link5" />
+  <joint name="joint5" type="revolute">
+    <parent link="link0" />
+    <child link="link5" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="4.7551371641917" effort="0" velocity="0" />
+  </joint>
+  <link name="link6" />
+  <joint name="joint6" type="revolute">
+    <parent link="link0" />
+    <child link="link6" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="4.807814540487757" effort="0" velocity="0" />
+  </joint>
+  <link name="link7" />
+  <joint name="joint7" type="revolute">
+    <parent link="link0" />
+    <child link="link7" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.9993077179813" upper="0" effort="0" velocity="0" />
+  </joint>
+</robot>

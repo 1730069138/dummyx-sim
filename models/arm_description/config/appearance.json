@@ -1,0 +1,153 @@
+{
+  "rgba": {
+    "silver": "0.60 0.62 0.64 1",
+    "light_silver": "0.80 0.82 0.83 1",
+    "motor_gray": "0.23 0.25 0.27 1",
+    "black": "0.055 0.060 0.065 1",
+    "blue": "0.035 0.36 0.69 1",
+    "steel": "0.40 0.43 0.46 1"
+  },
+  "parts": {
+    "part_00": {
+      "component": "LINK2-DJ-1",
+      "material": "motor_gray"
+    },
+    "part_01": {
+      "component": "JGJ-5_2-1",
+      "material": "motor_gray"
+    },
+    "part_02": {
+      "component": "J23-105-1",
+      "material": "silver"
+    },
+    "part_03": {
+      "component": "XW7-M2_5X8-2-2",
+      "material": "steel"
+    },
+    "part_04": {
+      "component": "XW4-M2X8-1",
+      "material": "steel"
+    },
+    "part_05": {
+      "component": "LINK2-DJ-2",
+      "material": "motor_gray"
+    },
+    "part_06": {
+      "component": "J1-P2-1",
+      "material": "silver"
+    },
+    "part_07": {
+      "component": "XW1-M2_5X5-CT-1",
+      "material": "steel"
+    },
+    "part_08": {
+      "component": "BASE_LINK-1",
+      "material": "black"
+    },
+    "part_09": {
+      "component": "J23-FALAN-1",
+      "material": "silver"
+    },
+    "part_10": {
+      "component": "LINK5-1",
+      "material": "silver"
+    },
+    "part_11": {
+      "component": "XW3-M2X8-1",
+      "material": "steel"
+    },
+    "part_12": {
+      "component": "J1-P1-100-1",
+      "material": "silver"
+    },
+    "part_13": {
+      "component": "LINK3-1",
+      "material": "silver"
+    },
+    "part_15": {
+      "component": "J5-P2-1",
+      "material": "motor_gray"
+    },
+    "part_16": {
+      "component": "LINK4-1",
+      "material": "silver"
+    },
+    "part_17": {
+      "component": "XW5-M2X10X2-1",
+      "material": "steel"
+    },
+    "part_18": {
+      "component": "DI-ZUO-V5-1",
+      "material": "blue"
+    },
+    "part_19": {
+      "component": "ZLQ-ZC-D4XD9X4H-2",
+      "material": "steel"
+    },
+    "part_20": {
+      "component": "ZHUA-2",
+      "material": "black"
+    },
+    "part_21": {
+      "component": "ZLQ-ZC-D4XD9X4H-1",
+      "material": "steel"
+    },
+    "part_22": {
+      "component": "2T-1",
+      "material": "steel"
+    },
+    "part_23": {
+      "component": "DAO-GUI-5X7X155-1",
+      "material": "steel"
+    },
+    "part_24": {
+      "component": "ZHUAN-1",
+      "material": "steel"
+    },
+    "part_25": {
+      "component": "ZHOU-CHENG-6X17X22_5-1",
+      "material": "blue"
+    },
+    "part_26": {
+      "component": "ZHOU-CHENG-6X17X22_5-2",
+      "material": "blue"
+    },
+    "part_27": {
+      "component": "ZHUA-1",
+      "material": "black"
+    },
+    "part_28": {
+      "component": "ZLQ-ZC-D4XD9X4H-4",
+      "material": "steel"
+    },
+    "part_29": {
+      "component": "2T-2",
+      "material": "steel"
+    },
+    "part_30": {
+      "component": "2T-3",
+      "material": "steel"
+    },
+    "part_31": {
+      "component": "ZLQ-ZC-D4XD9X4H-3",
+      "material": "steel"
+    },
+    "part_33": {
+      "component": "D415-1",
+      "material": "light_silver"
+    },
+    "part_34": {
+      "component": "RELAY-POWER-59422-1",
+      "material": "black"
+    },
+    "part_35": {
+      "component": "415SXT-ZJ-10DU--1",
+      "material": "black"
+    },
+    "part_36": {
+      "component": "JGJ-6-_ASM-1",
+      "material": "motor_gray"
+    }
+  },
+  "note": "Approximate per-part color match from photo; lighting and single-mesh mixed materials cannot be reproduced exactly."
+}

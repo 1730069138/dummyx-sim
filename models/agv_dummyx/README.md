@@ -1,13 +1,13 @@
 # agv_dummyx：巡检工厂抓取演示
 
-`scene.xml` 把巡检工作空间的 AGV 底座与新机械臂组合。本代码分支只保存本次制作的场景和脚本，不提交聊天前已有的机械臂源文件与复制来的 STL 网格。运行前需在本地准备：
+`scene.xml` 把巡检工作空间的 AGV 底座与新机械臂组合。当前本地场景所需的模型资产包括：
 
 - `models/agv_dummyx/base_link.STL`：来自巡检工作空间的 `assets/meshes/base_link.STL`。
-- `models/agv_dummyx/d415_camera.STL`：来自巡检工作空间的 `assets/meshes/camera_link.STL`。
-- `arm_description_gui_verified_zero/arm_description/meshes/`：原机械臂网格。
-- `arm_description_gui_verified_zero/arm_description/scripts/gripper_kinematics.py`：夹爪联动计算。使用构建工具及几何测试时还需原 `urdf/arm_portable.urdf` 和 `config/initial_pose.json`、`config/straight7_pose.json`。
+- `models/agv_dummyx/d415_camera.STL`：从 `D415_meters.stl` 复制来的运行时相机网格；CAD 源文件保存在 `models/agv_dummyx/cad/D415_Solid.SLDPRT`。
+- `models/arm_description/meshes/`：原机械臂网格。
+- `models/arm_description/scripts/gripper_kinematics.py`：夹爪联动计算。使用构建工具及几何测试时还需 `models/arm_description/urdf/arm_portable.urdf` 和 `config/initial_pose.json`、`config/straight7_pose.json`。
 
-这些文件仍在原本的本地工作区，仓库的代码分支不会提供它们；缺少时 MuJoCo 场景无法加载。
+上述资产已在当前工作区中；Git 分支是否包含它们需按提交清单核对。删除桌面压缩包不影响当前 MuJoCo 场景加载。
 
 机械臂安装点沿用原 URDF 的固定 `joint0`：
 相对 AGV 为 `(0.12866757754516, -0.001, 0.732)` m，安装旋转为零。
@@ -22,7 +22,7 @@ cd /home/jun/dummyx-sim
 /home/jun/anaconda3/envs/dummyx_vla/bin/python scripts/tools/preview_agv_dummyx.py
 ```
 
-默认显示 `z_pose.json` 保存的 Z 型姿态、夹爪张开；`--pose straight7` 可查看原直“7”姿态。鼠标可旋转、平移、缩放。
+默认显示 `z_pose.json` 保存的 Z 型姿态、夹爪张开；`--pose straight7` 可查看原直“7”姿态。直接加载 `scene.xml` 时，MuJoCo 的默认关节位置和零控制目标均为 Z 型，点击 Run 后伺服会保持该姿态。该场景的伺服控制量是相对 Z 型的偏移；采集和预览脚本仍接受原来的绝对关节角度。鼠标可旋转、平移、缩放。
 脚本只作运动学预览，底盘固定，物理计算暂停，不执行采集动作。
 工厂照明关闭投影阴影，避免 CAD 细分表面上的自阴影条纹；保留照明和材质。
 
@@ -35,7 +35,7 @@ python scripts/tools/preview_agv_dummyx.py --headless \
   --output outputs/agv_dummyx/preview.png
 ```
 
-新臂结构保存在本目录的 `scene.xml`，`part_34.msh` 也保存在本目录；其余机械臂网格通过相对路径引用上面的本地源目录。
+新臂结构保存在本目录的 `scene.xml`；机械臂网格统一放在 `../arm_description/meshes/`，其中 `part_34.msh` 是由源 `part_34.stl` 转换的 MuJoCo 网格。
 `provenance.json` 记录复制资源的哈希、源安装点和整机抬高量。依赖文件准备齐全后，运行时不再读取原巡检工作空间。
 底盘保持固定，未建立轮子关节或移动底盘动力学；机械臂抓放演示使用 MuJoCo 接触物理。
 
@@ -54,10 +54,10 @@ python scripts/tools/preview_agv_dummyx.py --headless \
 
 车体大圆孔位于 AGV 局部 `(-0.099992, -0.200)` m，顶板高度在世界系约 **0.602 m**，
 孔半径 **0.030 m**。`scene.xml` 在孔位安装半径 13 mm 的固定支架杆，
-杆顶和 D415 相机本体中心为世界高度 **1.640 m**。机械臂在向上伸展的检查姿态中，
-可视网格最高点的保守界为约 **1.539 m**；相机杆顶高约 **10 cm**。
-相机外形复制自原巡检工作空间的 `camera_link.STL`，在本目录保存为 `d415_camera.STL`；
-源文件不改。杆、法兰和相机本体均有碰撞近似，底座固定。
+主杆止于世界高度 **1.615 m**，细安装柱接到相机下侧圆孔；相机安装参考点高度为 **1.640 m**。
+机械臂在向上伸展的检查姿态中，可视网格最高点的保守界为约 **1.539 m**。
+相机外形使用从 D415 CAD 导出的米单位网格，保存在本目录的 `d415_camera.STL`；
+原巡检工作空间的 `camera_link.STL` 未修改。杆、法兰和相机本体均有碰撞近似，底座固定。
 
 `overview` 和 `d415_rgb` 是同一个杆顶 RGB 光学视角，朝向工作台；
 采用 D415 RGB 的约 **69.4° 水平、42.5° 垂直**视场。
@@ -65,7 +65,7 @@ python scripts/tools/preview_agv_dummyx.py --headless \
 这里的 D415 是相机外形与理想针孔 RGB 渲染，未模拟真实深度、畸变或噪声。
 采集器现在把 `overview` 原始 640×360 图像写入 `cam_fixed/`，腕部相机仍为 256×256；
 数据版本为 `agv_dummyx_screwdriver_v3`。旧 `scene_pre_d415.xml` 只用于旧数据回放。
-预览图见 `outputs/agv_dummyx/d415_mount_overview.png` 和 `d415_camera_initial_raw.png`。
+更新后的安装近景和采集视角分别见 `outputs/agv_dummyx/d415_official_closeup.png`、`d415_official_overview.png`。
 
 无窗口加载及渲染已检查，直“7”与全零两种姿态均无工作台碰撞接触。
 下面的 demo 检查固定轨迹中的接触及放置结果；随机采集的验证和限制见 `../../docs/hardstop_arm_collection.md`。

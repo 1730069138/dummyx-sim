@@ -1,0 +1,10 @@
+﻿"Symbol";"Value";"Unit";
+"TraceParts.PartNumber";"90-15082024-055453";"";
+"REFERENCE";"461182";"";
+"TraceParts.PartTitle";"Nylon Cable Ties";"";
+"TraceParts.InstanceId";"90-15082024-0554533ZQOKCTZV37RP7APM8ZCX43LH";"";
+"SUPPLIER";"Essentra Components";"";
+"DESIGN";"Cable Tie 7.6 mm 150.0 mm 39.0 mm Nylon Black";"";
+"TRACEPARTS";"TRACEPARTS";"";
+"TraceParts.PartLanguage";"en";"";
+"TraceParts.PartVersion";"1.0.1";"";

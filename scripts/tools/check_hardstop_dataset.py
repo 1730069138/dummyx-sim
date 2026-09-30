@@ -52,16 +52,18 @@ def check_episode(folder, arm=None):
         if arm is not None:
             for name, digest in meta["model_files_sha256"].items():
                 file = ROOT / name
-                if name == "models/hardstop_arm/part_34.msh":
-                    file = SCENE.parent / "part_34.msh"
+                if name in ("models/hardstop_arm/part_34.msh", "models/agv_dummyx/part_34.msh"):
+                    file = ROOT / "models/arm_description/meshes/part_34.msh"
                 if name == "models/agv_dummyx/scene.xml" and meta["schema"] == "agv_dummyx_screwdriver_v2":
                     file = LEGACY_SCENE
                 content = file.read_bytes()
-                if name == "models/agv_dummyx/scene.xml" and digest != hashlib.sha256(content).hexdigest():
-                    # Older recordings used the same mesh through its former path.
-                    content = content.replace(b'file="part_34.msh"',
-                                              b'file="../hardstop_arm/part_34.msh"').rstrip(b"\n")
-                if digest != hashlib.sha256(content).hexdigest():
+                candidates = [content]
+                if name == "models/agv_dummyx/scene.xml":
+                    # Recorded scenes may refer to the mesh's earlier locations.
+                    for old_path in (b'part_34.msh', b'../hardstop_arm/part_34.msh'):
+                        old = content.replace(b'../arm_description/meshes/part_34.msh', old_path)
+                        candidates.extend((old, old.rstrip(b"\n")))
+                if not any(digest == hashlib.sha256(candidate).hexdigest() for candidate in candidates):
                     raise ValueError(f"Model changed since recording: {file}")
             arm.reset(meta["initial_xy"], meta["initial_yaw"])
             max_q_error, max_object_error = 0., 0.

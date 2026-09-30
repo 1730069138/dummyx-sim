@@ -1,0 +1,13 @@
+{
+  "zero_pose_contact_checked": true,
+  "solid_contacts": "J1-J4 and jaws within CAD numerical tolerance; J2 residual overlap 2.91e-6 mm3",
+  "sheet_contacts": "J5/J6 boundary bracket [-0.0001,0] degrees; solid clearance unavailable",
+  "urdf_geometry_changed": false,
+  "limits_remeasured": false,
+  "hardware_accuracy_verified": false,
+  "ros2_runtime_tested": false,
+  "default_startup": "all zero",
+  "straight7_saved": "config/straight7_pose.json",
+  "cad_zero_frame_max_error": 8.787415239908114e-14,
+  "cad_synced_and_saved": true
+}

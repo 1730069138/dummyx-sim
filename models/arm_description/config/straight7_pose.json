@@ -1,0 +1,45 @@
+{
+  "confirmed_by_user": true,
+  "description": "Accepted straight 7; indicated LINK4 plate vertical; camera upper; jaw gap 101 mm",
+  "units": "radian; passive jaw joints metre",
+  "joint_positions": {
+    "joint1": 3.1416101068823132,
+    "joint2": 1.3962808548879837,
+    "joint3": -1.561455188137902,
+    "joint4": -1.942312724011374,
+    "joint5": 1.9268439348716764,
+    "joint6": 2.3723486989743314,
+    "joint7": -1.999307717981279,
+    "joint10": -0.05050000000000002,
+    "joint12": -0.05050000000000002,
+    "joint11": 0.04100363390596984,
+    "joint13": 0.04100363390596984
+  },
+  "hardware_mapping_verified": true,
+  "hardstop_zero_preserved": true,
+  "source_cad_angles_deg": [
+    180.001,
+    80.001,
+    89.4647921791077,
+    -111.28632158041,
+    110.40002524852753,
+    0.9255777895450592,
+    -114.55189418825914
+  ],
+  "urdf_angles_deg": [
+    180.001,
+    80.001,
+    -89.4647921791077,
+    -111.28632158041,
+    110.40002524852753,
+    135.925567984581,
+    -114.55189418825914
+  ],
+  "coordinate_revision": "J3 negative convention retained; J6 re-zeroed at new installed hardstop; accepted physical pose retained.",
+  "hardware_mapping_confirmation": {
+    "basis": "Explicit user confirmation in conversation",
+    "relation": "Motor positions use the discussed URDF conventions directly; no additional offset or sign correction",
+    "independent_measurement_by_agent": false
+  },
+  "j6_reinstallation_note": "Initial angle updated to measured distance from relocated hardstop. Previous 0.9256 deg corresponds to the old stop installation."
+}

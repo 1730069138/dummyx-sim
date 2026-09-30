@@ -1,0 +1,17 @@
+{
+  "joint": "joint3",
+  "relation": "q_new = -q_old",
+  "coordinate_change": "X retained; Y and Z reversed (proper 180 degree rotation about X)",
+  "axis": [
+    0,
+    0,
+    1
+  ],
+  "lower_deg": -282.4339890480054,
+  "upper_deg": 0,
+  "initial_deg": -89.4647921791077,
+  "hardstop_zero_unchanged": true,
+  "solidworks_source_modified": false,
+  "hardware_magnitude_mapping_verified": true,
+  "verification_basis": "User confirmed direct mapping; no extra offset"
+}

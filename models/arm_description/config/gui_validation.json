@@ -1,0 +1,18 @@
+{
+  "slider_joints": [
+    "joint1",
+    "joint2",
+    "joint3",
+    "joint4",
+    "joint5",
+    "joint6",
+    "joint7"
+  ],
+  "limits_match_full_urdf": true,
+  "initial_positions_within_limits": true,
+  "passive_gripper_joints_hidden_from_gui": true,
+  "single_joint_states_publisher_by_launch_design": true,
+  "python_syntax_valid": true,
+  "ros2_runtime_tested": false,
+  "reason": "ROS 2 / Qt / RViz unavailable on Windows export host"
+}

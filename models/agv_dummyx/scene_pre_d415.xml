@@ -20,41 +20,41 @@
     <material name="black" rgba="0.055 0.060 0.065 1" />
     <material name="blue" rgba="0.035 0.36 0.69 1" />
     <material name="steel" rgba="0.40 0.43 0.46 1" />
-    <mesh name="part_00" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_00.stl" />
-    <mesh name="part_01" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_01.stl" />
-    <mesh name="part_02" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_02.stl" />
-    <mesh name="part_03" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_03.stl" />
-    <mesh name="part_04" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_04.stl" />
-    <mesh name="part_05" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_05.stl" />
-    <mesh name="part_06" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_06.stl" />
-    <mesh name="part_07" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_07.stl" />
-    <mesh name="part_08" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_08.stl" />
-    <mesh name="part_09" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_09.stl" />
-    <mesh name="part_10" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_10.stl" />
-    <mesh name="part_11" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_11.stl" />
-    <mesh name="part_12" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_12.stl" />
-    <mesh name="part_13" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_13.stl" />
-    <mesh name="part_15" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_15.stl" />
-    <mesh name="part_16" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_16.stl" />
-    <mesh name="part_17" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_17.stl" />
-    <mesh name="part_18" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_18.stl" />
-    <mesh name="part_19" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_19.stl" />
-    <mesh name="part_20" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_20.stl" />
-    <mesh name="part_21" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_21.stl" />
-    <mesh name="part_22" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_22.stl" />
-    <mesh name="part_23" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_23.stl" />
-    <mesh name="part_24" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_24.stl" />
-    <mesh name="part_25" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_25.stl" />
-    <mesh name="part_26" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_26.stl" />
-    <mesh name="part_27" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_27.stl" />
-    <mesh name="part_28" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_28.stl" />
-    <mesh name="part_29" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_29.stl" />
-    <mesh name="part_30" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_30.stl" />
-    <mesh name="part_31" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_31.stl" />
-    <mesh name="part_33" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_33.stl" />
-    <mesh name="part_34" file="part_34.msh" />
-    <mesh name="part_35" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_35.stl" />
-    <mesh name="part_36" file="../../arm_description_gui_verified_zero/arm_description/meshes/part_36.stl" />
+    <mesh name="part_00" file="../arm_description/meshes/part_00.stl" />
+    <mesh name="part_01" file="../arm_description/meshes/part_01.stl" />
+    <mesh name="part_02" file="../arm_description/meshes/part_02.stl" />
+    <mesh name="part_03" file="../arm_description/meshes/part_03.stl" />
+    <mesh name="part_04" file="../arm_description/meshes/part_04.stl" />
+    <mesh name="part_05" file="../arm_description/meshes/part_05.stl" />
+    <mesh name="part_06" file="../arm_description/meshes/part_06.stl" />
+    <mesh name="part_07" file="../arm_description/meshes/part_07.stl" />
+    <mesh name="part_08" file="../arm_description/meshes/part_08.stl" />
+    <mesh name="part_09" file="../arm_description/meshes/part_09.stl" />
+    <mesh name="part_10" file="../arm_description/meshes/part_10.stl" />
+    <mesh name="part_11" file="../arm_description/meshes/part_11.stl" />
+    <mesh name="part_12" file="../arm_description/meshes/part_12.stl" />
+    <mesh name="part_13" file="../arm_description/meshes/part_13.stl" />
+    <mesh name="part_15" file="../arm_description/meshes/part_15.stl" />
+    <mesh name="part_16" file="../arm_description/meshes/part_16.stl" />
+    <mesh name="part_17" file="../arm_description/meshes/part_17.stl" />
+    <mesh name="part_18" file="../arm_description/meshes/part_18.stl" />
+    <mesh name="part_19" file="../arm_description/meshes/part_19.stl" />
+    <mesh name="part_20" file="../arm_description/meshes/part_20.stl" />
+    <mesh name="part_21" file="../arm_description/meshes/part_21.stl" />
+    <mesh name="part_22" file="../arm_description/meshes/part_22.stl" />
+    <mesh name="part_23" file="../arm_description/meshes/part_23.stl" />
+    <mesh name="part_24" file="../arm_description/meshes/part_24.stl" />
+    <mesh name="part_25" file="../arm_description/meshes/part_25.stl" />
+    <mesh name="part_26" file="../arm_description/meshes/part_26.stl" />
+    <mesh name="part_27" file="../arm_description/meshes/part_27.stl" />
+    <mesh name="part_28" file="../arm_description/meshes/part_28.stl" />
+    <mesh name="part_29" file="../arm_description/meshes/part_29.stl" />
+    <mesh name="part_30" file="../arm_description/meshes/part_30.stl" />
+    <mesh name="part_31" file="../arm_description/meshes/part_31.stl" />
+    <mesh name="part_33" file="../arm_description/meshes/part_33.stl" />
+    <mesh name="part_34" file="../arm_description/meshes/part_34.msh" />
+    <mesh name="part_35" file="../arm_description/meshes/part_35.stl" />
+    <mesh name="part_36" file="../arm_description/meshes/part_36.stl" />
     <mesh name="agv_base_mesh" file="base_link.STL" />
   </asset>
   <worldbody>

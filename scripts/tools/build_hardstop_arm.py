@@ -16,7 +16,7 @@ from scipy.spatial.transform import Rotation
 import trimesh
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "arm_description_gui_verified_zero/arm_description"
+SOURCE = ROOT / "models/arm_description"
 DEST = ROOT / "models/hardstop_arm"
 # One lumped mass per moving assembly, including its fixed visual children.
 MASSES = dict(zip((1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13),

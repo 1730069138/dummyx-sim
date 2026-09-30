@@ -1,6 +1,7 @@
 """Check the physical mount and D415 RGB framing in the AGV task scene."""
 from pathlib import Path
 import unittest
+import xml.etree.ElementTree as ET
 
 import mujoco
 import numpy as np
@@ -57,6 +58,39 @@ class D415CameraTests(unittest.TestCase):
         normalized = np.column_stack([local[:, 0] / depth / (half_vertical * 640 / 360),
                                       local[:, 1] / depth / half_vertical])
         self.assertLess(np.abs(normalized).max(), .95)
+
+    def test_d415_visual_uses_metre_mesh_and_faces_rgb_direction(self):
+        mesh = trimesh.load(SCENE.parent / "d415_camera.STL", force="mesh")
+        np.testing.assert_allclose(mesh.extents, [.099, .023, .020], atol=.001)
+
+        geom = ET.parse(SCENE).find(".//geom[@name='d415_camera_visual']")
+        rotation = np.empty(9)
+        mujoco.mju_quat2Mat(rotation, np.fromstring(geom.get("quat"), sep=" "))
+        mujoco.mj_forward(self.model, self.data)
+        mount_rotation = self.data.body("d415_camera_mount").xmat.reshape(3, 3)
+        camera_rotation = self.data.camera("overview").xmat.reshape(3, 3)
+        mesh_front = mount_rotation @ rotation.reshape(3, 3) @ [0, 0, 1]
+        self.assertGreater(np.dot(mesh_front, -camera_rotation[:, 2]), .99)
+
+    def test_pole_stops_below_camera_and_stud_meets_mounting_hole(self):
+        scene = ET.parse(SCENE)
+        geom = scene.find(".//geom[@name='d415_camera_visual']")
+        rotation = np.empty(9)
+        mujoco.mju_quat2Mat(rotation, np.fromstring(geom.get("quat"), sep=" "))
+        rotation = rotation.reshape(3, 3)
+        position = np.fromstring(geom.get("pos"), sep=" ")
+        mesh = trimesh.load(SCENE.parent / "d415_camera.STL", force="mesh")
+        vertices = mesh.vertices @ rotation.T + position
+        hole = np.array([.05, mesh.bounds[0, 1], .010])
+        np.testing.assert_allclose(rotation @ hole + position, [0, 0, 0], atol=1e-6)
+
+        pole = scene.find(".//geom[@name='d415_pole']")
+        pole_top = float(pole.get("pos").split()[2]) + float(pole.get("size").split()[1])
+        camera_mount = scene.find(".//body[@name='d415_camera_mount']")
+        self.assertGreater(float(camera_mount.get("pos").split()[2]) + vertices[:, 2].min() - pole_top, .002)
+        stud = scene.find(".//geom[@name='d415_mount_stud']")
+        stud_top = float(stud.get("pos").split()[2]) + float(stud.get("size").split()[1])
+        self.assertAlmostEqual(stud_top, float(camera_mount.get("pos").split()[2]), places=6)
 
 
 if __name__ == "__main__":

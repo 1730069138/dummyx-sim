@@ -12,7 +12,7 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 MODEL_PATH = ROOT / "models/agv_dummyx/scene.xml"
 OBSTACLE_MODEL_PATH = MODEL_PATH.parent / "scene_obstacle.xml"
-POSE_DIR = ROOT / "arm_description_gui_verified_zero/arm_description/config"
+POSE_DIR = ROOT / "models/arm_description/config"
 
 
 def load_model(pose="z", obstacle=False):
@@ -28,7 +28,8 @@ def load_model(pose="z", obstacle=False):
     # Match servo targets to the inspection pose if the model is later stepped.
     for index in range(model.nu):
         joint_id = model.actuator_trnid[index, 0]
-        data.ctrl[index] = data.qpos[model.jnt_qposadr[joint_id]]
+        adr = model.jnt_qposadr[joint_id]
+        data.ctrl[index] = data.qpos[adr] - model.qpos0[adr]
     mujoco.mj_forward(model, data)
     return model, data
 

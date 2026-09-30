@@ -66,17 +66,21 @@
     "bin_alignment": "Bin center is 0.05 m inward from the AGV left side mesh boundary (+0.303 m), at Y=+0.253 m"
   },
   "d415_camera": {
-    "source_visual_mesh": "/home/jun/xunjian_vla_workspace/assets/meshes/camera_link.STL",
+    "source_cad_file": "models/agv_dummyx/cad/D415_Solid.SLDPRT",
+    "source_cad_sha256": "41a4f25433ce35b32c9fb4026fa85bbd650fce66559d7efe42cce135a53ce9f8",
+    "source_bundle_member": "D415_meters.stl",
     "copied_visual_mesh": "models/agv_dummyx/d415_camera.STL",
-    "copied_visual_mesh_sha256": "041ceb9c58d5c71f95b259da5fe6c8e0c0fcd11a44a8206d3bebe83da532685b",
+    "copied_visual_mesh_sha256": "60383c0c5a2f0de62e0980a12581cb8794a1700038685c9c5398a38c717e9aab",
+    "source_bundle_sha256": "65f3cbf8e14f5d71e23087a48966a87269002f9ef09a49a7ab87680b63e32862",
     "deck_hole_center_xy_m": [-0.099992, -0.2],
     "deck_hole_radius_m": 0.03,
-    "pole_top_world_z_m": 1.64,
+    "pole_top_world_z_m": 1.615,
+    "camera_mount_world_z_m": 1.64,
     "upright_arm_visual_top_bound_m": 1.5389683441154716,
     "rgb_fov_deg": [69.4, 42.5],
     "rgb_observation_pixels": [640, 360],
     "camera_names": ["overview", "d415_rgb"],
-    "note": "Fixed visual/collision mount; RGB is ideal pinhole MuJoCo rendering, not a simulated RealSense depth pipeline."
+    "note": "User-exported D415 CAD visual mesh in metres; the CAD mounting-hole side faces the shortened pole and a narrow stud reaches the hole. The RGB optical frame is unchanged. RGB is ideal pinhole MuJoCo rendering, not a simulated RealSense depth pipeline."
   },
   "optional_obstacle": {
     "default_present": false,

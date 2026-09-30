@@ -137,6 +137,23 @@ class HardstopArmTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 arm.command(bad)
 
+    def test_default_run_holds_z_and_commands_remain_absolute(self):
+        arm = self.arm
+        arm.mj.mj_resetData(arm.model, arm.data)
+        z_pose = json.loads((SOURCE.parent / "agv_dummyx/z_pose.json").read_text())["joint_positions"]
+        for name, value in z_pose.items():
+            self.assertAlmostEqual(arm.data.joint(name).qpos[0], value)
+        start = arm.data.qpos.copy()
+        for _ in range(1000):
+            arm.mj.mj_step(arm.model, arm.data)
+        np.testing.assert_allclose(arm.data.qpos[7:14], start[7:14], atol=1e-4)
+
+        action = arm.reset()
+        arm.command(action)
+        for i in range(1, 7):
+            self.assertAlmostEqual(arm.data.ctrl[arm.servo[i]],
+                                   action[i - 1] - z_pose[f"joint{i}"])
+
     def test_placement_accepts_rim_lean_but_rejects_tool_center_outside_bin(self):
         arm = self.arm
         arm.reset()

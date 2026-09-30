@@ -1,0 +1,66 @@
+{
+  "joint_ranges": [
+    {
+      "joint": 1,
+      "lower_deg": 0,
+      "upper_deg": 350.0000195503235,
+      "mid_deg": 175.00000977516174,
+      "method": "Solid/surface stop pair"
+    },
+    {
+      "joint": 2,
+      "lower_deg": 0,
+      "upper_deg": 263.5639867782593,
+      "mid_deg": 131.78199338912964,
+      "other_stop_upper_deg": 278.18451142311096,
+      "controlling_pair": "J1-P1 / XW2"
+    },
+    {
+      "joint": 3,
+      "lower_deg": 0,
+      "upper_deg": 282.43398904800415,
+      "mid_deg": 141.21699452400208,
+      "method": "Solid stop pair; positive Z CAD convention"
+    },
+    {
+      "joint": 4,
+      "lower_deg": -220.4723997116089,
+      "upper_deg": 0,
+      "mid_deg": -110.23619985580444,
+      "method": "Solid stop pair"
+    },
+    {
+      "joint": 5,
+      "lower_deg": 0,
+      "upper_deg": 272.4492905139923,
+      "mid_deg": 136.22464525699615,
+      "method": "Sheet intersection boundary"
+    },
+    {
+      "joint": 6,
+      "lower_deg": 0,
+      "upper_deg": 275.46748185157776,
+      "mid_deg": 137.73374092578888,
+      "method": "Sheet intersection boundary"
+    },
+    {
+      "joint": 7,
+      "closed_gap_mm": 0,
+      "max_gap_mm": 101.00001978874207,
+      "mid_gap_mm": 50.50000989437103,
+      "mid_drive_deg": -61.81462702837318,
+      "method": "Slider to base hardstop; midpoint in linear jaw travel"
+    }
+  ],
+  "neutral_pose_deg": [
+    175.00000977516174,
+    131.78199338912964,
+    141.21699452400208,
+    -110.23619985580444,
+    136.22464525699615,
+    137.73374092578888,
+    -61.81462702837318
+  ],
+  "convention": "J1-J6 geometric +Z right-hand angles from calibrated stops; gripper midpoint measured in linear opening",
+  "limitations": "J5/J6 are sheet-boundary checks. Ranges derive from local stop pairs, not a full-arm collision or wiring envelope."
+}

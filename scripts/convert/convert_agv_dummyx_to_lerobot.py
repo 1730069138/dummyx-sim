@@ -1,6 +1,8 @@
 """Convert AGV DummyX v3 episodes to the LeRobot format used by OpenPI."""
 
 import argparse
+import gc
+import inspect
 import json
 from pathlib import Path
 
@@ -42,8 +44,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--repo-id", default="local/agv_dummyx_screwdriver")
-    parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--resume", action="store_true", help="Continue an existing dataset from its recorded episode count")
     args = parser.parse_args()
     source = episodes(args.data_dir)
     checked = [(folder, *check_episode(folder)) for folder in source]
@@ -54,31 +56,64 @@ def main():
 
     from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 
-    output = (args.output_root / args.repo_id).resolve()
-    if output.exists():
+    output = (Path.home() / ".cache/huggingface/lerobot" / args.repo_id).resolve()
+    if output.exists() and not args.resume:
         raise FileExistsError(f"Output already exists: {output}")
-    dataset = LeRobotDataset.create(
-        repo_id=args.repo_id,
-        root=output,
-        robot_type="agv_dummyx",
-        fps=50,
-        features={
-            "image": {"dtype": "image", "shape": (360, 640, 3), "names": ["height", "width", "channel"]},
-            "wrist_image": {"dtype": "image", "shape": (256, 256, 3), "names": ["height", "width", "channel"]},
-            "state": {"dtype": "float32", "shape": (7,), "names": ["state"]},
-            "actions": {"dtype": "float32", "shape": (7,), "names": ["actions"]},
-        },
-        image_writer_threads=4,
-    )
-    for folder, states, actions, task in checked:
+    if args.resume:
+        if not output.exists():
+            raise FileNotFoundError(f"No dataset to resume: {output}")
+        info = json.loads((output / "meta/info.json").read_text())
+        completed = info["total_episodes"]
+        if completed < 1 or completed > len(checked):
+            raise ValueError(f"Invalid completed episode count: {completed}")
+        if info["fps"] != 50 or info["robot_type"] != "agv_dummyx":
+            raise ValueError(f"Incompatible existing dataset: {output}")
+        if any(folder.name != f"ep_{i:04d}" for i, (folder, *_rest) in enumerate(checked)):
+            raise ValueError("Source episode indices must be contiguous from ep_0000")
+        orphan = output / info["data_path"].format(
+            episode_chunk=completed // info["chunks_size"], episode_index=completed)
+        if orphan.exists():
+            orphan.unlink()
+            print(f"Removed uncommitted parquet: {orphan}")
+        dataset = LeRobotDataset(args.repo_id, root=output, episodes=[completed - 1])
+        if dataset.meta.total_episodes != completed:
+            raise ValueError("Existing dataset episode count changed during loading")
+        dataset.episodes = None
+        dataset.hf_dataset = dataset.create_hf_dataset()
+        dataset.episode_buffer = dataset.create_episode_buffer()
+        dataset.start_image_writer(num_threads=4)
+        print(f"Resuming at ep_{completed:04d}; {completed} episodes already saved")
+    else:
+        dataset = LeRobotDataset.create(
+            repo_id=args.repo_id,
+            root=output,
+            robot_type="agv_dummyx",
+            fps=50,
+            features={
+                "image": {"dtype": "image", "shape": (360, 640, 3), "names": ["height", "width", "channel"]},
+                "wrist_image": {"dtype": "image", "shape": (256, 256, 3), "names": ["height", "width", "channel"]},
+                "state": {"dtype": "float32", "shape": (7,), "names": ["state"]},
+                "actions": {"dtype": "float32", "shape": (7,), "names": ["actions"]},
+            },
+            image_writer_threads=4,
+        )
+        completed = 0
+    task_is_argument = "task" in inspect.signature(dataset.add_frame).parameters
+    for folder, states, actions, task in checked[completed:]:
         for i in range(len(states)):
             with Image.open(folder / "cam_fixed" / f"{i:05d}.jpg") as image:
                 fixed = np.asarray(image.convert("RGB"))
             with Image.open(folder / "cam_wrist" / f"{i:05d}.jpg") as image:
                 wrist = np.asarray(image.convert("RGB"))
-            dataset.add_frame({"image": fixed, "wrist_image": wrist,
-                               "state": states[i], "actions": actions[i], "task": task})
+            frame = {"image": fixed, "wrist_image": wrist,
+                     "state": states[i], "actions": actions[i]}
+            if task_is_argument:
+                dataset.add_frame(frame, task=task)
+            else:
+                dataset.add_frame({**frame, "task": task})
         dataset.save_episode()
+        dataset.hf_dataset = dataset.create_hf_dataset()
+        gc.collect()
         print(f"Saved {folder.name}: {len(states)} frames")
     print(f"LeRobot dataset: {output}")
 
