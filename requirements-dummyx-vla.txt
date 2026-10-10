@@ -5,6 +5,7 @@
 numpy==1.26.4
 scipy==1.15.2
 mujoco==3.3.2
+ompl==2.0.1
 opencv-python==4.11.0.86
 matplotlib==3.10.1
 pillow==11.2.1

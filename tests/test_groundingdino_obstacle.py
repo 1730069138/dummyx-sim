@@ -29,6 +29,13 @@ class GeometryTests(unittest.TestCase):
         np.testing.assert_allclose((capsule["p1"] + capsule["p2"]) / 2, [0.11, -0.1, 0.28])
         self.assertGreater(capsule["r"], np.hypot(0.02, 0.02))
 
+    def test_agv_table_and_nine_centimeter_pillar(self):
+        cloud = pillar_cloud()
+        cloud[:, :, 2] = .8 + (cloud[:, :, 2] - .2) * (.09 / .16)
+        capsule, _ = perception.fit_known_pillar(cloud, table_z=.8, half_height=.045)
+        np.testing.assert_allclose((capsule["p1"] + capsule["p2"]) / 2, [.11, -.1, .845])
+        np.testing.assert_allclose(capsule["p2"] - capsule["p1"], [0., 0., .09])
+
     def test_invalid_partial_and_table_clouds_rejected(self):
         cloud = pillar_cloud()
         table = cloud.copy()
@@ -109,6 +116,25 @@ class APFTests(unittest.TestCase):
         self.assertEqual(result[2]["r"], 0.025)
         result = deploy.process_apf_action(self.model, self.data, np.zeros(7), False, 20, "groundingdino")
         self.assertIsNone(result[2])
+
+
+class BoxOpeningTests(unittest.TestCase):
+    def test_depth_rim_recovers_center_and_tcp_offsets(self):
+        center = np.array([.471, .253, .853])
+        a = np.linspace(-1., 1., 200)
+        rim = np.vstack([np.column_stack([a * .117, np.full(200, y), np.zeros(200)]) for y in (-.118, .118)] +
+                        [np.column_stack([np.full(200, x), a * .118, np.zeros(200)]) for x in (-.117, .117)]) + center
+        points = np.vstack([rim, np.array([[0., 0., .80], [0., 0., .98], [np.nan]*3])])
+        geometry, _ = perception.fit_box_opening(points)
+        np.testing.assert_allclose(geometry["opening_center"], center, atol=1e-10)
+        np.testing.assert_allclose(geometry["attraction_point"], center + [-.052, 0., .05])
+        np.testing.assert_allclose(geometry["placement_goal"], center + [-.052, 0., .019])
+        with self.assertRaises(ValueError):
+            perception.fit_box_opening(rim[:200])
+
+    def test_empty_depth_rejected(self):
+        with self.assertRaises(ValueError):
+            perception.fit_box_opening(np.empty((0, 3)))
 
 
 if __name__ == "__main__":

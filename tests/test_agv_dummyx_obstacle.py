@@ -18,11 +18,12 @@ class AGVObstacleSceneTests(unittest.TestCase):
                                        [1., 0., 0.], atol=1e-10)
             self.assertAlmostEqual(float(data.joint('joint2').qpos[0]), 0.)
 
-    def test_layout_centers_pillar_and_offsets_bin_five_cm_inside_left_edge(self):
+    def test_layout_moves_pillar_five_cm_toward_bin_and_preserves_bin_position(self):
         model, data = load_model(obstacle=True)
         arm = data.body('link0').xpos
         pillar = data.body('dynamic_pillar').xpos
-        self.assertAlmostEqual(pillar[1], arm[1], places=9)
+        np.testing.assert_allclose(pillar, [.46, .049, .88], atol=1e-12)
+        self.assertAlmostEqual(pillar[1] - arm[1], .05, places=9)
         self.assertGreater(pillar[0], arm[0])
         mesh = model.geom('agv_base_visual').dataid[0]
         start, count = model.mesh_vertadr[mesh], model.mesh_vertnum[mesh]
@@ -42,6 +43,13 @@ class AGVObstacleSceneTests(unittest.TestCase):
         test, enabled = load_model(obstacle=True)
         self.assertEqual(test.nq, base.nq + 7)
         self.assertEqual(test.nu, base.nu)
+        np.testing.assert_array_equal(test.qpos0[:base.nq], base.qpos0)
+        for name in ('z', 'straight7'):
+            base_key = base.key(name)
+            obstacle_key = test.key(name)
+            np.testing.assert_array_equal(obstacle_key.qpos[:base.nq], base_key.qpos)
+            np.testing.assert_array_equal(obstacle_key.qpos[base.nq:], test.qpos0[base.nq:])
+            np.testing.assert_array_equal(obstacle_key.ctrl, base_key.ctrl)
         for i in range(base.njnt):
             name = base.joint(i).name
             np.testing.assert_array_equal(original.joint(name).qpos, enabled.joint(name).qpos)
@@ -60,6 +68,9 @@ class AGVObstacleSceneTests(unittest.TestCase):
         pillar = model.geom('pillar_geom').id
         table = model.geom('workbench_top').id
         initial = data.body('dynamic_pillar').xpos.copy()
+        self.assertAlmostEqual(model.geom('pillar_geom').size[2] * 2, .16)
+        self.assertAlmostEqual(initial[2], .88)
+        self.assertAlmostEqual(initial[2] - model.geom('pillar_geom').size[2], .80)
         for c in data.contact:
             if pillar in c.geom:
                 self.assertIn(table, c.geom)

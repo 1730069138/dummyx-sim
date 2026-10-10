@@ -1,6 +1,6 @@
-"""RGB-D localization of the known upright, static 4 x 4 x 16 cm pillar.
+"""RGB-D localization of a known upright, static 4 x 4 cm pillar (16 cm by default).
 
-The table top is at world z=0.20 m. The pillar is assumed axis-aligned.
+The table top defaults to world z=0.20 m. The pillar is assumed axis-aligned.
 Only camera calibration and RGB-D enter localization; obstacle body/geom
 state is never read here. A visible, sufficiently complete top face is required.
 DINO and camera helpers follow deploy_screwdriver_client_vlsa.py, kept local
@@ -156,14 +156,14 @@ def bbox_depth_to_world_points(model, data, camera_name, depth, bbox_xyxy):
     return points_world
 
 
-def fit_known_pillar(points):
+def fit_known_pillar(points, table_z=TABLE_Z, half_height=HALF_HEIGHT):
     """Estimate XY from a complete top face, rejecting unsupported geometry.
 
     points is an H x W x 3 organized cloud cropped to a detection box. NaNs
     mark invalid depth. Top-face components separate disconnected background.
     This is deliberately a known-shape localizer, not arbitrary shape fitting.
     """
-    top_z = TABLE_Z + 2 * HALF_HEIGHT
+    top_z = table_z + 2 * half_height
     top = np.isfinite(points).all(axis=2) & (np.abs(points[:, :, 2] - top_z) < 0.004)
     count, labels = cv2.connectedComponents(top.astype(np.uint8), connectivity=8)
     candidates = []
@@ -181,14 +181,14 @@ def fit_known_pillar(points):
         near = flat[np.isfinite(flat).all(axis=1)
                     & (np.abs(flat[:, 0] - xy[0]) < HALF_WIDTH + 0.004)
                     & (np.abs(flat[:, 1] - xy[1]) < HALF_WIDTH + 0.004)
-                    & (flat[:, 2] > TABLE_Z + 0.01)
+                    & (flat[:, 2] > table_z + 0.01)
                     & (flat[:, 2] < top_z + 0.004)]
-        if len(near) < 30 or np.ptp(near[:, 2]) < 0.09:
+        if len(near) < 30 or np.ptp(near[:, 2]) < 0.09 * half_height / HALF_HEIGHT:
             continue
-        center = np.array([xy[0], xy[1], TABLE_Z + HALF_HEIGHT])
+        center = np.array([xy[0], xy[1], table_z + half_height])
         capsule = {
-            "p1": center - np.array([0.0, 0.0, HALF_HEIGHT]),
-            "p2": center + np.array([0.0, 0.0, HALF_HEIGHT]),
+            "p1": center - np.array([0.0, 0.0, half_height]),
+            "p2": center + np.array([0.0, 0.0, half_height]),
             "r": float(np.sqrt(2) * HALF_WIDTH + GEOMETRY_MARGIN),
         }
         candidates.append((capsule, near))
@@ -197,13 +197,14 @@ def fit_known_pillar(points):
     return candidates[0]
 
 
-def localize_pillar(model, data, renderer, detector, caption, box_threshold, text_threshold, output_dir):
+def localize_pillar(model, data, renderer, detector, caption, box_threshold, text_threshold, output_dir,
+                    camera_name="rear_cam", table_z=TABLE_Z, half_height=HALF_HEIGHT):
     """Capture once while physics is paused; save evidence even on detection failure."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=False)
     started = time.perf_counter()
-    rgb, depth = render_rgb_depth(renderer, data, "rear_cam")
-    cam_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, "rear_cam")
+    rgb, depth = render_rgb_depth(renderer, data, camera_name)
+    cam_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, camera_name)
     np.savez_compressed(output_dir / "capture.npz", depth=depth,
                         intrinsics=camera_intrinsics_from_fovy(model, cam_id, *depth.shape),
                         camera_position=data.cam_xpos[cam_id].copy(),
@@ -211,10 +212,10 @@ def localize_pillar(model, data, renderer, detector, caption, box_threshold, tex
                         simulation_time=data.time)
     overlay = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
     cv2.imwrite(str(output_dir / "rgb.png"), overlay)
-    metadata = {"status": "failed", "caption": caption, "camera": "rear_cam",
+    metadata = {"status": "failed", "caption": caption, "camera": camera_name,
                 "box_threshold": box_threshold, "text_threshold": text_threshold,
                 "simulation_time": float(data.time), "candidates": [],
-                "assumption": "static axis-aligned 0.04x0.04x0.16m pillar on z=0.20m table"}
+                "assumption": f"static axis-aligned 0.04x0.04x{2 * half_height:.2f}m pillar on z={table_z:.2f}m table"}
     try:
         detections = detector.detect_all_boxes(rgb, caption, box_threshold, text_threshold)
         valid = []
@@ -225,9 +226,9 @@ def localize_pillar(model, data, renderer, detector, caption, box_threshold, tex
             roi_depth = depth[y1:y2, x1:x2]
             mask = np.isfinite(roi_depth) & (roi_depth > 1e-5)
             cloud = np.full((*roi_depth.shape, 3), np.nan)
-            cloud[mask] = bbox_depth_to_world_points(model, data, "rear_cam", depth, detection["xyxy"])
+            cloud[mask] = bbox_depth_to_world_points(model, data, camera_name, depth, detection["xyxy"])
             try:
-                capsule, points = fit_known_pillar(cloud)
+                capsule, points = fit_known_pillar(cloud, table_z, half_height)
                 center = (capsule["p1"] + capsule["p2"]) / 2
                 # Duplicate DINO boxes may describe the same pillar.
                 if not any(np.linalg.norm(center - item[2]) < 0.01 for item in valid):
@@ -257,3 +258,62 @@ def localize_pillar(model, data, renderer, detector, caption, box_threshold, tex
         cv2.imwrite(str(output_dir / "detections.png"), overlay)
         (output_dir / "perception.json").write_text(
             json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def fit_box_opening(points, table_z=.80):
+    """Fit the visible rim of the known upright AGV box, without scene poses."""
+    points = points[np.isfinite(points).all(axis=1)]
+    points = points[(points[:, 2] > table_z + .04) & (points[:, 2] < table_z + .07)]
+    if len(points) < 100:
+        raise ValueError("Insufficient box rim depth points")
+    top = float(np.percentile(points[:, 2], 99))
+    rim = points[points[:, 2] >= top - .0015]
+    if len(rim) < 100:
+        raise ValueError("Insufficient complete top rim")
+    lower, upper = np.percentile(rim[:, :2], [0.5, 99.5], axis=0)
+    extent = upper - lower
+    if not (.20 <= extent[0] <= .26 and .20 <= extent[1] <= .27):
+        raise ValueError(f"Incomplete or invalid box rim extent: {extent.tolist()}")
+    center = np.r_[(lower + upper) / 2, top]
+    return {"opening_center": center, "placement_goal": center + [-.052, 0., .019],
+            "attraction_point": center + [-.052, 0., .05]}, rim
+
+
+def localize_box(model, data, renderer, detector, box_threshold, text_threshold, output_dir,
+                 camera_name="d415_rgb", table_z=.80):
+    """Localize the known AGV open box from DINO and RGB-D; reject ambiguity."""
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=False)
+    rgb, depth = render_rgb_depth(renderer, data, camera_name)
+    overlay = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+    cv2.imwrite(str(output_dir / "rgb.png"), overlay)
+    np.save(output_dir / "depth.npy", depth)
+    metadata = {"status": "failed", "caption": "open teal box.", "camera": camera_name,
+                "assumption": "static axis-aligned AGV box with complete visible rim", "candidates": []}
+    try:
+        valid = []
+        for detection in detector.detect_all_boxes(rgb, metadata["caption"], box_threshold, text_threshold):
+            entry = dict(detection)
+            try:
+                cloud = bbox_depth_to_world_points(model, data, camera_name, depth, detection["xyxy"])
+                geometry, rim = fit_box_opening(cloud, table_z)
+                if not any(np.linalg.norm(geometry["opening_center"] - g[0]["opening_center"]) < .01 for g in valid):
+                    valid.append((geometry, rim))
+                entry["geometry_status"] = "valid"
+            except ValueError as exc:
+                entry["geometry_status"] = str(exc)
+            x1, y1, x2, y2 = detection["xyxy"]
+            cv2.rectangle(overlay, (x1, y1), (x2, y2), (0, 255, 0) if entry["geometry_status"] == "valid" else (0, 0, 255), 1)
+            metadata["candidates"].append(entry)
+        if len(valid) != 1:
+            raise ValueError(f"Expected one complete box opening, found {len(valid)}")
+        geometry, rim = valid[0]
+        metadata.update(status="ok", **{k: v.tolist() for k, v in geometry.items()})
+        np.save(output_dir / "rim_points.npy", rim)
+        return geometry, metadata
+    except Exception as exc:
+        metadata["reason"] = str(exc)
+        raise
+    finally:
+        cv2.imwrite(str(output_dir / "detections.png"), overlay)
+        (output_dir / "perception.json").write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + "\n")
