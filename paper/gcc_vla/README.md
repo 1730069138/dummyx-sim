@@ -181,7 +181,7 @@ smoke有6回合，单独统计；exp1正式40；exp23正式400；jump额外5。*
 ```bash
 R3=/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716
 # 第三轮调度使用离线BERT缓存。先在有网时下载到标准本地缓存：
-python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('bert-base-uncased')"
+HF_HOME=/home/jun/.cache/huggingface python -c "from transformers import AutoTokenizer, AutoModel; AutoTokenizer.from_pretrained('bert-base-uncased'); AutoModel.from_pretrained('bert-base-uncased')"
 mkdir -p "$R3/audit/hf_cache/hub"
 cp -a /home/jun/.cache/huggingface/hub/models--bert-base-uncased "$R3/audit/hf_cache/hub/"
 
