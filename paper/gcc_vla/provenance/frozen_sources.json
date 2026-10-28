@@ -1,0 +1,1184 @@
+[
+  {
+    "path": "models/dummy_apf.xml",
+    "source": "/home/jun/dummyx-sim/models/dummy_apf.xml",
+    "sha256": "dc107703bc5c33b9bb16f5ebb91551607356f44d09715b432f929f5f94a9f877",
+    "bytes": 11410
+  },
+  {
+    "path": "models/dummyx_apf_scene.xml",
+    "source": "/home/jun/dummyx-sim/models/dummyx_apf_scene.xml",
+    "sha256": "975bfba2840c4603ac519178c917af477c016a0f5fa9b74634bc468689cdf61e",
+    "bytes": 3238
+  },
+  {
+    "path": "models/gcc_vla_paper/main/model.mjb",
+    "source": "/home/jun/dummyx-sim/models/gcc_vla_paper/main/model.mjb",
+    "sha256": "a99947328ad49d5af48b97f19dc81ffe096ef3b0ec06754a42f838fc2a7ef1a3",
+    "bytes": 23152066
+  },
+  {
+    "path": "models/gcc_vla_paper/x40/initial_state.npz",
+    "source": "/home/jun/dummyx-sim/models/gcc_vla_paper/x40/initial_state.npz",
+    "sha256": "fef57373084ed394db56796b408bc0c7fa234a823782251fb18fe5de62f8587a",
+    "bytes": 927
+  },
+  {
+    "path": "models/gcc_vla_paper/x40/model.mjb",
+    "source": "/home/jun/dummyx-sim/models/gcc_vla_paper/x40/model.mjb",
+    "sha256": "5e7ff3065c96b66cef8c1bce04703e9c0e36d54b09d5f5be10547348651ff17a",
+    "bytes": 23152094
+  },
+  {
+    "path": "models/gcc_vla_paper/x40/preflight_result.json",
+    "source": "/home/jun/dummyx-sim/models/gcc_vla_paper/x40/preflight_result.json",
+    "sha256": "4effed1cb32d7513facf1eb949316bfb9b40c27a718850e0b8187f1c49edc443",
+    "bytes": 2791
+  },
+  {
+    "path": "scripts/deploy/agv_pace.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/agv_pace.py",
+    "sha256": "9064265ef2ab4678a0b4071ca0ab260393d088455c2bae1ff1b096089085abff",
+    "bytes": 16000
+  },
+  {
+    "path": "scripts/deploy/agv_reference_projection.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/agv_reference_projection.py",
+    "sha256": "cca868666a665be00e22fe62b5e4c9af718a740c5a58bc26fb3b32127662df64",
+    "bytes": 2593
+  },
+  {
+    "path": "scripts/deploy/agv_vlsa.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/agv_vlsa.py",
+    "sha256": "eb13a931585f5b5b485527839372dffae928a38ba4883436d81155aaaeb75237",
+    "bytes": 4353
+  },
+  {
+    "path": "scripts/deploy/deploy_screwdriver_client_old.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/deploy_screwdriver_client_old.py",
+    "sha256": "f3e92d5d9c0538a245baf824f4c852ec4753035d797832fa4c6ff4d7805f3a99",
+    "bytes": 64292
+  },
+  {
+    "path": "scripts/deploy/deploy_screwdriver_client_vlsa.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/deploy_screwdriver_client_vlsa.py",
+    "sha256": "db98f578432fe4efc05965cbb92813e9c4bb43d38b4c3615d5a2fb708a0feaef",
+    "bytes": 151722
+  },
+  {
+    "path": "scripts/deploy/gcape_paper/experiments/pressure_runtime.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcape_paper/experiments/pressure_runtime.py",
+    "sha256": "2bf8fef6036a2221b5c889e4a7fd7ff3677433a6c3164e84478c513d2a511699",
+    "bytes": 6034
+  },
+  {
+    "path": "scripts/deploy/gcape_paper/frozen_original/outputs/screwdriver_eval/paper_full50_20261026/metrics.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcape_paper/frozen_original/outputs/screwdriver_eval/paper_full50_20261026/metrics.py",
+    "sha256": "1cf007af9d6a3267b055d98345745941145c649595d7ab82acf6acb1455c98ff",
+    "bytes": 3634
+  },
+  {
+    "path": "scripts/deploy/gcc_vla_paper/config/profiles.json",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcc_vla_paper/config/profiles.json",
+    "sha256": "611e1831042b208d302877b0ffb1b569de37271b2d66f33db6636328f323ade2",
+    "bytes": 20897
+  },
+  {
+    "path": "scripts/deploy/gcc_vla_paper/config/remote_identity.json",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcc_vla_paper/config/remote_identity.json",
+    "sha256": "8b32ed26b157c1abdc1b0c1c370c9e684cab79eac867dae4acb5b2305afba8f3",
+    "bytes": 9290
+  },
+  {
+    "path": "scripts/deploy/gcc_vla_paper/run_experiment.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcc_vla_paper/run_experiment.py",
+    "sha256": "a38e485bbd5b51119c55e67023b9b2ed4a8beddb723a1955b266728e998b30ea",
+    "bytes": 19976
+  },
+  {
+    "path": "scripts/deploy/groundingdino_obstacle.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/groundingdino_obstacle.py",
+    "sha256": "9ed18b7580aae112e16f0303072a135e270099a605aa1931a624fbfad83872ad",
+    "bytes": 14031
+  },
+  {
+    "path": "scripts/deploy/joint_torque_observer.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/joint_torque_observer.py",
+    "sha256": "7c83d1ccbf13580ca50622823f108656e1496413dfae776338975e88fd3bc53b",
+    "bytes": 10786
+  },
+  {
+    "path": "scripts/deploy/pace_diagnostics.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_diagnostics.py",
+    "sha256": "2bf85a1bf16c50e6ca0ad72e84615b9a0fbfedee8b65ee10809e55f4053845ea",
+    "bytes": 45578
+  },
+  {
+    "path": "scripts/deploy/pace_external50/controllers/oscbf_independent.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_external50/controllers/oscbf_independent.py",
+    "sha256": "57be95bec850663d7452fcb3eecb053fe7b3d50a403fed9be79feb9dd96f90f7",
+    "bytes": 9865
+  },
+  {
+    "path": "scripts/deploy/pace_external50/controllers/vlsa_independent.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_external50/controllers/vlsa_independent.py",
+    "sha256": "7d2afe2237ddfdf304874cfc416516745692966a496615afd9284d4957371b9c",
+    "bytes": 15503
+  },
+  {
+    "path": "scripts/deploy/pace_gc_directional/experiments/probe_identity.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_gc_directional/experiments/probe_identity.py",
+    "sha256": "d1b090c089399530dc361cba22615be4034193244d3685b04e081ee228431423",
+    "bytes": 3544
+  },
+  {
+    "path": "scripts/deploy/pace_native_aligned_20261027/deploy_vlsa_aligned_v6.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_native_aligned_20261027/deploy_vlsa_aligned_v6.py",
+    "sha256": "1f3a888b1b8bc5da73c02d09cd731ca37680c6d0e6582d9710d8061da5f08e8c",
+    "bytes": 162859
+  },
+  {
+    "path": "scripts/deploy/pace_native_aligned_20261027/scheduler_v3.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_native_aligned_20261027/scheduler_v3.py",
+    "sha256": "661b728670172aa689bbbcdff262aae2c25fa5008a6c4952a5a34502f41e3272",
+    "bytes": 20370
+  },
+  {
+    "path": "scripts/deploy/pace_neo_mesh_20261027/common.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_neo_mesh_20261027/common.py",
+    "sha256": "26326c19feb9aa425d555bf227e83f9a315d1cde8eb5ff7bc7eed25ebecbb13b",
+    "bytes": 5716
+  },
+  {
+    "path": "scripts/deploy/pace_neo_mesh_20261027/neo_candidate_mesh.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_neo_mesh_20261027/neo_candidate_mesh.py",
+    "sha256": "020d609a95287bb9336e3f2f24a81fbabea2416e121c45c79d6ed0d103b769c4",
+    "bytes": 5195
+  },
+  {
+    "path": "scripts/deploy/pace_neo_mesh_20261027/neo_factory.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_neo_mesh_20261027/neo_factory.py",
+    "sha256": "b250f5a209808540a1a5376c7a449f69c244e7f2b3dd898a4034a2ff1239d31f",
+    "bytes": 4219
+  },
+  {
+    "path": "scripts/deploy/pace_neo_mesh_20261027/neo_solver.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_neo_mesh_20261027/neo_solver.py",
+    "sha256": "b45f6350fba224409c7f8cde9d8fd2c7284da333118eff0eebc882b5053035e8",
+    "bytes": 2088
+  },
+  {
+    "path": "scripts/deploy/pace_neo_mesh_20261027/neo_tracking_parent.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_neo_mesh_20261027/neo_tracking_parent.py",
+    "sha256": "05e45dca6b06f19e9c9b1d37e38e7f7c3bcb80465bb866846da74c8bdf454627",
+    "bytes": 13878
+  },
+  {
+    "path": "scripts/deploy/pace_neo_mesh_20261027/run_worker.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_neo_mesh_20261027/run_worker.py",
+    "sha256": "300b2c2ac35b2f620f3a29670590ecfff76cdf148ff3e0a4101fd4ffea1ae0e2",
+    "bytes": 15366
+  },
+  {
+    "path": "scripts/deploy/pace_novelty.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pace_novelty.py",
+    "sha256": "5c2a763be9f1d1a21c91b21f4b965c2b8a16a0a57a2ec03b83722164c35b9722",
+    "bytes": 15502
+  },
+  {
+    "path": "scripts/deploy/pregrasp_guard.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/pregrasp_guard.py",
+    "sha256": "5f765ce0e9c98cba62d9d1f87efeb77af92d1f9580acf54fc463e75424b05592",
+    "bytes": 14641
+  },
+  {
+    "path": "scripts/deploy/run_screwdriver_pace_preview.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/run_screwdriver_pace_preview.py",
+    "sha256": "681ae4aeded9692e80db946d6b8b37a82a1fa0e78ee854d6fdef324d2f27729c",
+    "bytes": 1711
+  },
+  {
+    "path": "scripts/deploy/tabletop_box_attraction.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_box_attraction.py",
+    "sha256": "814dea0193c874be19f9e43e638029491a643ca0e073aa5a80ef2b3f99f0ba63",
+    "bytes": 11122
+  },
+  {
+    "path": "scripts/deploy/tabletop_execution_preview.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_execution_preview.py",
+    "sha256": "603e60c9309adc8e3a289aacc88b6b4da2249907a03d293d0abdc5883b5466af",
+    "bytes": 4920
+  },
+  {
+    "path": "scripts/deploy/tabletop_pace_preview.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_pace_preview.py",
+    "sha256": "aca6b072f0c7755101a770ea7d3391f2ab1c40f478fed5f875bf05f9d251109a",
+    "bytes": 39867
+  },
+  {
+    "path": "scripts/deploy/tabletop_pace_runtime.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_pace_runtime.py",
+    "sha256": "6831f650d6b029fc4e56c837995686ac0ae79d2b8b2e78e28410bc8bc4f4bc47",
+    "bytes": 8306
+  },
+  {
+    "path": "scripts/deploy/tabletop_paper_ablation.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_paper_ablation.py",
+    "sha256": "768366af3a979efdc0533d1565234fd37edd84eede02c60ec701428bb4932a14",
+    "bytes": 8772
+  },
+  {
+    "path": "scripts/deploy/tabletop_perception.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_perception.py",
+    "sha256": "17ac6864f85f6e7219ad44a094371cd020db9e1769bc9f9a1ed3998b7cad0ab2",
+    "bytes": 8191
+  },
+  {
+    "path": "scripts/deploy/tabletop_preview_lift.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_preview_lift.py",
+    "sha256": "2c6c89a1bb02725c6d6ecd50a622dda137416d981389097890b3fa2e9883e0b9",
+    "bytes": 1748
+  },
+  {
+    "path": "scripts/deploy/tabletop_preview_refresh.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_preview_refresh.py",
+    "sha256": "89ef263f4d2e5f24389f541deb4182e338f3931f7167ea125a905ce8c70e01c4",
+    "bytes": 482
+  },
+  {
+    "path": "scripts/deploy/tabletop_recording_storage.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_recording_storage.py",
+    "sha256": "5aea61302f50398b4d6998ee2dd21f5768549b9d46ab0300295523b736690702",
+    "bytes": 2457
+  },
+  {
+    "path": "scripts/deploy/tabletop_route_preference.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_route_preference.py",
+    "sha256": "9a67564593318ce2499644bf7118c43358c8e65a3bb2f4f72bc04902cb8820ad",
+    "bytes": 2943
+  },
+  {
+    "path": "scripts/deploy/tabletop_tool_proxy.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_tool_proxy.py",
+    "sha256": "38aaefb21770614bc8caa60e111c2d78b9f090bdbf402be8cf6f62c7fe850bc5",
+    "bytes": 3320
+  },
+  {
+    "path": "scripts/deploy/tabletop_tracking_model.json",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_tracking_model.json",
+    "sha256": "4e0746c46e41ba0f5d9bfb8dcc01a9121155bb9338b71fa162967bb0b0c2a03b",
+    "bytes": 2952
+  },
+  {
+    "path": "scripts/deploy/tabletop_visuals.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/tabletop_visuals.py",
+    "sha256": "433087206b9ac7d83619e29e689a508da5711c165bebbc96311828e2675b425e",
+    "bytes": 1191
+  },
+  {
+    "path": "models/meshes/base_link.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/base_link.stl",
+    "sha256": "6357cb29fc53a1c7aa2ba3696a15e471b4c37dfcaffb904f9d4b7ecf1617250f",
+    "bytes": 534184
+  },
+  {
+    "path": "models/meshes/flat_screwdriver/texture_map.png",
+    "source": "/home/jun/dummyx-sim/models/meshes/flat_screwdriver/texture_map.png",
+    "sha256": "391a0552fc7f1606847e5f8061a7c135c94b9001aa6b2da9416a5c4d2c086ec1",
+    "bytes": 362456
+  },
+  {
+    "path": "models/meshes/flat_screwdriver/textured.mtl",
+    "source": "/home/jun/dummyx-sim/models/meshes/flat_screwdriver/textured.mtl",
+    "sha256": "a779e1d8a29bdbc18ee724b7faa2e1e53591cbc2ee451ff38c64df7222c3f31e",
+    "bytes": 66
+  },
+  {
+    "path": "models/meshes/flat_screwdriver/textured.obj",
+    "source": "/home/jun/dummyx-sim/models/meshes/flat_screwdriver/textured.obj",
+    "sha256": "242adf37f152a1c270246ecf0fe08b80508847ccfe9db407b83d279c5634b297",
+    "bytes": 1585789
+  },
+  {
+    "path": "models/meshes/flat_screwdriver/textured_coacd_0.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/flat_screwdriver/textured_coacd_0.stl",
+    "sha256": "1801963999d01a451fb061f91acf44afabed262252e48d8190f14908524d9865",
+    "bytes": 1684
+  },
+  {
+    "path": "models/meshes/flat_screwdriver/textured_coacd_1.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/flat_screwdriver/textured_coacd_1.stl",
+    "sha256": "a44675407e9096c7ed9e15a10d9f22b9258943af31cc915415ebe56262eb9fad",
+    "bytes": 1684
+  },
+  {
+    "path": "models/meshes/flat_screwdriver/textured_coacd_2.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/flat_screwdriver/textured_coacd_2.stl",
+    "sha256": "f6601335e93f75acc7eab5c798c89beef9fd1d7efc730528c96e797e193e1e8f",
+    "bytes": 1684
+  },
+  {
+    "path": "models/meshes/flat_screwdriver/textured_coacd_3.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/flat_screwdriver/textured_coacd_3.stl",
+    "sha256": "43dcff88947d36d7c64be35b937052cc12a763170262923fa49852997d432cfb",
+    "bytes": 1684
+  },
+  {
+    "path": "models/meshes/link1_1.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/link1_1.stl",
+    "sha256": "48c7d154ce2cccb912089c69fca91d83ed43dbf4a91dc4255116fe457f57c300",
+    "bytes": 521484
+  },
+  {
+    "path": "models/meshes/link2_1.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/link2_1.stl",
+    "sha256": "aaa6c21d5d91ba2402dec029cd420815d90084380faee1f754941130d79ea12a",
+    "bytes": 325784
+  },
+  {
+    "path": "models/meshes/link3_1.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/link3_1.stl",
+    "sha256": "fbca7437f91ebc71be91a39a90d369f508fe64baf66c7bd50d2ea9b2175fcb2d",
+    "bytes": 277984
+  },
+  {
+    "path": "models/meshes/link4_1.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/link4_1.stl",
+    "sha256": "4644649d5e427b5d4591332d61951e0a0d3802f772ed2009c2f3a6f7b5667501",
+    "bytes": 203484
+  },
+  {
+    "path": "models/meshes/link5_1.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/link5_1.stl",
+    "sha256": "dc3d944cdc07eaf4eb8055bdfa76a58a9fa6c71c203cbff56077779586348f27",
+    "bytes": 174884
+  },
+  {
+    "path": "models/meshes/link6_1.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/link6_1.stl",
+    "sha256": "2227c62568731733a88f71a8093b61bf4a231b378e584c79fad0c8ce1c5a2e90",
+    "bytes": 135084
+  },
+  {
+    "path": "models/meshes/piper_base.STL",
+    "source": "/home/jun/dummyx-sim/models/meshes/piper_base.STL",
+    "sha256": "e0b2050ba81a45c79c045b9f13e3d1dd11f84bca1beb12eebc3102651c8476cf",
+    "bytes": 671184
+  },
+  {
+    "path": "models/meshes/piperlink7.STL",
+    "source": "/home/jun/dummyx-sim/models/meshes/piperlink7.STL",
+    "sha256": "907dcdd10498a9d2e9317e42f550570a4ca522d1c4ff7b7c8721fd5cb951e481",
+    "bytes": 91984
+  },
+  {
+    "path": "models/meshes/piperlink8.STL",
+    "source": "/home/jun/dummyx-sim/models/meshes/piperlink8.STL",
+    "sha256": "5552c0fda737f3abfa1e324ee8a4284dc473a17a0ca5fcbf35d61ca3e6701a18",
+    "bytes": 91884
+  },
+  {
+    "path": "models/meshes/scissors/texture_map.png",
+    "source": "/home/jun/dummyx-sim/models/meshes/scissors/texture_map.png",
+    "sha256": "4746d4acd28ddc238f04e766ee9b9ad46da92c59d43b05b761705efeef68c2b9",
+    "bytes": 314154
+  },
+  {
+    "path": "models/meshes/scissors/textured.mtl",
+    "source": "/home/jun/dummyx-sim/models/meshes/scissors/textured.mtl",
+    "sha256": "a779e1d8a29bdbc18ee724b7faa2e1e53591cbc2ee451ff38c64df7222c3f31e",
+    "bytes": 66
+  },
+  {
+    "path": "models/meshes/scissors/textured.obj",
+    "source": "/home/jun/dummyx-sim/models/meshes/scissors/textured.obj",
+    "sha256": "b925d0cbb935e8d2608f56d8ee6fdbe7b1b64746bf94f0f4fd17d208ee967416",
+    "bytes": 1585587
+  },
+  {
+    "path": "models/meshes/scissors/textured_coacd_0.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/scissors/textured_coacd_0.stl",
+    "sha256": "736c30fe11bc9a822a7dfd964ebc43a7d5bf7150df574f82f799328266ae1fd9",
+    "bytes": 1684
+  },
+  {
+    "path": "models/meshes/scissors/textured_coacd_1.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/scissors/textured_coacd_1.stl",
+    "sha256": "ab0af063af692ed4759f3e4675d5918575c8efb7af6e1c26fb107056cd5419b4",
+    "bytes": 1684
+  },
+  {
+    "path": "models/meshes/scissors/textured_coacd_2.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/scissors/textured_coacd_2.stl",
+    "sha256": "3171c28859f0bd8ac9cde6fff1b1cc37e0734f0ae910d533d58ac703547e39d5",
+    "bytes": 1684
+  },
+  {
+    "path": "models/meshes/scissors/textured_coacd_3.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/scissors/textured_coacd_3.stl",
+    "sha256": "889e808eab2ec1ac8a5466d77062041511f2deab0ddacb9f1fb66bb18b9c19ce",
+    "bytes": 1684
+  },
+  {
+    "path": "models/meshes/scissors/textured_coacd_4.stl",
+    "source": "/home/jun/dummyx-sim/models/meshes/scissors/textured_coacd_4.stl",
+    "sha256": "85f6167be6fff76504a80dcc9bac3ccbf18c2add4d3cfc78c530f4318f0c16c2",
+    "bytes": 1684
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/scripts/ablation_contact.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/scripts/ablation_contact.py",
+    "sha256": "33dce55fc9f0b2742dc72e5fe8c5bc332fc1785d9180e065c5456f9aa6adb161",
+    "bytes": 3524
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/scripts/ablation_support.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/scripts/ablation_support.py",
+    "sha256": "5462ccaf0a6a08744a224d49eca7e38895c14ff686a71c1a7226b3c649a79a7d",
+    "bytes": 806
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/scripts/gcc_schedule.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/scripts/gcc_schedule.py",
+    "sha256": "54d0774dc9ecfc2dbddb5839445e01c6ddc958f98278dcbea716421dec828bb2",
+    "bytes": 5650
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/scripts/gcc_audit.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/scripts/gcc_audit.py",
+    "sha256": "b24c0adc1d249165c840cf56d53564c0414bf8327461d16f4ee3fce245ad2b52",
+    "bytes": 5424
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/scripts/gcc_kinematic.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/scripts/gcc_kinematic.py",
+    "sha256": "f752ac3ad318c95a3786b792bc811fa18c9655b3cc0f2c560fd23941e338d77e",
+    "bytes": 4036
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/scripts/gcc_regression.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/scripts/gcc_regression.py",
+    "sha256": "d965b84f0f72e4ce0e4e13fd1040271e7f5cbf76f13ad852b7ebd62a964a55bc",
+    "bytes": 2945
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/scripts/run_ablation_worker.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/scripts/run_ablation_worker.py",
+    "sha256": "dc1957d7eed15c04a439c0f576e6c1e1d7aa23934b6eb98da670e59455d03d5d",
+    "bytes": 15914
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/agv_pace.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/agv_pace.py",
+    "sha256": "9064265ef2ab4678a0b4071ca0ab260393d088455c2bae1ff1b096089085abff",
+    "bytes": 16000
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/agv_reference_projection.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/agv_reference_projection.py",
+    "sha256": "cca868666a665be00e22fe62b5e4c9af718a740c5a58bc26fb3b32127662df64",
+    "bytes": 2593
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/agv_vlsa.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/agv_vlsa.py",
+    "sha256": "eb13a931585f5b5b485527839372dffae928a38ba4883436d81155aaaeb75237",
+    "bytes": 4353
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/deploy_screwdriver_client_old.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/deploy_screwdriver_client_old.py",
+    "sha256": "f3e92d5d9c0538a245baf824f4c852ec4753035d797832fa4c6ff4d7805f3a99",
+    "bytes": 64292
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/deploy_screwdriver_client_vlsa.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/deploy_screwdriver_client_vlsa.py",
+    "sha256": "db98f578432fe4efc05965cbb92813e9c4bb43d38b4c3615d5a2fb708a0feaef",
+    "bytes": 151722
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/groundingdino_obstacle.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/groundingdino_obstacle.py",
+    "sha256": "9ed18b7580aae112e16f0303072a135e270099a605aa1931a624fbfad83872ad",
+    "bytes": 14031
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/joint_torque_observer.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/joint_torque_observer.py",
+    "sha256": "7c83d1ccbf13580ca50622823f108656e1496413dfae776338975e88fd3bc53b",
+    "bytes": 10786
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/pace_diagnostics.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/pace_diagnostics.py",
+    "sha256": "2bf85a1bf16c50e6ca0ad72e84615b9a0fbfedee8b65ee10809e55f4053845ea",
+    "bytes": 45578
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/pace_novelty.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/pace_novelty.py",
+    "sha256": "5c2a763be9f1d1a21c91b21f4b965c2b8a16a0a57a2ec03b83722164c35b9722",
+    "bytes": 15502
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/pregrasp_guard.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/pregrasp_guard.py",
+    "sha256": "5f765ce0e9c98cba62d9d1f87efeb77af92d1f9580acf54fc463e75424b05592",
+    "bytes": 14641
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/run_screwdriver_pace_preview.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/run_screwdriver_pace_preview.py",
+    "sha256": "681ae4aeded9692e80db946d6b8b37a82a1fa0e78ee854d6fdef324d2f27729c",
+    "bytes": 1711
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_box_attraction.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_box_attraction.py",
+    "sha256": "814dea0193c874be19f9e43e638029491a643ca0e073aa5a80ef2b3f99f0ba63",
+    "bytes": 11122
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_execution_preview.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_execution_preview.py",
+    "sha256": "603e60c9309adc8e3a289aacc88b6b4da2249907a03d293d0abdc5883b5466af",
+    "bytes": 4920
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_pace_preview.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_pace_preview.py",
+    "sha256": "aca6b072f0c7755101a770ea7d3391f2ab1c40f478fed5f875bf05f9d251109a",
+    "bytes": 39867
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_pace_runtime.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_pace_runtime.py",
+    "sha256": "6831f650d6b029fc4e56c837995686ac0ae79d2b8b2e78e28410bc8bc4f4bc47",
+    "bytes": 8306
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_paper_ablation.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_paper_ablation.py",
+    "sha256": "768366af3a979efdc0533d1565234fd37edd84eede02c60ec701428bb4932a14",
+    "bytes": 8772
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_perception.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_perception.py",
+    "sha256": "17ac6864f85f6e7219ad44a094371cd020db9e1769bc9f9a1ed3998b7cad0ab2",
+    "bytes": 8191
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_preview_lift.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_preview_lift.py",
+    "sha256": "2c6c89a1bb02725c6d6ecd50a622dda137416d981389097890b3fa2e9883e0b9",
+    "bytes": 1748
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_preview_refresh.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_preview_refresh.py",
+    "sha256": "89ef263f4d2e5f24389f541deb4182e338f3931f7167ea125a905ce8c70e01c4",
+    "bytes": 482
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_recording_storage.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_recording_storage.py",
+    "sha256": "5aea61302f50398b4d6998ee2dd21f5768549b9d46ab0300295523b736690702",
+    "bytes": 2457
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_route_preference.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_route_preference.py",
+    "sha256": "9a67564593318ce2499644bf7118c43358c8e65a3bb2f4f72bc04902cb8820ad",
+    "bytes": 2943
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_tool_proxy.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_tool_proxy.py",
+    "sha256": "38aaefb21770614bc8caa60e111c2d78b9f090bdbf402be8cf6f62c7fe850bc5",
+    "bytes": 3320
+  },
+  {
+    "path": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_visuals.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_visuals.py",
+    "sha256": "433087206b9ac7d83619e29e689a508da5711c165bebbc96311828e2675b425e",
+    "bytes": 1191
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/ablation_support.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/ablation_support.py",
+    "sha256": "5462ccaf0a6a08744a224d49eca7e38895c14ff686a71c1a7226b3c649a79a7d",
+    "bytes": 806
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/run_round2_worker.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/run_round2_worker.py",
+    "sha256": "abb23230561717bbb21d8ccf8cf10664808e81f679bd5e63b5c55abec0dd278a",
+    "bytes": 17055
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/round2_trace.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/round2_trace.py",
+    "sha256": "c9db5ab70734fffca772fa86b37dfc00b801ced9736eb39e9c15050d5b9efad3",
+    "bytes": 24388
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/schedule_round2.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/schedule_round2.py",
+    "sha256": "dbf68244e30e57de7c29d4e50bce03f2a173aba5a3c113013f3945669d7706ea",
+    "bytes": 6569
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/analyze_round2.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/analyze_round2.py",
+    "sha256": "9ce1faa2c67a6360a334691b9dfd532ad1a7b62b55780ffb82dd7ef6e1785712",
+    "bytes": 40529
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/audit_smoke_trace_readonly.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_smoke_trace_readonly.py",
+    "sha256": "df45950dbe51580a199288e6326030443218f6d4af5f25d17672caa3bd8bcd65",
+    "bytes": 3609
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/audit_exp1_demands_readonly.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_exp1_demands_readonly.py",
+    "sha256": "373016943f91834a9ecf4b69d7f98bb6463f776da1cd3d6c6d43b1efe3334c07",
+    "bytes": 9449
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/audit_exp2_J4_identity_readonly.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_exp2_J4_identity_readonly.py",
+    "sha256": "e320cd87168109407c477131a2c7819ae768d9058533efb48b679e8d57de5da0",
+    "bytes": 16835
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/audit_exp3_guard_interpretation_readonly.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_exp3_guard_interpretation_readonly.py",
+    "sha256": "4461c87868df115d8232a95d22ab2ea173fdb71e2b78fe78181deb422b48a869",
+    "bytes": 13217
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/audit_final_allocation.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_final_allocation.py",
+    "sha256": "5d8df73e9210051effb86b237e83b7e0fef6d56e87e29dfe60025eb357aef871",
+    "bytes": 5600
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/assemble_results_round2.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/assemble_results_round2.py",
+    "sha256": "b94c249146b7066011e0f6ba6888f346cf9dae3047aca1317b09ee8b13df10af",
+    "bytes": 11946
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/export_round2_tables.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/export_round2_tables.py",
+    "sha256": "0243d1e68e5e47d48d1a5fa564c673827189e48a0405ef889f70e6b3ca0f27c6",
+    "bytes": 2258
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/scripts/check_services_round2.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/scripts/check_services_round2.py",
+    "sha256": "61a991e42ab4f20b42ef78d167aee4560cfd91ade5b9033bc93861460c3fba13",
+    "bytes": 851
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/agv_pace.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/agv_pace.py",
+    "sha256": "9064265ef2ab4678a0b4071ca0ab260393d088455c2bae1ff1b096089085abff",
+    "bytes": 16000
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/agv_reference_projection.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/agv_reference_projection.py",
+    "sha256": "cca868666a665be00e22fe62b5e4c9af718a740c5a58bc26fb3b32127662df64",
+    "bytes": 2593
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/agv_vlsa.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/agv_vlsa.py",
+    "sha256": "eb13a931585f5b5b485527839372dffae928a38ba4883436d81155aaaeb75237",
+    "bytes": 4353
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/common.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/common.py",
+    "sha256": "26326c19feb9aa425d555bf227e83f9a315d1cde8eb5ff7bc7eed25ebecbb13b",
+    "bytes": 5716
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/deploy_screwdriver_client_old.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/deploy_screwdriver_client_old.py",
+    "sha256": "143030e2511dd257ae7a8cb3a2a80a5f85cc9920f24655d8e839f9988f8ff6e3",
+    "bytes": 66481
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/deploy_screwdriver_client_vlsa.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/deploy_screwdriver_client_vlsa.py",
+    "sha256": "db98f578432fe4efc05965cbb92813e9c4bb43d38b4c3615d5a2fb708a0feaef",
+    "bytes": 151722
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/frozen_metrics.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/frozen_metrics.py",
+    "sha256": "1cf007af9d6a3267b055d98345745941145c649595d7ab82acf6acb1455c98ff",
+    "bytes": 3634
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/groundingdino_obstacle.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/groundingdino_obstacle.py",
+    "sha256": "9ed18b7580aae112e16f0303072a135e270099a605aa1931a624fbfad83872ad",
+    "bytes": 14031
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/joint_torque_observer.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/joint_torque_observer.py",
+    "sha256": "7c83d1ccbf13580ca50622823f108656e1496413dfae776338975e88fd3bc53b",
+    "bytes": 10786
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/neo_factory.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/neo_factory.py",
+    "sha256": "b250f5a209808540a1a5376c7a449f69c244e7f2b3dd898a4034a2ff1239d31f",
+    "bytes": 4219
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/oscbf_independent.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/oscbf_independent.py",
+    "sha256": "57be95bec850663d7452fcb3eecb053fe7b3d50a403fed9be79feb9dd96f90f7",
+    "bytes": 9865
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/pace_novelty.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/pace_novelty.py",
+    "sha256": "5c2a763be9f1d1a21c91b21f4b965c2b8a16a0a57a2ec03b83722164c35b9722",
+    "bytes": 15502
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/pressure_runtime.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/pressure_runtime.py",
+    "sha256": "2bf8fef6036a2221b5c889e4a7fd7ff3677433a6c3164e84478c513d2a511699",
+    "bytes": 6034
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/run_screwdriver_pace_preview.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/run_screwdriver_pace_preview.py",
+    "sha256": "681ae4aeded9692e80db946d6b8b37a82a1fa0e78ee854d6fdef324d2f27729c",
+    "bytes": 1711
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_box_attraction.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_box_attraction.py",
+    "sha256": "814dea0193c874be19f9e43e638029491a643ca0e073aa5a80ef2b3f99f0ba63",
+    "bytes": 11122
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_execution_preview.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_execution_preview.py",
+    "sha256": "603e60c9309adc8e3a289aacc88b6b4da2249907a03d293d0abdc5883b5466af",
+    "bytes": 4920
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_pace_preview.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_pace_preview.py",
+    "sha256": "2f376c1110bac5e6540066aa01adcfc1ddae5cb49d765fd63985f97523a39315",
+    "bytes": 40858
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_pace_runtime.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_pace_runtime.py",
+    "sha256": "6831f650d6b029fc4e56c837995686ac0ae79d2b8b2e78e28410bc8bc4f4bc47",
+    "bytes": 8306
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_paper_ablation.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_paper_ablation.py",
+    "sha256": "768366af3a979efdc0533d1565234fd37edd84eede02c60ec701428bb4932a14",
+    "bytes": 8772
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_perception.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_perception.py",
+    "sha256": "17ac6864f85f6e7219ad44a094371cd020db9e1769bc9f9a1ed3998b7cad0ab2",
+    "bytes": 8191
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_preview_lift.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_preview_lift.py",
+    "sha256": "2c6c89a1bb02725c6d6ecd50a622dda137416d981389097890b3fa2e9883e0b9",
+    "bytes": 1748
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_preview_refresh.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_preview_refresh.py",
+    "sha256": "89ef263f4d2e5f24389f541deb4182e338f3931f7167ea125a905ce8c70e01c4",
+    "bytes": 482
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_recording_storage.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_recording_storage.py",
+    "sha256": "5aea61302f50398b4d6998ee2dd21f5768549b9d46ab0300295523b736690702",
+    "bytes": 2457
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_route_preference.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_route_preference.py",
+    "sha256": "9a67564593318ce2499644bf7118c43358c8e65a3bb2f4f72bc04902cb8820ad",
+    "bytes": 2943
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_tool_proxy.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_tool_proxy.py",
+    "sha256": "38aaefb21770614bc8caa60e111c2d78b9f090bdbf402be8cf6f62c7fe850bc5",
+    "bytes": 3320
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_tracking_model.json",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_tracking_model.json",
+    "sha256": "4e0746c46e41ba0f5d9bfb8dcc01a9121155bb9338b71fa162967bb0b0c2a03b",
+    "bytes": 2952
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/runtime/tabletop_visuals.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_visuals.py",
+    "sha256": "433087206b9ac7d83619e29e689a508da5711c165bebbc96311828e2675b425e",
+    "bytes": 1191
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/statistics_plan.json",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/statistics_plan.json",
+    "sha256": "e58f12b7cee21923b44131cc0f2fd842886e4819a5642d7106932fa368e591ae",
+    "bytes": 11872
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round2/audit/jump_limit_frozen.json",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/audit/jump_limit_frozen.json",
+    "sha256": "3346fabd1c82577e1836351ebdd60213e4ce37b0a2c73fe61b45a4664dc50b04",
+    "bytes": 7460
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/ablation_support.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/ablation_support.py",
+    "sha256": "5462ccaf0a6a08744a224d49eca7e38895c14ff686a71c1a7226b3c649a79a7d",
+    "bytes": 806
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/run_round2_worker.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/run_round2_worker.py",
+    "sha256": "abb23230561717bbb21d8ccf8cf10664808e81f679bd5e63b5c55abec0dd278a",
+    "bytes": 17055
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/round2_trace.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/round2_trace.py",
+    "sha256": "c9db5ab70734fffca772fa86b37dfc00b801ced9736eb39e9c15050d5b9efad3",
+    "bytes": 24388
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/analyze_round2.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/analyze_round2.py",
+    "sha256": "9ce1faa2c67a6360a334691b9dfd532ad1a7b62b55780ffb82dd7ef6e1785712",
+    "bytes": 40529
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/schedule_round3.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/schedule_round3.py",
+    "sha256": "6a416e475127d783a54e74f4dcd521834887f9c951f8d3f712815bef9e3f624d",
+    "bytes": 5289
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/admit_round3_smoke.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/admit_round3_smoke.py",
+    "sha256": "0b5cb171a83e0ede5c11dce05d93698a70cc9fb4692bc9a5382a9e5a865bd264",
+    "bytes": 3368
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/analyze_round3_jump.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/analyze_round3_jump.py",
+    "sha256": "430c4563cf3bcceeea50ce49e9b20a134da30542f2ff0aebe6ff73c821aa7d0d",
+    "bytes": 22781
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/export_round3_tables.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/export_round3_tables.py",
+    "sha256": "1fe85b24f0536eb86b3b10c9214285870a00c7cdcb0446d2e42f80e1febda27c",
+    "bytes": 7613
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/independent_verify_final200_readonly.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/independent_verify_final200_readonly.py",
+    "sha256": "b4870806be58bfe611b22b6c12097a2e8dfed442ae6f40f6bda91ad8795a65dd",
+    "bytes": 14034
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/rebuild_original600_readonly.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/rebuild_original600_readonly.py",
+    "sha256": "f4f4b84f09dec41f097135b222b325efdd3992d4d8abed7a308bf36421b1cecf",
+    "bytes": 23514
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/audit_initial_block_contrasts_readonly.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/audit_initial_block_contrasts_readonly.py",
+    "sha256": "65aee2b2a5973a4e954a3553af215a6ed90ddc963240474d43602affe3b1dce5",
+    "bytes": 18991
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/scripts/verify_task1_s1_and_initial_crossbatch.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/scripts/verify_task1_s1_and_initial_crossbatch.py",
+    "sha256": "1cd5a976ee0e36acf521b239dcdd6fdf00bd122772e27a1f7f97761acaa974d5",
+    "bytes": 6377
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/agv_pace.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/agv_pace.py",
+    "sha256": "9064265ef2ab4678a0b4071ca0ab260393d088455c2bae1ff1b096089085abff",
+    "bytes": 16000
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/agv_reference_projection.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/agv_reference_projection.py",
+    "sha256": "cca868666a665be00e22fe62b5e4c9af718a740c5a58bc26fb3b32127662df64",
+    "bytes": 2593
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/agv_vlsa.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/agv_vlsa.py",
+    "sha256": "eb13a931585f5b5b485527839372dffae928a38ba4883436d81155aaaeb75237",
+    "bytes": 4353
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/common.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/common.py",
+    "sha256": "26326c19feb9aa425d555bf227e83f9a315d1cde8eb5ff7bc7eed25ebecbb13b",
+    "bytes": 5716
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/deploy_screwdriver_client_old.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/deploy_screwdriver_client_old.py",
+    "sha256": "143030e2511dd257ae7a8cb3a2a80a5f85cc9920f24655d8e839f9988f8ff6e3",
+    "bytes": 66481
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/deploy_screwdriver_client_vlsa.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/deploy_screwdriver_client_vlsa.py",
+    "sha256": "db98f578432fe4efc05965cbb92813e9c4bb43d38b4c3615d5a2fb708a0feaef",
+    "bytes": 151722
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/frozen_metrics.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/frozen_metrics.py",
+    "sha256": "1cf007af9d6a3267b055d98345745941145c649595d7ab82acf6acb1455c98ff",
+    "bytes": 3634
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/groundingdino_obstacle.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/groundingdino_obstacle.py",
+    "sha256": "9ed18b7580aae112e16f0303072a135e270099a605aa1931a624fbfad83872ad",
+    "bytes": 14031
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/joint_torque_observer.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/joint_torque_observer.py",
+    "sha256": "7c83d1ccbf13580ca50622823f108656e1496413dfae776338975e88fd3bc53b",
+    "bytes": 10786
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/neo_factory.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/neo_factory.py",
+    "sha256": "b250f5a209808540a1a5376c7a449f69c244e7f2b3dd898a4034a2ff1239d31f",
+    "bytes": 4219
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/oscbf_independent.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/oscbf_independent.py",
+    "sha256": "57be95bec850663d7452fcb3eecb053fe7b3d50a403fed9be79feb9dd96f90f7",
+    "bytes": 9865
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/pace_novelty.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/pace_novelty.py",
+    "sha256": "5c2a763be9f1d1a21c91b21f4b965c2b8a16a0a57a2ec03b83722164c35b9722",
+    "bytes": 15502
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/pressure_runtime.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/pressure_runtime.py",
+    "sha256": "2bf8fef6036a2221b5c889e4a7fd7ff3677433a6c3164e84478c513d2a511699",
+    "bytes": 6034
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/run_screwdriver_pace_preview.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/run_screwdriver_pace_preview.py",
+    "sha256": "681ae4aeded9692e80db946d6b8b37a82a1fa0e78ee854d6fdef324d2f27729c",
+    "bytes": 1711
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_box_attraction.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_box_attraction.py",
+    "sha256": "814dea0193c874be19f9e43e638029491a643ca0e073aa5a80ef2b3f99f0ba63",
+    "bytes": 11122
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_execution_preview.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_execution_preview.py",
+    "sha256": "603e60c9309adc8e3a289aacc88b6b4da2249907a03d293d0abdc5883b5466af",
+    "bytes": 4920
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_pace_preview.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_pace_preview.py",
+    "sha256": "2f376c1110bac5e6540066aa01adcfc1ddae5cb49d765fd63985f97523a39315",
+    "bytes": 40858
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_pace_runtime.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_pace_runtime.py",
+    "sha256": "6831f650d6b029fc4e56c837995686ac0ae79d2b8b2e78e28410bc8bc4f4bc47",
+    "bytes": 8306
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_paper_ablation.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_paper_ablation.py",
+    "sha256": "768366af3a979efdc0533d1565234fd37edd84eede02c60ec701428bb4932a14",
+    "bytes": 8772
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_perception.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_perception.py",
+    "sha256": "17ac6864f85f6e7219ad44a094371cd020db9e1769bc9f9a1ed3998b7cad0ab2",
+    "bytes": 8191
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_preview_lift.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_preview_lift.py",
+    "sha256": "2c6c89a1bb02725c6d6ecd50a622dda137416d981389097890b3fa2e9883e0b9",
+    "bytes": 1748
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_preview_refresh.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_preview_refresh.py",
+    "sha256": "89ef263f4d2e5f24389f541deb4182e338f3931f7167ea125a905ce8c70e01c4",
+    "bytes": 482
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_recording_storage.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_recording_storage.py",
+    "sha256": "5aea61302f50398b4d6998ee2dd21f5768549b9d46ab0300295523b736690702",
+    "bytes": 2457
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_route_preference.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_route_preference.py",
+    "sha256": "9a67564593318ce2499644bf7118c43358c8e65a3bb2f4f72bc04902cb8820ad",
+    "bytes": 2943
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_tool_proxy.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_tool_proxy.py",
+    "sha256": "38aaefb21770614bc8caa60e111c2d78b9f090bdbf402be8cf6f62c7fe850bc5",
+    "bytes": 3320
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_tracking_model.json",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_tracking_model.json",
+    "sha256": "4e0746c46e41ba0f5d9bfb8dcc01a9121155bb9338b71fa162967bb0b0c2a03b",
+    "bytes": 2952
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/runtime/tabletop_visuals.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_visuals.py",
+    "sha256": "433087206b9ac7d83619e29e689a508da5711c165bebbc96311828e2675b425e",
+    "bytes": 1191
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/statistics_plan.json",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/statistics_plan.json",
+    "sha256": "8e5afb5321dc4747a4bec16507bdb44c1076ca67880282c6899b3f240cc2422a",
+    "bytes": 43765
+  },
+  {
+    "path": "paper/gcc_vla/frozen/round3/audit/jump_limit_frozen.json",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round3_20261028_214716/audit/jump_limit_frozen.json",
+    "sha256": "3346fabd1c82577e1836351ebdd60213e4ce37b0a2c73fe61b45a4664dc50b04",
+    "bytes": 7460
+  },
+  {
+    "path": "paper/gcc_vla/frozen/presubmission_analysis/scripts/J4阻塞核查.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round2_20261028_153421/scripts/J4阻塞核查.py",
+    "sha256": "42ca4bdef5f58f7ca2da58dc9ff57ca2327037bf5a7f205ffc07163dc3aff769",
+    "bytes": 9924
+  },
+  {
+    "path": "paper/gcc_vla/frozen/presubmission_analysis/scripts/G与完整方法六项非配对检验.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round2_20261028_153421/scripts/G与完整方法六项非配对检验.py",
+    "sha256": "3454a2bdccfcbbdf1c949347c71cdd5f9c29a1096961b56f4e88567d968133b2",
+    "bytes": 3722
+  },
+  {
+    "path": "paper/gcc_vla/frozen/presubmission_analysis/scripts/峰值接触与72失败只读诊断.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round2_20261028_153421/scripts/峰值接触与72失败只读诊断.py",
+    "sha256": "3ef11f4f0f0718323ab558e4ec9ebe6e40663698e86abdca1a5ae585b443da49",
+    "bytes": 11622
+  },
+  {
+    "path": "paper/gcc_vla/frozen/presubmission_analysis/scripts/生成峰值统计与B分析报告.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round2_20261028_153421/scripts/生成峰值统计与B分析报告.py",
+    "sha256": "63a3a10cea6a34f5b43279cf9d39668c5a83d1d57b492109f0f345849727fc4f",
+    "bytes": 12492
+  },
+  {
+    "path": "paper/gcc_vla/frozen/presubmission_analysis/scripts/原600设备与G_GC策略块核查_修正.py",
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_round2_20261028_153421/scripts/原600设备与G_GC策略块核查_修正.py",
+    "sha256": "f0d80e39a50b0af712080ffe5882a653633227c5c48aec07959a03a83d80731c",
+    "bytes": 3167
+  },
+  {
+    "path": "scripts/deploy/gcc_vla_paper/replay_metrics_20261027/replay_vlsa_fidelity.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcc_vla_paper/replay_metrics_20261027/replay_vlsa_fidelity.py",
+    "sha256": "076da743ebe11e491823a3d8d7fae7819f2f7ecf9b77cfe89c67ad5cbff31079",
+    "bytes": 11780
+  },
+  {
+    "path": "scripts/deploy/gcc_vla_paper/replay_metrics_20261027/replay_vlsa.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcc_vla_paper/replay_metrics_20261027/replay_vlsa.py",
+    "sha256": "96cdedf54bc2051600240bddca3ead079aa37ba47c2f0d089797f3ecf516889c",
+    "bytes": 10744
+  },
+  {
+    "path": "scripts/deploy/gcc_vla_paper/replay_metrics_20261027/replay_vlsa_exact.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcc_vla_paper/replay_metrics_20261027/replay_vlsa_exact.py",
+    "sha256": "c94c226ad9038afb47ee21e49b8b9a91433113062264ec03cf5e3b90c4613306",
+    "bytes": 13319
+  },
+  {
+    "path": "scripts/deploy/gcc_vla_paper/replay_metrics_20261027/run_archived100.py",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcc_vla_paper/replay_metrics_20261027/run_archived100.py",
+    "sha256": "ea4024a61fa2d5585a738e2f42c01ae0723208e660a130c0235f96419b1f62f1",
+    "bytes": 2169
+  },
+  {
+    "path": "paper/gcc_vla/frozen/original600_analysis/timing_audit/recompute_timing.py",
+    "source": "/home/jun/dummyx-sim/outputs/pace_latest_evidence_20261027_1400/载荷与耗时补全_20261027/timing_audit/recompute_timing.py",
+    "sha256": "e128fb970aa13da92a9f23bb5b73556e26989c932db1b7c6b82f4c57281d947a",
+    "bytes": 9809
+  },
+  {
+    "path": "paper/gcc_vla/frozen/original600_analysis/combined_metrics/combine_complete600.py",
+    "source": "/home/jun/dummyx-sim/outputs/pace_latest_evidence_20261027_1400/载荷与耗时补全_20261027/combined_metrics/combine_complete600.py",
+    "sha256": "4e9efea00c58290d95b155ef78d53e6ccb9bbd876db4a60807dfbe9212892798",
+    "bytes": 24168
+  },
+  {
+    "path": "paper/gcc_vla/frozen/original600_analysis/load_audit_original500/recompute_original500.py",
+    "source": "/home/jun/dummyx-sim/outputs/pace_latest_evidence_20261027_1400/载荷与耗时补全_20261027/load_audit_original500/recompute_original500.py",
+    "sha256": "ee7c997bf42a7aa15ab731e7e2a9405f7223c5b861facf65015e4ad327df40d8",
+    "bytes": 9370
+  },
+  {
+    "path": "scripts/deploy/gcc_vla_paper/config/source_manifest.json",
+    "source": "/home/jun/dummyx-sim/scripts/deploy/gcc_vla_paper/config/source_manifest.json",
+    "sha256": "e8036b1b46035a9d6474e7b5abba0f2547ac935da61625f3020f5de04df45fa6",
+    "bytes": 13213
+  }
+]

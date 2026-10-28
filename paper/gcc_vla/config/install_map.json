@@ -1,0 +1,486 @@
+[
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/scripts/ablation_contact.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/scripts/ablation_contact.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/scripts/ablation_support.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/scripts/ablation_support.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/scripts/gcc_schedule.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/scripts/gcc_schedule.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/scripts/gcc_audit.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/scripts/gcc_audit.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/scripts/gcc_kinematic.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/scripts/gcc_kinematic.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/scripts/gcc_regression.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/scripts/gcc_regression.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/scripts/run_ablation_worker.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/scripts/run_ablation_worker.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/agv_pace.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/agv_pace.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/agv_reference_projection.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/agv_reference_projection.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/agv_vlsa.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/agv_vlsa.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/deploy_screwdriver_client_old.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/deploy_screwdriver_client_old.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/deploy_screwdriver_client_vlsa.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/deploy_screwdriver_client_vlsa.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/groundingdino_obstacle.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/groundingdino_obstacle.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/joint_torque_observer.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/joint_torque_observer.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/pace_diagnostics.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/pace_diagnostics.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/pace_novelty.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/pace_novelty.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/pregrasp_guard.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/pregrasp_guard.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/run_screwdriver_pace_preview.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/run_screwdriver_pace_preview.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_box_attraction.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_box_attraction.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_execution_preview.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_execution_preview.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_pace_preview.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_pace_preview.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_pace_runtime.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_pace_runtime.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_paper_ablation.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_paper_ablation.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_perception.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_perception.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_preview_lift.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_preview_lift.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_preview_refresh.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_preview_refresh.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_recording_storage.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_recording_storage.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_route_preference.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_route_preference.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_tool_proxy.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_tool_proxy.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/mechanism72/backup/冻结运行时/tabletop_visuals.py",
+    "destination": "outputs/gcc_vla_revision_20261028_132637/backup/冻结运行时/tabletop_visuals.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/ablation_support.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/ablation_support.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/run_round2_worker.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/run_round2_worker.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/round2_trace.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/round2_trace.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/schedule_round2.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/schedule_round2.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/analyze_round2.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/analyze_round2.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/audit_smoke_trace_readonly.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_smoke_trace_readonly.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/audit_exp1_demands_readonly.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_exp1_demands_readonly.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/audit_exp2_J4_identity_readonly.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_exp2_J4_identity_readonly.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/audit_exp3_guard_interpretation_readonly.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_exp3_guard_interpretation_readonly.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/audit_final_allocation.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/audit_final_allocation.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/assemble_results_round2.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/assemble_results_round2.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/export_round2_tables.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/export_round2_tables.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/scripts/check_services_round2.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/scripts/check_services_round2.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/agv_pace.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/agv_pace.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/agv_reference_projection.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/agv_reference_projection.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/agv_vlsa.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/agv_vlsa.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/common.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/common.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/deploy_screwdriver_client_old.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/deploy_screwdriver_client_old.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/deploy_screwdriver_client_vlsa.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/deploy_screwdriver_client_vlsa.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/frozen_metrics.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/frozen_metrics.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/groundingdino_obstacle.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/groundingdino_obstacle.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/joint_torque_observer.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/joint_torque_observer.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/neo_factory.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/neo_factory.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/oscbf_independent.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/oscbf_independent.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/pace_novelty.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/pace_novelty.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/pressure_runtime.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/pressure_runtime.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/run_screwdriver_pace_preview.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/run_screwdriver_pace_preview.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_box_attraction.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_box_attraction.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_execution_preview.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_execution_preview.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_pace_preview.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_pace_preview.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_pace_runtime.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_pace_runtime.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_paper_ablation.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_paper_ablation.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_perception.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_perception.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_preview_lift.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_preview_lift.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_preview_refresh.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_preview_refresh.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_recording_storage.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_recording_storage.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_route_preference.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_route_preference.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_tool_proxy.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_tool_proxy.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_tracking_model.json",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_tracking_model.json"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/runtime/tabletop_visuals.py",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/runtime/tabletop_visuals.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/statistics_plan.json",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/statistics_plan.json"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round2/audit/jump_limit_frozen.json",
+    "destination": "outputs/gcc_vla_experiments_round2_20261028_190400/audit/jump_limit_frozen.json"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/ablation_support.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/ablation_support.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/run_round2_worker.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/run_round2_worker.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/round2_trace.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/round2_trace.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/analyze_round2.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/analyze_round2.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/schedule_round3.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/schedule_round3.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/admit_round3_smoke.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/admit_round3_smoke.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/analyze_round3_jump.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/analyze_round3_jump.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/export_round3_tables.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/export_round3_tables.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/independent_verify_final200_readonly.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/independent_verify_final200_readonly.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/rebuild_original600_readonly.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/rebuild_original600_readonly.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/audit_initial_block_contrasts_readonly.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/audit_initial_block_contrasts_readonly.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/scripts/verify_task1_s1_and_initial_crossbatch.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/scripts/verify_task1_s1_and_initial_crossbatch.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/agv_pace.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/agv_pace.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/agv_reference_projection.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/agv_reference_projection.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/agv_vlsa.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/agv_vlsa.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/common.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/common.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/deploy_screwdriver_client_old.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/deploy_screwdriver_client_old.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/deploy_screwdriver_client_vlsa.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/deploy_screwdriver_client_vlsa.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/frozen_metrics.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/frozen_metrics.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/groundingdino_obstacle.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/groundingdino_obstacle.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/joint_torque_observer.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/joint_torque_observer.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/neo_factory.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/neo_factory.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/oscbf_independent.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/oscbf_independent.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/pace_novelty.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/pace_novelty.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/pressure_runtime.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/pressure_runtime.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/run_screwdriver_pace_preview.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/run_screwdriver_pace_preview.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_box_attraction.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_box_attraction.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_execution_preview.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_execution_preview.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_pace_preview.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_pace_preview.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_pace_runtime.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_pace_runtime.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_paper_ablation.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_paper_ablation.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_perception.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_perception.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_preview_lift.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_preview_lift.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_preview_refresh.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_preview_refresh.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_recording_storage.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_recording_storage.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_route_preference.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_route_preference.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_tool_proxy.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_tool_proxy.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_tracking_model.json",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_tracking_model.json"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/runtime/tabletop_visuals.py",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/runtime/tabletop_visuals.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/statistics_plan.json",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/statistics_plan.json"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/round3/audit/jump_limit_frozen.json",
+    "destination": "outputs/gcc_vla_round3_20261028_214716/audit/jump_limit_frozen.json"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/presubmission_analysis/scripts/J4阻塞核查.py",
+    "destination": "outputs/gcc_vla_round2_20261028_153421/scripts/J4阻塞核查.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/presubmission_analysis/scripts/G与完整方法六项非配对检验.py",
+    "destination": "outputs/gcc_vla_round2_20261028_153421/scripts/G与完整方法六项非配对检验.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/presubmission_analysis/scripts/峰值接触与72失败只读诊断.py",
+    "destination": "outputs/gcc_vla_round2_20261028_153421/scripts/峰值接触与72失败只读诊断.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/presubmission_analysis/scripts/生成峰值统计与B分析报告.py",
+    "destination": "outputs/gcc_vla_round2_20261028_153421/scripts/生成峰值统计与B分析报告.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/presubmission_analysis/scripts/原600设备与G_GC策略块核查_修正.py",
+    "destination": "outputs/gcc_vla_round2_20261028_153421/scripts/原600设备与G_GC策略块核查_修正.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/original600_analysis/timing_audit/recompute_timing.py",
+    "destination": "outputs/pace_latest_evidence_20261027_1400/载荷与耗时补全_20261027/timing_audit/recompute_timing.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/original600_analysis/combined_metrics/combine_complete600.py",
+    "destination": "outputs/pace_latest_evidence_20261027_1400/载荷与耗时补全_20261027/combined_metrics/combine_complete600.py"
+  },
+  {
+    "archive": "paper/gcc_vla/frozen/original600_analysis/load_audit_original500/recompute_original500.py",
+    "destination": "outputs/pace_latest_evidence_20261027_1400/载荷与耗时补全_20261027/load_audit_original500/recompute_original500.py"
+  }
+]

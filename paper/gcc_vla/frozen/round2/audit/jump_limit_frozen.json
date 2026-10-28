@@ -1,0 +1,214 @@
+{
+  "source_n": 10,
+  "source": "all preregistered exp1 raw episodes across both scenes; valid previous command and completed substeps only",
+  "rule": "perjoint99percentile linear absolute jump >1e-12rad; floor1e-4rad",
+  "threshold_rad": [
+    0.031248799123169593,
+    0.03577327030341545,
+    0.03294372815894846,
+    0.011915621510522133,
+    0.03625579244210433,
+    0.0005140508586996057
+  ],
+  "nonzero_samples_per_joint": [
+    2851,
+    2851,
+    2851,
+    2851,
+    2851,
+    2851
+  ],
+  "sources": [
+    {
+      "seed": 810000,
+      "scene": "main",
+      "gpu": 0,
+      "id": "exp1_raw_main_r000",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu0/exp1_raw_main_r000/substep_trace.npz",
+      "sha256": "8a9fb2582ce3ece1052d19bd015ed1bbb8edfea39bd261d57df80ce877dc03c8",
+      "validation": {
+        "samples": 15000,
+        "completed": 15000,
+        "attempted_not_completed": 0,
+        "contacts": 114853,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 0,
+        "first_limit_index": null,
+        "causal_attribution": false
+      }
+    },
+    {
+      "seed": 820003,
+      "scene": "pillar_x_plus40mm",
+      "gpu": 0,
+      "id": "exp1_raw_pillar_x_plus40mm_r003",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu0/exp1_raw_pillar_x_plus40mm_r003/substep_trace.npz",
+      "sha256": "881bc82857035ce4fe8772c18f70fff2c816a5aeafe75be05b522cc63fc150b7",
+      "validation": {
+        "samples": 15000,
+        "completed": 15000,
+        "attempted_not_completed": 0,
+        "contacts": 100012,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 0,
+        "first_limit_index": null,
+        "causal_attribution": false
+      }
+    },
+    {
+      "seed": 810001,
+      "scene": "main",
+      "gpu": 1,
+      "id": "exp1_raw_main_r001",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu1/exp1_raw_main_r001/substep_trace.npz",
+      "sha256": "646386aeb340f4cfa16e6ae1c5d0954eeeeaf8f83f5c8ee3bf968c991e3648e8",
+      "validation": {
+        "samples": 8048,
+        "completed": 8048,
+        "attempted_not_completed": 0,
+        "contacts": 56489,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 0,
+        "first_limit_index": null,
+        "causal_attribution": false
+      }
+    },
+    {
+      "seed": 820004,
+      "scene": "pillar_x_plus40mm",
+      "gpu": 1,
+      "id": "exp1_raw_pillar_x_plus40mm_r004",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu1/exp1_raw_pillar_x_plus40mm_r004/substep_trace.npz",
+      "sha256": "3c28c79133d097574792eb7a39a2f7f5c9dbeb2d37ca5543d0d5af5be4eead81",
+      "validation": {
+        "samples": 15000,
+        "completed": 15000,
+        "attempted_not_completed": 0,
+        "contacts": 103981,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 0,
+        "first_limit_index": null,
+        "causal_attribution": false
+      }
+    },
+    {
+      "seed": 810002,
+      "scene": "main",
+      "gpu": 2,
+      "id": "exp1_raw_main_r002",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu2/exp1_raw_main_r002/substep_trace.npz",
+      "sha256": "cf6b5af7f906845d3e1b9587aa3b8db624c8031daec478a9812ee1d9e7dc6ae0",
+      "validation": {
+        "samples": 15000,
+        "completed": 15000,
+        "attempted_not_completed": 0,
+        "contacts": 105985,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 0,
+        "first_limit_index": null,
+        "causal_attribution": false
+      }
+    },
+    {
+      "seed": 810003,
+      "scene": "main",
+      "gpu": 3,
+      "id": "exp1_raw_main_r003",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu3/exp1_raw_main_r003/substep_trace.npz",
+      "sha256": "414f4a10793f676d5b8be0a2f76503d7e80d21426bdbfc35f9b67e3617e17831",
+      "validation": {
+        "samples": 15000,
+        "completed": 15000,
+        "attempted_not_completed": 0,
+        "contacts": 115803,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 0,
+        "first_limit_index": null,
+        "causal_attribution": false
+      }
+    },
+    {
+      "seed": 820000,
+      "scene": "pillar_x_plus40mm",
+      "gpu": 3,
+      "id": "exp1_raw_pillar_x_plus40mm_r000",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu3/exp1_raw_pillar_x_plus40mm_r000/substep_trace.npz",
+      "sha256": "d3397ac1e92abecfb566b257db983b526ee613b1ccf6582a89172663664be5e6",
+      "validation": {
+        "samples": 15000,
+        "completed": 15000,
+        "attempted_not_completed": 0,
+        "contacts": 90507,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 0,
+        "first_limit_index": null,
+        "causal_attribution": false
+      }
+    },
+    {
+      "seed": 810004,
+      "scene": "main",
+      "gpu": 4,
+      "id": "exp1_raw_main_r004",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu4/exp1_raw_main_r004/substep_trace.npz",
+      "sha256": "cd35fe6ef3d65b76ab339af83b31d620b3a172b6afe5188963de84de4ea804a8",
+      "validation": {
+        "samples": 15000,
+        "completed": 15000,
+        "attempted_not_completed": 0,
+        "contacts": 98243,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 0,
+        "first_limit_index": null,
+        "causal_attribution": false
+      }
+    },
+    {
+      "seed": 820001,
+      "scene": "pillar_x_plus40mm",
+      "gpu": 4,
+      "id": "exp1_raw_pillar_x_plus40mm_r001",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu4/exp1_raw_pillar_x_plus40mm_r001/substep_trace.npz",
+      "sha256": "c58d9a59f76e03101530d426748e449faf04fc01ba6271e0e708ef7268ccfca4",
+      "validation": {
+        "samples": 15000,
+        "completed": 15000,
+        "attempted_not_completed": 0,
+        "contacts": 96398,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 0,
+        "first_limit_index": null,
+        "causal_attribution": false
+      }
+    },
+    {
+      "seed": 820002,
+      "scene": "pillar_x_plus40mm",
+      "gpu": 5,
+      "id": "exp1_raw_pillar_x_plus40mm_r002",
+      "trace_path": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/experiments/exp1/worker_gpu5/exp1_raw_pillar_x_plus40mm_r002/substep_trace.npz",
+      "sha256": "1ab402a09604b37dae015f45478a63dde6e2fd0a93d7b52c58229ac305626dfd",
+      "validation": {
+        "samples": 15000,
+        "completed": 15000,
+        "attempted_not_completed": 0,
+        "contacts": 100415,
+        "all_required_fields": true,
+        "reaches_limit_substeps": 1,
+        "first_limit_index": 6550,
+        "causal_attribution": false
+      }
+    }
+  ],
+  "statistics_plan_sha256": "e58f12b7cee21923b44131cc0f2fd842886e4819a5642d7106932fa368e591ae",
+  "frozen_before_probe": true,
+  "probe_scene": "pillar_x_plus40mm",
+  "probe_seeds": [
+    820000,
+    820001,
+    820002,
+    820003,
+    820004
+  ],
+  "diagnostic_only": true
+}

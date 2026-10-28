@@ -1,0 +1,16 @@
+{
+  "source_hashes_verified": 197,
+  "dry_run_plans": 12,
+  "planned_main_episodes": 600,
+  "model_assets_loaded": 2,
+  "physics_steps": 0,
+  "policy_calls": 0,
+  "summary_regression_methods": [
+    "raw_pi0",
+    "pace_g",
+    "pace_gc",
+    "vlsa_native"
+  ],
+  "clean_new_machine_environment_install_tested": false,
+  "new_closed_loop_run_tested": false
+}

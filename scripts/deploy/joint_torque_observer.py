@@ -1,7 +1,7 @@
 """Model residual force observer; SI units, world force acting ON the robot.
 
 Core update accepts synchronized robot-model quantities, not contact solver data.
-MuJoCo adapter samples immediately AFTER an Euler mj_step: qM, bias, passive,
+MuJoCo adapter samples immediately AFTER an Euler/implicitfast mj_step: qM, bias, passive,
 actuator force and kinematics still describe the pre-integration state, while
 qvel is the new velocity. This permits encoder-style acceleration differencing.
 Do not call mj_forward between mj_step and sample_after_step.
@@ -74,19 +74,45 @@ class ModelResidualObserver:
 
 
 class MujocoTorqueObserver:
-    """Uses only model, encoder velocities and qfrc_actuator[:6]."""
-    def __init__(self, model, tcp_id, config=None):
+    """Encoder residual with integrator correction and explicit arm DOF mapping.
+
+    joint_names=None preserves the original six leading DOFs. For implicitfast,
+    (M - h*D) dv/h recovers the pre-integration generalized force; D is the
+    smooth-force velocity derivative produced by the integrator, not contact truth.
+    Sample exactly once after each mj_step, before mj_forward or another step.
+    """
+    def __init__(self, model, tcp_id, config=None, *, joint_names=None):
         import mujoco
-        if model.opt.integrator != mujoco.mjtIntegrator.mjINT_EULER:
-            raise ValueError("Timestamp-aligned adapter currently requires Euler integration")
+        if model.opt.integrator not in (mujoco.mjtIntegrator.mjINT_EULER,
+                                        mujoco.mjtIntegrator.mjINT_IMPLICITFAST):
+            raise ValueError("Timestamp-aligned adapter requires Euler or implicitfast integration")
+        if not 0 <= tcp_id < model.nsite:
+            raise ValueError("Invalid TCP site")
         self.model, self.tcp_id = model, tcp_id
+        self.joint_names = None if joint_names is None else tuple(joint_names)
+        if self.joint_names is None:
+            if model.nv < 6:
+                raise ValueError("Default observer requires six leading DOFs")
+            self.dof_indices = np.arange(6)
+        else:
+            if len(self.joint_names) != 6 or len(set(self.joint_names)) != 6:
+                raise ValueError("Expected six unique scalar arm joints")
+            ids = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, n)
+                   for n in self.joint_names]
+            if any(j < 0 or model.jnt_type[j] not in
+                   (mujoco.mjtJoint.mjJNT_HINGE, mujoco.mjtJoint.mjJNT_SLIDE) for j in ids):
+                raise ValueError("Arm joint missing or not scalar")
+            self.dof_indices = model.jnt_dofadr[ids].copy()
+        self.integrator = int(model.opt.integrator)
         self.observer = ModelResidualObserver(config)
         self.previous_velocity = None
+        self.previous_time = None
         self.jacobian = np.zeros((3, model.nv))
         self.inertia_force = np.zeros(model.nv)
 
     def reset(self, data):
         self.previous_velocity = data.qvel.copy()
+        self.previous_time = float(data.time)
         self.observer.reset()
 
     def sample_after_step(self, data):
@@ -94,18 +120,35 @@ class MujocoTorqueObserver:
         if self.previous_velocity is None:
             raise RuntimeError("reset(data) before stepping")
         dt = self.model.opt.timestep
+        if int(self.model.opt.integrator) != self.integrator:
+            raise RuntimeError("Integrator changed; recreate observer")
+        if not np.isclose(data.time - self.previous_time, dt, rtol=1e-7, atol=1e-12):
+            raise RuntimeError("Sample exactly once per physics step; reset after model reset")
         delta_velocity = data.qvel - self.previous_velocity
         acceleration = delta_velocity / dt
         self.previous_velocity[:] = data.qvel
+        self.previous_time = float(data.time)
         mujoco.mj_mulM(self.model, data, self.inertia_force, acceleration)
         # Euler integrates joint damping implicitly: (M + dt*D) dv/dt.
         # Restore the pre-step passive-force convention without solver forces.
-        if not self.model.opt.disableflags & int(mujoco.mjtDisableBit.mjDSBL_EULERDAMP):
+        if self.integrator == int(mujoco.mjtIntegrator.mjINT_IMPLICITFAST):
+            # MuJoCo 3.3.2 gathers the lower triangle of qDeriv and uses a
+            # symmetric factorization. Mirror that triangle, not a full unsymmetric D.
+            derivative = np.zeros((self.model.nv, self.model.nv))
+            for row in range(self.model.nv):
+                start = int(data.D_rowadr[row])
+                stop = start + int(data.D_rownnz[row])
+                derivative[row, data.D_colind[start:stop]] = data.qDeriv[start:stop]
+            lower = np.tril(derivative)
+            symmetric = lower + np.tril(derivative, -1).T
+            self.inertia_force -= symmetric @ delta_velocity
+        elif not self.model.opt.disableflags & int(mujoco.mjtDisableBit.mjDSBL_EULERDAMP):
             self.inertia_force += self.model.dof_damping * delta_velocity
         mujoco.mj_jacSite(self.model, data, self.jacobian, None, self.tcp_id)
+        indices = self.dof_indices
         return self.observer.update(
-            self.inertia_force[:6], data.qfrc_bias[:6], data.qfrc_passive[:6],
-            data.qfrc_actuator[:6], self.jacobian[:, :6], dt)
+            self.inertia_force[indices], data.qfrc_bias[indices], data.qfrc_passive[indices],
+            data.qfrc_actuator[indices], self.jacobian[:, indices], dt)
 
 
 def select_control_force(source, estimate, legacy_contact_reader):
@@ -137,9 +180,11 @@ def robot_contact_truth(model, data, robot_body_ids):
     return total
 
 
-def arm_body_ids(model):
+def arm_body_ids(model, root_name="link1_1"):
     import mujoco
-    root = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "link1_1")
+    root = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, root_name)
+    if root < 0:
+        raise ValueError(f"Robot root body not found: {root_name}")
     result = {root}
     for body in range(root + 1, model.nbody):
         if int(model.body_parentid[body]) in result:

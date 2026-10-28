@@ -276,7 +276,7 @@ def fit_box_opening(points, table_z=.80):
         raise ValueError(f"Incomplete or invalid box rim extent: {extent.tolist()}")
     center = np.r_[(lower + upper) / 2, top]
     return {"opening_center": center, "placement_goal": center + [-.052, 0., .019],
-            "attraction_point": center + [-.052, 0., .05]}, rim
+            "attraction_point": center + [.05, 0., .05]}, rim
 
 
 def localize_box(model, data, renderer, detector, box_threshold, text_threshold, output_dir,

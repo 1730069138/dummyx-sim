@@ -1,0 +1,188 @@
+{
+  "checkpoint_files": [
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/_CHECKPOINT_METADATA",
+      "size": 426,
+      "sha256": "ccd5792228cde0a1365610efd50e9389e520a581e2387c47bdd21a84dae6850c"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/assets/local/dummyx_grasp/norm_stats.json",
+      "size": 2104,
+      "sha256": "9751aced3c617d459115d917a592668d90787dff8b85cfe15d415d9fc8f9bc68"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/_METADATA",
+      "size": 32065,
+      "sha256": "f29affe7362d104ba668419e73c0d858a98212348e102309c14008e0dece67b8"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/_sharding",
+      "size": 18483,
+      "sha256": "8b64d0f2b7e59bc63721ed34860ccdd382811123d3179be7b9cfeba83edc4532"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/array_metadatas/process_0",
+      "size": 12499,
+      "sha256": "15dc3b8f20cffe30115a9e01eaa27d9e28ea2cd1b0d4bc0edeef2b88cceca059"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/d/03b79bca8d7f41d659ef7da3bf1ef790",
+      "size": 4682,
+      "sha256": "822053a29dd3b10c2f2566c7e237d13209c86c4b7640e8571488a81fcfd3de28"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/manifest.ocdbt",
+      "size": 118,
+      "sha256": "952d6a692b6571a68fd6afff0b4616a3ae0d7701e14632071b82e5b7ed0c5d71"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/035eb7005f9b0d1214167e2d0f244ec6",
+      "size": 1386,
+      "sha256": "37de6e7b9d25119f825d5ab80207d3fb641c83a4cb5f555fc05e9bd76ca34a51"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/20cecddf1971fbb60fead93ebfb49b1c",
+      "size": 788618469,
+      "sha256": "5a1572cb33e115477e01e591c5bb80b8191c0367ec78d1447aa6d0037e75f059"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/46907bf059111fb3815769e50b2c7389",
+      "size": 1382,
+      "sha256": "9bb82060fc6911452a45685e7cc1f908aecde0ddeb406da48482a530e75427d6"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/548da24e9b79c457ae3b0d3e7ef91a55",
+      "size": 104440922,
+      "sha256": "b2d0c66c4fb4f9e94a13359985a07172af271e554d447ada57184177ba565b81"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/75264a622949144fb0ad84817351c033",
+      "size": 219,
+      "sha256": "2291c82a77115e1b38a94d245570ce162f40c50e1fafa3deaeb6c6f6ae1c499c"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/7887904b2216498b08cbda7ec41a669c",
+      "size": 5813,
+      "sha256": "6a539f87ea00f4489ffa2a9c3d81e515a74d9ac99c1aa5e51f34cc8f4ef968a2"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/9a3b4e3115c2596cc819869d1938c2f1",
+      "size": 2838052546,
+      "sha256": "960c6e2bbd2494928cb3b6faec01fbec4cdc008f48e88a3714549f860723160b"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/9bc56e8aa56bd22206aefa794899b42f",
+      "size": 4667,
+      "sha256": "7e6be26b007d655de0944fe6999c874307ac7b387008a1be0dbe8063d8330857"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/e9e07e768abd41b931cfd317eef6a616",
+      "size": 2421328375,
+      "sha256": "5f467cb04aa0bf849add8d842562640da1cfe885f2fbc92d506aa49af8614a81"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/d/fa38455f783f7f844ac9fd687f988419",
+      "size": 4771052,
+      "sha256": "729b9489f9a561abfbca162b1e40618dbbf661534cdc1a0bee48db967490a9ce"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/params/ocdbt.process_0/manifest.ocdbt",
+      "size": 482,
+      "sha256": "52c42d95d48c55c7eebc9cc1b7e98bf7f4440e357f7b1d5c6e024469090746d6"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/_METADATA",
+      "size": 61939,
+      "sha256": "6e767ef8c2003ef2b84bf4c9d5317d2bfc3e9c269aa2afa0b1d07c266fbe4d76"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/_sharding",
+      "size": 30320,
+      "sha256": "488c7b3ce86200754fdeac94c5a0c71a92d768247ed408adda69febf4c3c4b54"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/array_metadatas/process_0",
+      "size": 20421,
+      "sha256": "d9af310b582ff73dac542a78e8156e19e1e8a5fcc269ee6d04332dc8fe782656"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/d/6f4a7168066b4dd8acc9694d9ef1ef1c",
+      "size": 3656,
+      "sha256": "ac07338fb8006b221cb5e636bf9d981c471c78e1fec248d8ead1ac67ed94c111"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/manifest.ocdbt",
+      "size": 118,
+      "sha256": "65edcd5f2aa876ef2703773a318b49a64a311099bbe49c777ec044ac7b1119e5"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/d/0ff2870c95598f9ccb7806e0a45f4855",
+      "size": 2183262650,
+      "sha256": "88b94c73fa0f24ca3806d6c8f2c17fab140375e00c22b7f34eb6aacb40df554b"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/d/5da831a47dbce7e04d7064e0bf7ef819",
+      "size": 171,
+      "sha256": "4322e96cd3829e98d2a117a6ec7128cdaa27f5f3a65c63fc53133c63c1413e9b"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/d/6dca8ef5aacf3dbc089e0af84ce6f85d",
+      "size": 1203,
+      "sha256": "f4ebcb8179537ccd062699c1ee80126a74d6781d924f34e2fd06728316509f37"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/d/72299e55462148b976ebdc0783e9679b",
+      "size": 1231,
+      "sha256": "3e0714ac751eb7a9f7e3e474aaf8c73c215b29c868c90fdc46f63fe57fa0c41d"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/d/9816ae35c0bef21f679e3e01d90a9640",
+      "size": 65841,
+      "sha256": "50fd982bf45886fb2115bcc918329b5d5cfbbeb721a2f3b0fc098e8c0e94ec38"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/d/a73cd0fe021fd18cd7fc2c52de7ec604",
+      "size": 140196186,
+      "sha256": "5397a1472d8e87f511f88e4df7a1fd137f2dc230d0ca16ae57322b78090c4357"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/d/af321ed236998f85ce75c287575388d7",
+      "size": 733551009,
+      "sha256": "8c17af8b6482106bf45e0f962fca2e0a8f675c71d3482ffc15ca0093011c3304"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/d/d693a5e9af26dfed63e041b9b556ce80",
+      "size": 237312613,
+      "sha256": "c60555f5d78d41d35fc57ba7234717a07aacb5c9a1046f7d595e6dec459d78e7"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/d/ef4f6fbe1b28c29f90aa0b69433cbe22",
+      "size": 1191654,
+      "sha256": "3ad1f0be70f1189b57696e9d744697a352aa5eb9a48d9ebb8df1291adc0eb021"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000/train_state/ocdbt.process_0/manifest.ocdbt",
+      "size": 442,
+      "sha256": "1f4eb323af46831db4047421730fbf439a74190f7600ea27c5bad40868e869bb"
+    }
+  ],
+  "source": [
+    {
+      "path": "/home/jun/VLA/openpi/scripts/serve_policy.py",
+      "sha256": "8832c40331935119d7e02062749779806fe55af6c141cb5421c541894bfc7e59"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/src/openpi/policies/policy.py",
+      "sha256": "a2ac5236e23b11d0f5a840d4a8fef148d89dba921d5452ec5dfcd5a6ffa46f20"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/src/openpi/policies/policy_config.py",
+      "sha256": "aaf42ab04a33b6c91d2447926211646c33ebd8ebfa427f026d7b6c4f7c45ec52"
+    },
+    {
+      "path": "/home/jun/VLA/openpi/src/openpi/training/config.py",
+      "sha256": "10b9b8287cef7b88ef1385e0514d6d832279e5e9c5b7fc49d9032084598a22de"
+    }
+  ],
+  "checkpoint": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000"
+}

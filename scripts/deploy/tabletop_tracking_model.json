@@ -1,0 +1,85 @@
+{
+  "schema": "tabletop_tracking_1step_v1",
+  "dt": 0.05,
+  "coefficients": [
+    [
+      0.1558661350106902,
+      0.6913977279090882,
+      0.00028250723806722
+    ],
+    [
+      0.18277419259945815,
+      0.6416930596012734,
+      -0.003986497977395476
+    ],
+    [
+      0.36877228881455876,
+      0.5288998665362445,
+      -0.002689459598728683
+    ],
+    [
+      0.2875160066942013,
+      0.3657353569592012,
+      -0.003844006829805846
+    ],
+    [
+      0.7834618310142565,
+      0.05883738131130362,
+      0.003118763105637669
+    ],
+    [
+      0.6143861845594342,
+      0.2036666897360812,
+      0.002448566423383064
+    ]
+  ],
+  "formula": "q_next=q + a*(mean_reference-q) + b*dt*qvel + bias; clipping to joint ranges",
+  "fit": "bounded least squares on recorded preview-on episode; preview-off success held out",
+  "metrics": [
+    {
+      "source": "/home/jun/dummyx-sim/outputs/screwdriver_eval/success_base_preview_on_single_20261026_103513/episodes/run_20261026_103521_947697_none_Case4_obs_apf_no_cont_groundingdino_joint_torque/fail/data_ep_001.npz",
+      "samples": 259,
+      "joint_rmse_rad": [
+        0.005761367515780097,
+        0.008564097173825344,
+        0.011131240648509014,
+        0.010999429657576044,
+        0.006478277079474703,
+        0.011063021478085718
+      ],
+      "joint_p95_abs_error_rad": [
+        0.010917157852144184,
+        0.018588990675006946,
+        0.02303278694131063,
+        0.020646713641534316,
+        0.012355702265303546,
+        0.015169342280462959
+      ]
+    },
+    {
+      "source": "/home/jun/dummyx-sim/outputs/screwdriver_eval/staged_world_xy_zero_single_20261026_103155/episodes/run_20261026_103204_641054_none_Case4_obs_apf_no_cont_groundingdino_joint_torque/success/data_ep_001.npz",
+      "samples": 155,
+      "joint_rmse_rad": [
+        0.004699976831699966,
+        0.005924942738260407,
+        0.0062801606943016465,
+        0.009729179296482782,
+        0.004648777775746938,
+        0.00632766372848779
+      ],
+      "joint_p95_abs_error_rad": [
+        0.01094579110199529,
+        0.009558456476195593,
+        0.008176036996203406,
+        0.022817367973673505,
+        0.010468314985220158,
+        0.014065325746674193
+      ]
+    }
+  ],
+  "sources": {
+    "/home/jun/dummyx-sim/outputs/screwdriver_eval/success_base_preview_on_single_20261026_103513/episodes/run_20261026_103521_947697_none_Case4_obs_apf_no_cont_groundingdino_joint_torque/fail/data_ep_001.npz": "6f4e79e029c771e93e5179a4a1be41642269867b56bbe60283c24a959feced10",
+    "/home/jun/dummyx-sim/outputs/screwdriver_eval/staged_world_xy_zero_single_20261026_103155/episodes/run_20261026_103204_641054_none_Case4_obs_apf_no_cont_groundingdino_joint_torque/success/data_ep_001.npz": "6a01612a9990ab6520773f7ea824f58470b368c166bd6813de8f2fd29c71175a"
+  },
+  "limitations": "Local empirical response, not physical dynamics certificate; future mean reference approximated by guarded control target."
+}

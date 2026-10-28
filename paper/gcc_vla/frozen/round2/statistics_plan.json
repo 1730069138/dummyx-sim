@@ -1,0 +1,413 @@
+{
+  "version": "20261028_v1",
+  "created_utc": "2026-10-28T11:26:42.150702+00:00",
+  "source_request": "/home/jun/Documents/xwechat_files/wxid_7kr316me1s6m22_f01e/msg/file/2026-10/codex指令.md",
+  "experiments": {
+    "exp1": {
+      "configurations": [
+        "raw",
+        "G",
+        "F",
+        "oscbf"
+      ],
+      "n_per_configuration_scene": 5,
+      "seeds": {
+        "main": [
+          810000,
+          810001,
+          810002,
+          810003,
+          810004
+        ],
+        "pillar_x_plus40mm": [
+          820000,
+          820001,
+          820002,
+          820003,
+          820004
+        ]
+      },
+      "purpose": "actuator saturation temporal association and full contact-pair diagnostic; no causal module labels; no inferential primary contrast"
+    },
+    "exp2": {
+      "configurations": [
+        "fixed",
+        "normal"
+      ],
+      "n_per_configuration_scene": 50,
+      "seeds": {
+        "main": [
+          830000,
+          830001,
+          830002,
+          830003,
+          830004,
+          830005,
+          830006,
+          830007,
+          830008,
+          830009,
+          830010,
+          830011,
+          830012,
+          830013,
+          830014,
+          830015,
+          830016,
+          830017,
+          830018,
+          830019,
+          830020,
+          830021,
+          830022,
+          830023,
+          830024,
+          830025,
+          830026,
+          830027,
+          830028,
+          830029,
+          830030,
+          830031,
+          830032,
+          830033,
+          830034,
+          830035,
+          830036,
+          830037,
+          830038,
+          830039,
+          830040,
+          830041,
+          830042,
+          830043,
+          830044,
+          830045,
+          830046,
+          830047,
+          830048,
+          830049
+        ],
+        "pillar_x_plus40mm": [
+          840000,
+          840001,
+          840002,
+          840003,
+          840004,
+          840005,
+          840006,
+          840007,
+          840008,
+          840009,
+          840010,
+          840011,
+          840012,
+          840013,
+          840014,
+          840015,
+          840016,
+          840017,
+          840018,
+          840019,
+          840020,
+          840021,
+          840022,
+          840023,
+          840024,
+          840025,
+          840026,
+          840027,
+          840028,
+          840029,
+          840030,
+          840031,
+          840032,
+          840033,
+          840034,
+          840035,
+          840036,
+          840037,
+          840038,
+          840039,
+          840040,
+          840041,
+          840042,
+          840043,
+          840044,
+          840045,
+          840046,
+          840047,
+          840048,
+          840049
+        ]
+      },
+      "purpose": "direction option only; fixed baseline versus closest-pair normal"
+    },
+    "exp3": {
+      "configurations": [
+        "F",
+        "B"
+      ],
+      "n_per_configuration_scene": 50,
+      "seeds": {
+        "main": [
+          850000,
+          850001,
+          850002,
+          850003,
+          850004,
+          850005,
+          850006,
+          850007,
+          850008,
+          850009,
+          850010,
+          850011,
+          850012,
+          850013,
+          850014,
+          850015,
+          850016,
+          850017,
+          850018,
+          850019,
+          850020,
+          850021,
+          850022,
+          850023,
+          850024,
+          850025,
+          850026,
+          850027,
+          850028,
+          850029,
+          850030,
+          850031,
+          850032,
+          850033,
+          850034,
+          850035,
+          850036,
+          850037,
+          850038,
+          850039,
+          850040,
+          850041,
+          850042,
+          850043,
+          850044,
+          850045,
+          850046,
+          850047,
+          850048,
+          850049
+        ],
+        "pillar_x_plus40mm": [
+          860000,
+          860001,
+          860002,
+          860003,
+          860004,
+          860005,
+          860006,
+          860007,
+          860008,
+          860009,
+          860010,
+          860011,
+          860012,
+          860013,
+          860014,
+          860015,
+          860016,
+          860017,
+          860018,
+          860019,
+          860020,
+          860021,
+          860022,
+          860023,
+          860024,
+          860025,
+          860026,
+          860027,
+          860028,
+          860029,
+          860030,
+          860031,
+          860032,
+          860033,
+          860034,
+          860035,
+          860036,
+          860037,
+          860038,
+          860039,
+          860040,
+          860041,
+          860042,
+          860043,
+          860044,
+          860045,
+          860046,
+          860047,
+          860048,
+          860049
+        ]
+      },
+      "purpose": "final substep guard only; F full, B all final guards disabled"
+    }
+  },
+  "total_formal_allocations": 440,
+  "smoke": {
+    "episodes_per_experiment": 2,
+    "total": 6,
+    "independent_seed_ranges": true,
+    "not_part_of_formal_statistics": true,
+    "admission": "technical finite/schema/control and metric identity only; never task outcome"
+  },
+  "allocation": {
+    "same_scene_configs_share_seed": true,
+    "gpu_rule": "(rep + 3*scene_index) % 6; scene_index 0 main, 1 pillar_x_plus40mm; same-seed configs always same GPU",
+    "configuration_order": "rotate list by seed % number_of_configurations; reversal not selected by outcomes",
+    "initial_state_first_observation_first_action_block": "audit and retain equality/differences; do not replace required unpaired tests with paired tests"
+  },
+  "metrics": {
+    "SR": "frozen existing strict task predicate",
+    "STSR": "SR and no true pillar contact, tool-floor event or recorded pillar tilt; only these3events",
+    "PCR": "at least one recorded robot/tool pillar contact; exclude pillar-table support",
+    "J": "sum external robot+tool per-contact3D force norms at completed1ms steps times0.001; exclude protected-internal grip",
+    "J4": "same integral over first4000valid contiguous1ms physical steps after episode start; requires full4s; absent if early termination; no zero fill or extrapolation",
+    "Fpk": "maximum external per-contact norm sum over completed episode",
+    "tau_limit": "six arm actuators actual actuator_force at compiled lower/upper force range tolerance1e-8, not ctrl or residual torque",
+    "T": "all task success+failure durations",
+    "continuous_summary": "episode mean±sample SD; report available n separately for J4",
+    "proportion_uncertainty": "Wilson95%, z=1.959963984540054; episode is statistical unit"
+  },
+  "families": [
+    {
+      "id": "exp2_binary4",
+      "experiment": "exp2",
+      "test": "two-sided Fisher exact",
+      "outcomes": [
+        "SR",
+        "STSR"
+      ],
+      "scenes": [
+        "main",
+        "pillar_x_plus40mm"
+      ],
+      "contrasts": [
+        "normal-fixed"
+      ],
+      "m": 4,
+      "correction": "Holm step-down across these4only",
+      "effects": [
+        "risk difference percentage points normal-fixed",
+        "odds ratio"
+      ]
+    },
+    {
+      "id": "exp3_binary6",
+      "experiment": "exp3",
+      "test": "two-sided Fisher exact",
+      "outcomes": [
+        "SR",
+        "STSR",
+        "PCR"
+      ],
+      "scenes": [
+        "main",
+        "pillar_x_plus40mm"
+      ],
+      "contrasts": [
+        "F-B"
+      ],
+      "m": 6,
+      "correction": "Holm across these6only",
+      "effects": [
+        "risk difference percentage points F-B",
+        "odds ratio"
+      ]
+    },
+    {
+      "id": "exp3_load4",
+      "experiment": "exp3",
+      "test": "two-sided Mann-Whitney U, asymptotic tie and continuity correction",
+      "outcomes": [
+        "J",
+        "J4"
+      ],
+      "scenes": [
+        "main",
+        "pillar_x_plus40mm"
+      ],
+      "contrasts": [
+        "F-B"
+      ],
+      "m": 4,
+      "correction": "Holm across these4only",
+      "effects": [
+        "Cliff delta F-minus-B, ties0",
+        "mean difference F-B as descriptive only"
+      ]
+    }
+  ],
+  "missing_testing": "If outcome has no valid observations/test impossible, p=null and family remains plannedm with missing p conservatively1 for Holm; no declaration that incomplete planned cohort confirms superiority. Formal planned N and observed coverage always shown.",
+  "failure_categories": {
+    "primary": [
+      "step_limit",
+      "infeasible_abort",
+      "other_task_termination"
+    ],
+    "technical": "policy_error/simulation_error/perception_error/infrastructure exception are retained technical attempts, endpoint unknown, not task failure by default; exact same allocation seed/GPU/config may be restored once without outcome-based retry; all attempts retained",
+    "stage": "trace observable phase_pre codes0..3 and raw predicates, not exact task truth; final guard post-pickup-before-first-valid-placement is interval-start predicate, not post-outcome phase selection"
+  },
+  "saturation_analysis": {
+    "unit": "each completed substep and six actuator indices",
+    "first_limit": "first completed saturation interval; firstphase uses phase_pre with phase_metric_valid_pre retained",
+    "dominance": "at each saturated joint compare abs(delta_geometry),abs(delta_contact_clipped),abs(delta_guard); unique max only, ties/zero separate; report coincident jump and position error; association NOT causal attribution",
+    "contact": "all ragged contacts present; maximum contributor at Fsumpeak from protected-external contact force norms; retain internal grip separately",
+    "demand": "demand_exceeds only if supported actuator model; clipped output at limit does not itself establish excess unbounded demand"
+  },
+  "figures": {
+    "selection": "exp1/main minimum planned seed810000, configurations raw,G,F, first technical-valid completion of that exact allocation; no selection by force/task effects; if not available report missing rather than choose favorable alternative",
+    "n": 3,
+    "panels": [
+      "six actual torque traces with limit±lines",
+      "per-joint applied target jump",
+      "geometry/contact/guard contribution magnitudes",
+      "position error if space; saturation intervals marked"
+    ],
+    "formats": [
+      "PNG300dpi",
+      "PDF"
+    ]
+  },
+  "jump_limiter_optional": {
+    "status": "optional diagnostic only, not primary experiment4",
+    "calibration": "ONLY all10exp1raw allocations across2scenes; completed steps with previous_applied_valid and finite nonzero absolute target jump; per joint pooled99percentile, numpy percentile methodlinear",
+    "floor_rad": 0.0001,
+    "freeze": "write threshold vector with all raw source hashes and counts before any limiter run; no tuning by F outcomes",
+    "diagnostic_configs": [
+      "F_jump_limited"
+    ],
+    "scene": "pillar_x_plus40mm",
+    "n": 5,
+    "seeds": [
+      820000,
+      820001,
+      820002,
+      820003,
+      820004
+    ],
+    "comparison": "same exp1F allocations/seeds/GPU; report all5, preserve task and contact costs; matched inference equality audit; descriptive only"
+  },
+  "stopping": "No success-rate based stop, no favorable sample selection. All planned failures retained. Technical issue stops infrastructure until recorded and fixed; retain incomplete attempt and uncertainty.",
+  "partial_reporting": "Write actual completed/technical/missing counts. Do not run confirmatory family interpretations until full planned allocations fixed; repeated interim p-value inspection is not a stopping rule.",
+  "extra_layouts": {
+    "status": "not_run",
+    "reason": "optional layout extension not scheduled; no silent scope expansion"
+  },
+  "software": "Python numpy/scipy/matplotlib versions and script/source hashes recorded in output"
+}

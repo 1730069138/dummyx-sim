@@ -95,8 +95,11 @@ and environment variable:
 import argparse
 import base64
 import csv
+import hashlib
 import os
+from pathlib import Path
 import time
+import xml.etree.ElementTree as ET
 
 import cv2
 import mujoco
@@ -111,6 +114,8 @@ except ImportError as exc:
     ) from exc
 
 from openpi_client import websocket_client_policy
+from pace_novelty import pillar_positions
+from pace_diagnostics import write_json_exclusive
 
 
 # =============================================================================
@@ -1265,7 +1270,10 @@ def run_perception_probe(
 ):
     """Run 2D grounding only, save all candidates, then return without OpenPI."""
     target_xy = (0.28, -0.10) if args.fixed_eval else None
-    reset_scene(model, data, use_obstacle=not args.no_obstacle, target_xy=target_xy)
+    probe_pillar_xy = (pillar_positions(args.pillar_random_seed, 1)[0]
+                       if args.pillar_random_seed is not None else args.pillar_xy)
+    reset_scene(model, data, use_obstacle=not args.no_obstacle, target_xy=target_xy,
+                initial_state_protocol=args.initial_state_protocol, pillar_xy=probe_pillar_xy)
 
     camera_frames = {}
     for camera_name in ("rear_cam", "fixed"):
@@ -1447,7 +1455,10 @@ def run_candidate_pair_probe(
     real obstacle before changing the production selector.
     """
     target_xy = (0.28, -0.10) if args.fixed_eval else None
-    reset_scene(model, data, use_obstacle=not args.no_obstacle, target_xy=target_xy)
+    probe_pillar_xy = (pillar_positions(args.pillar_random_seed, 1)[0]
+                       if args.pillar_random_seed is not None else args.pillar_xy)
+    reset_scene(model, data, use_obstacle=not args.no_obstacle, target_xy=target_xy,
+                initial_state_protocol=args.initial_state_protocol, pillar_xy=probe_pillar_xy)
 
     query = (args.obstacle_text or "pillar").strip()
     probe_root = os.path.join(record_root, "candidate_pair_probe")
@@ -2432,7 +2443,24 @@ def get_target_table_force(model, data, valid_body_ids):
     return f_xyz
 
 
-def reset_scene(model, data, use_obstacle=True, target_xy=None):
+def add_initial_state_arguments(parser):
+    parser.add_argument("--initial_state_protocol", choices=("historical", "full_v1"), default="historical",
+                        help="historical preserves old reset state; full_v1 resets all MuJoCo data and uses the shared PACE pillar reset height")
+    parser.add_argument("--pillar_xy", type=float, nargs=2, default=(.11, -.10), metavar=("X", "Y"),
+                        help="Pillar reset XY in metres when --pillar_random_seed is omitted")
+    parser.add_argument("--pillar_random_seed", type=int, default=None,
+                        help="Use PACE's deterministic per-episode pillar-position sequence")
+
+
+def reset_scene(model, data, use_obstacle=True, target_xy=None, *,
+                initial_state_protocol="historical", pillar_xy=(.11, -.10)):
+    pillar_xy = np.asarray(pillar_xy, dtype=float)
+    if pillar_xy.shape != (2,) or not np.all(np.isfinite(pillar_xy)):
+        raise ValueError("pillar_xy must contain two finite coordinates")
+    if initial_state_protocol not in ("historical", "full_v1"):
+        raise ValueError(initial_state_protocol)
+    if initial_state_protocol == "full_v1":
+        mujoco.mj_resetData(model, data)
     if target_xy is not None:
         target_x, target_y = target_xy
     else:
@@ -2458,7 +2486,8 @@ def reset_scene(model, data, use_obstacle=True, target_xy=None):
         q_adr = model.jnt_qposadr[pillar_jnt_id]
         v_adr = model.jnt_dofadr[pillar_jnt_id]
         if use_obstacle:
-            data.qpos[q_adr : q_adr + 3] = PILLAR_INITIAL_POS
+            pillar_z = .38 if initial_state_protocol == "full_v1" else PILLAR_INITIAL_POS[2]
+            data.qpos[q_adr : q_adr + 3] = [pillar_xy[0], pillar_xy[1], pillar_z]
             data.qpos[q_adr + 3 : q_adr + 7] = [1, 0, 0, 0]
         else:
             data.qpos[q_adr : q_adr + 3] = [10.0, 10.0, -10.0]
@@ -2734,6 +2763,35 @@ def _find_project_root(script_file):
     )
 
 
+def write_run_configuration(record_root, args, xml_path, policy_server_metadata):
+    """Save input provenance without changing perception, QP or servo adaptation."""
+    source_paths = [Path(__file__).resolve(), Path(__file__).with_name("pace_novelty.py").resolve()]
+    pending_xml = [Path(xml_path).resolve()]
+    seen_xml = set()
+    while pending_xml:
+        path = pending_xml.pop()
+        if path in seen_xml:
+            continue
+        seen_xml.add(path)
+        source_paths.append(path)
+        pending_xml.extend((path.parent / include.attrib["file"]).resolve()
+                           for include in ET.parse(path).getroot().iter("include"))
+    config = dict(
+        arguments=vars(args).copy(),
+        source_sha256={str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in source_paths},
+        policy_server_metadata=policy_server_metadata,
+        effective_pillar_reset_z_m=.38 if args.initial_state_protocol == "full_v1" else float(PILLAR_INITIAL_POS[2]),
+        scope=dict(
+            paired_inputs="Shared target/pillar sequences and full_v1 reset; compare saved actual initial coordinates",
+            geometry="VLSA keeps ellipsoids; PACE uses capsules, so oracle input does not imply identical geometric representation",
+            adapter="VLSA per-axis linear/angular correction caps and servo-aware interface remain active and recorded in arguments",
+            provenance="Source and included XML hashes are recorded; this is not a complete mesh/checkpoint snapshot",
+        ),
+    )
+    write_json_exclusive(Path(record_root) / "run_config.json", config)
+    return config
+
+
 def main(args):
     # Repository layout may evolve; resolve the root from the scene file rather
     # than depending on a fixed number of parent directories.
@@ -2825,6 +2883,8 @@ def main(args):
             for _ in range(args.num_episodes)
         ]
         print(f"Paired deterministic evaluation sequence: seed={args.eval_seed}")
+    pillar_sequence = (pillar_positions(args.pillar_random_seed, args.num_episodes)
+                       if args.pillar_random_seed is not None else None)
 
     use_obstacle = not args.no_obstacle
     timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -2837,6 +2897,7 @@ def main(args):
             f"run_{timestamp}_{args.mode}_"
             f"{args.obstacle_source}_obs{int(use_obstacle)}"
         )
+    run_name += f"_init-{args.initial_state_protocol}_ps-{args.pillar_random_seed}"
     record_root = os.path.join(base_dir, "recordings", run_name)
     os.makedirs(record_root, exist_ok=True)
 
@@ -2872,6 +2933,7 @@ def main(args):
         host=args.host,
         port=args.port,
     )
+    write_run_configuration(record_root, args, xml_path, policy.get_server_metadata())
 
     success_count = 0
     placement_success_count = 0
@@ -2948,13 +3010,16 @@ def main(args):
                 if fixed_targets is not None
                 else None
             )
+            episode_pillar_xy = (pillar_sequence[episode] if pillar_sequence is not None
+                                 else tuple(args.pillar_xy))
             reset_scene(
                 model,
                 data,
                 use_obstacle=use_obstacle,
                 target_xy=target_xy,
+                initial_state_protocol=args.initial_state_protocol,
+                pillar_xy=episode_pillar_xy,
             )
-            episode_initial_target_xy = data.xpos[target_body_id][:2].copy()
             if use_obstacle and args.settle_before_start:
                 pillar_joint_id = mujoco.mj_name2id(
                     model,
@@ -2962,6 +3027,8 @@ def main(args):
                     "pillar_joint",
                 )
                 settle_pillar(model, data, pillar_joint_id)
+            episode_initial_target_xy = data.xpos[target_body_id][:2].copy()
+            episode_initial_pillar_xy = data.xpos[pillar_body_id][:2].copy()
             viewer.sync()
 
             safety_layer = None
@@ -3497,7 +3564,11 @@ def main(args):
                 episode_peak_contact_force=np.array(ep_peak_force),
                 episode_contact_impulse=np.array(ep_impulse),
                 episode_peak_joint_torque=np.array(ep_peak_tau),
+                episode_id=np.array(episode + 1),
                 episode_initial_target_xy=episode_initial_target_xy,
+                episode_initial_pillar_xy=episode_initial_pillar_xy,
+                episode_pillar_xy=np.asarray(episode_pillar_xy),
+                initial_state_protocol=np.array(args.initial_state_protocol),
                 q_pos_vla=np.asarray(ep_q_pos_vla),
                 q_dot_vla=np.asarray(ep_q_dot_vla),
                 v_nom=np.asarray(ep_v_nom),
@@ -3791,6 +3862,7 @@ if __name__ == "__main__":
             "for screwdriver pick-and-place"
         )
     )
+    add_initial_state_arguments(parser)
     parser.add_argument(
         "--host",
         default="localhost",

@@ -1,0 +1,108 @@
+{
+  "id": "pillar_x_plus40mm",
+  "xy_offset_m": [
+    0.04,
+    0
+  ],
+  "height_offset_m": 0,
+  "settling_physics_steps": 296,
+  "policy_calls": 0,
+  "initial_penetrations": [],
+  "all_initial_contacts": [
+    {
+      "first_body": "table",
+      "second_body": "real_screwdriver",
+      "dist_m": -0.00023152755366026565,
+      "position_m": [
+        0.26539321559295426,
+        -0.07994345006056452,
+        0.1998842362231699
+      ]
+    },
+    {
+      "first_body": "table",
+      "second_body": "dynamic_pillar",
+      "dist_m": -6.657839554335965e-06,
+      "position_m": [
+        0.16999999984659572,
+        -0.08000002757136604,
+        0.19999334216044568
+      ]
+    },
+    {
+      "first_body": "table",
+      "second_body": "dynamic_pillar",
+      "dist_m": -6.6354014753885675e-06,
+      "position_m": [
+        0.12999999984662092,
+        -0.08000002757305436,
+        0.19999336459852463
+      ]
+    },
+    {
+      "first_body": "table",
+      "second_body": "dynamic_pillar",
+      "dist_m": -6.594739388028705e-06,
+      "position_m": [
+        0.16999999984842562,
+        -0.12000002757116696,
+        0.199993405260612
+      ]
+    },
+    {
+      "first_body": "table",
+      "second_body": "dynamic_pillar",
+      "dist_m": -6.572301309081308e-06,
+      "position_m": [
+        0.1299999998484508,
+        -0.12000002757285527,
+        0.19999342769869094
+      ]
+    }
+  ],
+  "pillar_actual_center_m": [
+    0.15000008959983904,
+    -0.09999977517144537,
+    0.27998676985868803
+  ],
+  "pillar_geom_half_size_m": [
+    0.02,
+    0.02,
+    0.08
+  ],
+  "pillar_mass_kg": 0.2,
+  "pillar_inertia_kg_m2": [
+    0.00045333333333333337,
+    0.00045333333333333337,
+    5.333333333333334e-05
+  ],
+  "pillar_upright_Rzz": 0.999999999994393,
+  "model_sha256": "5e7ff3065c96b66cef8c1bce04703e9c0e36d54b09d5f5be10547348651ff17a",
+  "expanded_xml_sha256": "f2d66701459f8a12221c19d5684f518876e37f28ccdd9811ac32929a9d166329",
+  "visual_valid": true,
+  "perception_path": "/home/jun/dummyx-sim/outputs/pace_gc_directional/research_20261026_214604/analysis/xplus40_sharedfilter_preflight_v1/pillar_x_plus40mm/perception/perception.json",
+  "detected_pillar": {
+    "p1": [
+      0.14999999967467031,
+      -0.09968142948065822,
+      0.20000007244042328
+    ],
+    "p2": [
+      0.14999999967467031,
+      -0.09968142948065822,
+      0.3599869118009571
+    ],
+    "r": 0.03785235317310677,
+    "shared_input_filter": {
+      "rule": "lower_world_z_quantile_trim",
+      "quantile": 0.02,
+      "lower_z_m": 0.20125498787220075,
+      "input_color_depth_points": 1981,
+      "kept_points": 1956,
+      "rejected_points": 25,
+      "scope": "User-authorized common perception preprocessing; not new G method",
+      "simulator_object_pose_used": false
+    }
+  },
+  "admitted": true
+}

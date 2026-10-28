@@ -1,0 +1,1904 @@
+{
+  "run_id": "gcc_vla_round3_20261028_214716",
+  "task": "round3_optional_jump_expansion",
+  "created_utc": "2026-10-28T13:52:54.247430+00:00",
+  "frozen_before_any_smoke_or_formal_inference": true,
+  "design": {
+    "scenes": [
+      "main",
+      "pillar_x_plus40mm"
+    ],
+    "configurations": [
+      "F",
+      "F_limited"
+    ],
+    "n_per_scene_config": 50,
+    "formal_total": 200,
+    "same_scene_seed_gpu": true,
+    "order": "alternate F/F_limited by rep parity",
+    "gpu_rule": "(rep+3*scene_index)%6",
+    "max_actions": 300,
+    "action_period_s": 0.05,
+    "physics_period_s": 0.001,
+    "policy_weights_frozen": true,
+    "policy_sampling": "fold_in(PRNGKey(episode_seed),request_index); reserved keys removed before model transform",
+    "model_config": "pi0_dummyx_lora",
+    "checkpoint": "/home/jun/VLA/openpi/checkpoints/pi0_dummyx_lora/dummyx_lora_run0405/40000"
+  },
+  "jump_limiter": {
+    "threshold_rad": [
+      0.031248799123169593,
+      0.03577327030341545,
+      0.03294372815894846,
+      0.011915621510522133,
+      0.03625579244210433,
+      0.0005140508586996057
+    ],
+    "source": "/home/jun/dummyx-sim/outputs/gcc_vla_experiments_round2_20261028_190400/audit/jump_limit_frozen.json",
+    "source_sha256": "3346fabd1c82577e1836351ebdd60213e4ce37b0a2c73fe61b45a4664dc50b04",
+    "recalibration": false,
+    "placement": "after final geometric guard and before actuator ctrl; six arm joints only; first command has no preceding reference and is not clipped",
+    "implementation": "bit-identical copied round2 deploy_screwdriver_client_old.py; geometry/contact/guard unchanged"
+  },
+  "smoke": {
+    "total": 2,
+    "scene": "pillar_x_plus40mm",
+    "seed": 890300,
+    "configs": [
+      "F",
+      "F_limited"
+    ],
+    "gpu": 2,
+    "excluded_from_formal": true,
+    "admission": "all original evaluation/trace fields,1ms times,ctrl/decomposition/contact/limit reconstruction pass; same first state/observation/action; limiter bound verified; no changes to outcome definitions"
+  },
+  "statistics": {
+    "unit": "episode; never substep as independent sample",
+    "success": "unchanged frozen strict placement predicate; task success does not mean fully contained or return-home",
+    "STSR": "SR and no pillar contact,tool-floor or pillar tilt; unchanged original endpoint predicate",
+    "PCR": "actual model contact,not proxy gap",
+    "load": "sum of protected-external 3D contact-force magnitudes; internal grasp contacts excluded",
+    "J4": "first4000 completed contiguous1ms samples; less than4s => missing,no zero-fill/no imputation; report valid_n",
+    "binary": {
+      "test": "two-sided Fisher exact",
+      "metrics": [
+        "SR",
+        "STSR",
+        "PCR"
+      ],
+      "family": "2 scenes x3 metrics =6 Holm; user wording4scenes interpreted as4configuration-scene cells but2physical layouts",
+      "family_size": 6,
+      "effect": "risk difference F_limited minus F in percentage points; Wilson95% each rate"
+    },
+    "load_test": {
+      "test": "two-sided Mann-Whitney U,asymptotic,tie correction,continuity correction",
+      "metrics": [
+        "J",
+        "J4"
+      ],
+      "family_size": 4,
+      "adjust": "Holm",
+      "effect": "Cliffs delta=2U/(n_limited*n_F)-1; F_limited minus F"
+    },
+    "descriptive": [
+      "force_peak",
+      "reaches_8Nm_episode",
+      "saturation_substeps_per_episode",
+      "T_all_episodes",
+      "pillar_tilt",
+      "failure_category"
+    ],
+    "continuous": "mean and sampleSD(ddof1),also actual valid_n",
+    "alpha": 0.05,
+    "posthoc_or_outcome_adaptation": false
+  },
+  "retention": {
+    "all_valid_task_failures": true,
+    "no_favorable_replacement": true,
+    "no_optional_stopping_on_outcome": true,
+    "technical_interruptions": "do not classify as task failure; restore same seed,gpu,config in independent attempt; effective original allocation counted once; retain execution metadata",
+    "no_refit_threshold_or_additional_samples": true
+  },
+  "allocations": [
+    {
+      "id": "jump_expansion_F_main_r000",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870000,
+      "rep": 0,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r000",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870000,
+      "rep": 0,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r001",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870001,
+      "rep": 1,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r001",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870001,
+      "rep": 1,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r002",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870002,
+      "rep": 2,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r002",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870002,
+      "rep": 2,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r003",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870003,
+      "rep": 3,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r003",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870003,
+      "rep": 3,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r004",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870004,
+      "rep": 4,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r004",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870004,
+      "rep": 4,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r005",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870005,
+      "rep": 5,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r005",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870005,
+      "rep": 5,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r006",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870006,
+      "rep": 6,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r006",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870006,
+      "rep": 6,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r007",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870007,
+      "rep": 7,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r007",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870007,
+      "rep": 7,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r008",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870008,
+      "rep": 8,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r008",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870008,
+      "rep": 8,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r009",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870009,
+      "rep": 9,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r009",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870009,
+      "rep": 9,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r010",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870010,
+      "rep": 10,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r010",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870010,
+      "rep": 10,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r011",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870011,
+      "rep": 11,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r011",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870011,
+      "rep": 11,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r012",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870012,
+      "rep": 12,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r012",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870012,
+      "rep": 12,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r013",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870013,
+      "rep": 13,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r013",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870013,
+      "rep": 13,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r014",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870014,
+      "rep": 14,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r014",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870014,
+      "rep": 14,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r015",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870015,
+      "rep": 15,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r015",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870015,
+      "rep": 15,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r016",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870016,
+      "rep": 16,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r016",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870016,
+      "rep": 16,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r017",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870017,
+      "rep": 17,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r017",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870017,
+      "rep": 17,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r018",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870018,
+      "rep": 18,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r018",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870018,
+      "rep": 18,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r019",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870019,
+      "rep": 19,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r019",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870019,
+      "rep": 19,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r020",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870020,
+      "rep": 20,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r020",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870020,
+      "rep": 20,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r021",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870021,
+      "rep": 21,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r021",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870021,
+      "rep": 21,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r022",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870022,
+      "rep": 22,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r022",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870022,
+      "rep": 22,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r023",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870023,
+      "rep": 23,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r023",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870023,
+      "rep": 23,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r024",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870024,
+      "rep": 24,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r024",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870024,
+      "rep": 24,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r025",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870025,
+      "rep": 25,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r025",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870025,
+      "rep": 25,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r026",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870026,
+      "rep": 26,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r026",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870026,
+      "rep": 26,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r027",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870027,
+      "rep": 27,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r027",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870027,
+      "rep": 27,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r028",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870028,
+      "rep": 28,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r028",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870028,
+      "rep": 28,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r029",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870029,
+      "rep": 29,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r029",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870029,
+      "rep": 29,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r030",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870030,
+      "rep": 30,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r030",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870030,
+      "rep": 30,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r031",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870031,
+      "rep": 31,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r031",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870031,
+      "rep": 31,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r032",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870032,
+      "rep": 32,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r032",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870032,
+      "rep": 32,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r033",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870033,
+      "rep": 33,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r033",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870033,
+      "rep": 33,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r034",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870034,
+      "rep": 34,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r034",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870034,
+      "rep": 34,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r035",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870035,
+      "rep": 35,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r035",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870035,
+      "rep": 35,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r036",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870036,
+      "rep": 36,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r036",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870036,
+      "rep": 36,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r037",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870037,
+      "rep": 37,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r037",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870037,
+      "rep": 37,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r038",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870038,
+      "rep": 38,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r038",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870038,
+      "rep": 38,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r039",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870039,
+      "rep": 39,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r039",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870039,
+      "rep": 39,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r040",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870040,
+      "rep": 40,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r040",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870040,
+      "rep": 40,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r041",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870041,
+      "rep": 41,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r041",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870041,
+      "rep": 41,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r042",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870042,
+      "rep": 42,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r042",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870042,
+      "rep": 42,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r043",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870043,
+      "rep": 43,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r043",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870043,
+      "rep": 43,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r044",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870044,
+      "rep": 44,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r044",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870044,
+      "rep": 44,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r045",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870045,
+      "rep": 45,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r045",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870045,
+      "rep": 45,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_main_r046",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870046,
+      "rep": 46,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r046",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870046,
+      "rep": 46,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r047",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870047,
+      "rep": 47,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r047",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870047,
+      "rep": 47,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_main_r048",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870048,
+      "rep": 48,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r048",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870048,
+      "rep": 48,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_limited_main_r049",
+      "config_name": "F_limited",
+      "scene": "main",
+      "seed": 870049,
+      "rep": 49,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_main_r049",
+      "config_name": "F",
+      "scene": "main",
+      "seed": 870049,
+      "rep": 49,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r000",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880000,
+      "rep": 0,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r000",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880000,
+      "rep": 0,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r001",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880001,
+      "rep": 1,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r001",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880001,
+      "rep": 1,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r002",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880002,
+      "rep": 2,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r002",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880002,
+      "rep": 2,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r003",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880003,
+      "rep": 3,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r003",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880003,
+      "rep": 3,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r004",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880004,
+      "rep": 4,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r004",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880004,
+      "rep": 4,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r005",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880005,
+      "rep": 5,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r005",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880005,
+      "rep": 5,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r006",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880006,
+      "rep": 6,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r006",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880006,
+      "rep": 6,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r007",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880007,
+      "rep": 7,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r007",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880007,
+      "rep": 7,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r008",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880008,
+      "rep": 8,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r008",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880008,
+      "rep": 8,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r009",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880009,
+      "rep": 9,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r009",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880009,
+      "rep": 9,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r010",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880010,
+      "rep": 10,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r010",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880010,
+      "rep": 10,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r011",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880011,
+      "rep": 11,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r011",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880011,
+      "rep": 11,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r012",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880012,
+      "rep": 12,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r012",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880012,
+      "rep": 12,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r013",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880013,
+      "rep": 13,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r013",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880013,
+      "rep": 13,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r014",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880014,
+      "rep": 14,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r014",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880014,
+      "rep": 14,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r015",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880015,
+      "rep": 15,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r015",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880015,
+      "rep": 15,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r016",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880016,
+      "rep": 16,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r016",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880016,
+      "rep": 16,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r017",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880017,
+      "rep": 17,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r017",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880017,
+      "rep": 17,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r018",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880018,
+      "rep": 18,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r018",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880018,
+      "rep": 18,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r019",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880019,
+      "rep": 19,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r019",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880019,
+      "rep": 19,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r020",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880020,
+      "rep": 20,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r020",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880020,
+      "rep": 20,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r021",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880021,
+      "rep": 21,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r021",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880021,
+      "rep": 21,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r022",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880022,
+      "rep": 22,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r022",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880022,
+      "rep": 22,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r023",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880023,
+      "rep": 23,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r023",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880023,
+      "rep": 23,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r024",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880024,
+      "rep": 24,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r024",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880024,
+      "rep": 24,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r025",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880025,
+      "rep": 25,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r025",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880025,
+      "rep": 25,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r026",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880026,
+      "rep": 26,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r026",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880026,
+      "rep": 26,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r027",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880027,
+      "rep": 27,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r027",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880027,
+      "rep": 27,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r028",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880028,
+      "rep": 28,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r028",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880028,
+      "rep": 28,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r029",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880029,
+      "rep": 29,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r029",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880029,
+      "rep": 29,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r030",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880030,
+      "rep": 30,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r030",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880030,
+      "rep": 30,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r031",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880031,
+      "rep": 31,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r031",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880031,
+      "rep": 31,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r032",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880032,
+      "rep": 32,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r032",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880032,
+      "rep": 32,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r033",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880033,
+      "rep": 33,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r033",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880033,
+      "rep": 33,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r034",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880034,
+      "rep": 34,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r034",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880034,
+      "rep": 34,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r035",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880035,
+      "rep": 35,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r035",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880035,
+      "rep": 35,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r036",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880036,
+      "rep": 36,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r036",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880036,
+      "rep": 36,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r037",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880037,
+      "rep": 37,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r037",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880037,
+      "rep": 37,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r038",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880038,
+      "rep": 38,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r038",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880038,
+      "rep": 38,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r039",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880039,
+      "rep": 39,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r039",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880039,
+      "rep": 39,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r040",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880040,
+      "rep": 40,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r040",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880040,
+      "rep": 40,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r041",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880041,
+      "rep": 41,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r041",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880041,
+      "rep": 41,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r042",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880042,
+      "rep": 42,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r042",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880042,
+      "rep": 42,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r043",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880043,
+      "rep": 43,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r043",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880043,
+      "rep": 43,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r044",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880044,
+      "rep": 44,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r044",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880044,
+      "rep": 44,
+      "gpu": 5,
+      "port": 8005
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r045",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880045,
+      "rep": 45,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r045",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880045,
+      "rep": 45,
+      "gpu": 0,
+      "port": 8001
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r046",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880046,
+      "rep": 46,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r046",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880046,
+      "rep": 46,
+      "gpu": 1,
+      "port": 8002
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r047",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880047,
+      "rep": 47,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r047",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880047,
+      "rep": 47,
+      "gpu": 2,
+      "port": 8000
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r048",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880048,
+      "rep": 48,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r048",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880048,
+      "rep": 48,
+      "gpu": 3,
+      "port": 8003
+    },
+    {
+      "id": "jump_expansion_F_limited_pillar_x_plus40mm_r049",
+      "config_name": "F_limited",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880049,
+      "rep": 49,
+      "gpu": 4,
+      "port": 8004
+    },
+    {
+      "id": "jump_expansion_F_pillar_x_plus40mm_r049",
+      "config_name": "F",
+      "scene": "pillar_x_plus40mm",
+      "seed": 880049,
+      "rep": 49,
+      "gpu": 4,
+      "port": 8004
+    }
+  ]
+}
